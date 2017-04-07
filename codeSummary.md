@@ -31,3 +31,5 @@ inline uint32_t BDM2currentProbeRange(CurrentProbeRangeBDM currentProbeRange) {
 }
 
 ```
+
+- 创建ADT（抽象数据类型），将一个抽象具有的数据和操作放在一个文件内
