@@ -23,7 +23,9 @@ none on /home type ramfs (rw,relatime)
 none on /proc/bus/usb type usbfs (rw,relatime)
 none on /dev/pts type devpts (rw,relatime,mode=600)
 none on /dev/shm type tmpfs (rw,relatime)
+******************************************************************************************************************************
 **/dev/mmcblk0p1 on /media/sd type ext4 (rw,noatime,nodiratime,errors=remount-ro,commit=2,barrier=1,nodelalloc,data=journal)**
+******************************************************************************************************************************
 ubi1_0 on /opt type ubifs (rw,sync,relatime)
 ubi0_0 on /etc type ubifs (rw,sync,relatime)
 ubi2_0 on /yy/log type ubifs (rw,sync,relatime)
