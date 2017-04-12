@@ -18,3 +18,11 @@ string sqlCmd = "SELECT capcity_array FROM "\
 ```
 [链接1](https://www.techonthenet.com/sqlite/select_limit.php)
 [链接2](http://www.cnblogs.com/wangxingliu/p/3512188.html)
+
+- int sqlite3_changes(sqlite3*) 返回修改的行数
+
+``` shell
+
+功能：此函数返回最近完成的INSERT修改的行数，UPDATE插入的行数或DELETE语句删除的行数。 执行任何其他类型的SQL语句返回0。
+			
+```

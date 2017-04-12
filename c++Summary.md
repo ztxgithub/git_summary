@@ -14,3 +14,35 @@
 	截取完成条件：当parse都截取完了，parse内容会改变，token每次调用会被替换
 	
 ```
+
+
+- switch-case,case下面一定要加{}
+
+``` c++
+
+      case FAST: // 冲放电事件情况下
+            {
+                fastSampleSend();
+                loopSampleData();
+                bool isEvent = BatMgrCheckAlarmAndEvent();
+                if (isEvent) {
+                    changeState(FAST);
+                } else if (this->sampleState == FAST) {
+                    changeState(SLOW);
+                }
+            }
+	
+```
+
+- 类型转化要进行强制转换
+
+``` c++
+
+	int64_t cap = this->temp_used_capacity;
+	int32_t current = data.getCurrent();
+	uint32_t diff_in_ms = timeDiffInMS(&this->pre_time, current_time);
+	cap += ((int64_t)current * (int64_t)diff_in_ms);
+	
+	注意：如果没有强制转换：cap += (current * diff_in_ms);会溢出
+	
+```
