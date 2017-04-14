@@ -53,19 +53,19 @@ inline uint32_t BDM2currentProbeRange(CurrentProbeRangeBDM currentProbeRange) {
 	delete group;  //自动调用 ~BatteryGroup()的析构函数
 	
 	BatteryGroup::~BatteryGroup(){
-    log_i("~BatteryGroup");
-    if(this->alarmSignal) {
-        delete this->alarmSignal;
-        this->alarmSignal = NULL;
-    }
-    if(this->valueSignal) {
-        delete this->valueSignal;
-        this->valueSignal = NULL;
-    }
-    if(this->capacity) {
-        delete this->capacity;
-        capacity = NULL;
-    }
+		log_i("~BatteryGroup");
+		if(this->alarmSignal) {
+			delete this->alarmSignal;
+			this->alarmSignal = NULL;
+		}
+		if(this->valueSignal) {
+			delete this->valueSignal;
+			this->valueSignal = NULL;
+		}
+		if(this->capacity) {
+			delete this->capacity;
+			capacity = NULL;
+		}
 }
 
 	delete this->alarmSignal;  //而它又自主得调用~BatteryAlarmSignal()析构函数
