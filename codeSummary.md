@@ -66,7 +66,7 @@ inline uint32_t BDM2currentProbeRange(CurrentProbeRangeBDM currentProbeRange) {
 			delete this->capacity;
 			capacity = NULL;
 		}
-}
+	}
 
 	delete this->alarmSignal;  //而它又自主得调用~BatteryAlarmSignal()析构函数
 	之后一层一层往下调
