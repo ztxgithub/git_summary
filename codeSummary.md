@@ -33,3 +33,43 @@ inline uint32_t BDM2currentProbeRange(CurrentProbeRangeBDM currentProbeRange) {
 ```
 
 - 创建ADT（抽象数据类型），将一个抽象具有的数据和操作放在一个文件内
+
+- 在定义一个结构体时，不知道该结构体内有多少数据
+
+``` c++
+
+	struct EventData {
+		EventDataHeader header;
+		EventDataBody body[0];   //定义一个大小为0的数据结构
+	};
+
+	
+```
+
+- C++类的释放最好有析构函数，这样释放申请的内存空间就不用太复杂
+
+``` c++
+
+	delete group;  //自动调用 ~BatteryGroup()的析构函数
+	
+	BatteryGroup::~BatteryGroup(){
+    log_i("~BatteryGroup");
+    if(this->alarmSignal) {
+        delete this->alarmSignal;
+        this->alarmSignal = NULL;
+    }
+    if(this->valueSignal) {
+        delete this->valueSignal;
+        this->valueSignal = NULL;
+    }
+    if(this->capacity) {
+        delete this->capacity;
+        capacity = NULL;
+    }
+}
+
+	delete this->alarmSignal;  //而它又自主得调用~BatteryAlarmSignal()析构函数
+	之后一层一层往下调
+
+	
+```

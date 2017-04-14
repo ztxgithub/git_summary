@@ -46,3 +46,16 @@
 	注意：如果没有强制转换：cap += (current * diff_in_ms);会溢出
 	
 ```
+
+- list::erase
+
+``` c++
+
+	iterator erase (const_iterator position);
+	
+	iterator erase (const_iterator first, const_iterator last);
+	删除的范围是 [first,last)，不包括last
+	
+	返回值：指向下一个可用的iterator
+	
+```

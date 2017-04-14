@@ -11,6 +11,8 @@ FROM tables
 [ORDER BY expression [ ASC | DESC ]]
 LIMIT number_rows OFFSET offset_value;
 
+返回 个数为number_rows条，从offset_value开始的记录
+
 例如：按time降序限定第一条记录，选出capcity_array值
 string sqlCmd = "SELECT capcity_array FROM "\
             + tableName + " ORDER BY time DESC LIMIT 1";
