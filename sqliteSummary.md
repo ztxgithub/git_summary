@@ -11,7 +11,11 @@ FROM tables
 [ORDER BY expression [ ASC | DESC ]]
 LIMIT number_rows OFFSET offset_value;
 
-返回 个数为number_rows条，从offset_value开始的记录
+返回 个数为number_rows条，从offset_value开始的记录（跳过的记录从 0 开始）
+
+LIMIT 10 -- returns the first 10 rows (rows 1 - 10)
+LIMIT 10 OFFSET 5 -- returns rows 6 - 15
+LIMIT 3, 20 -- returns rows 4 - 23 
 
 例如：按time降序限定第一条记录，选出capcity_array值
 string sqlCmd = "SELECT capcity_array FROM "\

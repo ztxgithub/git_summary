@@ -73,3 +73,15 @@ inline uint32_t BDM2currentProbeRange(CurrentProbeRangeBDM currentProbeRange) {
 
 	
 ```
+
+- C++声明函数的时候可以在形参上有一个默认值
+
+``` c++
+
+	static string U64ToString(uint64_t value, size_t length = 0, int frombase=10);
+  
+    string sid = TypeTransfer::U64ToString(*iterSucId, 17);  //一定要按顺序赋值，其实是 value==*iterSucId， length==17， frombase==10
+	
+	string sid = TypeTransfer::U64ToString(*iterSucId);		
+	
+```
