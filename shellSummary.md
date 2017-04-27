@@ -3,7 +3,7 @@
 
 ``` shell
 
-	cat /proc/version
+	> cat /proc/version
 	
 ```
 
@@ -11,9 +11,9 @@
 
 ``` shell
 
-	du -h folder     :以人类可读的方式递归显示该folder及子目录的大小
+	> du -h folder     :以人类可读的方式递归显示该folder及子目录的大小
 	
-	du -sh folder    :只显示folder文件夹包含的大小
+	> du -sh folder    :只显示folder文件夹包含的大小
 	
 ```
 
