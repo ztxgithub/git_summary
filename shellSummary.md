@@ -45,3 +45,11 @@
 	> cat /dev/null > filename   ( >:代表全部替换， >> :代表追加 )
 	
 ```
+
+- 通过 sz 命令传输有问题可以用 scp
+
+``` shell
+
+	> scp CASSFSUService_Cloud_2017-04-27.log zhangtx@192.168.0.2:~/
+	
+```

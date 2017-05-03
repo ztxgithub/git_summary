@@ -67,3 +67,14 @@
 	int32_t  --> %d
 	
 ```
+
+- vector 内存释放
+
+``` c++
+
+	1.当 vector 定义为局部变量时，不需要使用swap
+	2.当 vector 定义为static 变量时，要使用
+	string_vector.clear();
+    vector<string>().swap(string_vector);
+	
+```
