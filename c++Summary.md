@@ -78,3 +78,16 @@
 	vector<string>().swap(string_vector);
 	
 ```
+
+- 变量定义的时候才能用{0,0}之类的
+
+``` c++
+
+	typedef struct strSerialTime{
+		uint16_t serial;
+		uint16_t num;
+	}SerialTime;
+	
+	SerialTime lstSerialTime = {0, 0};  //初始化可以用这种方式赋值
+	
+```
