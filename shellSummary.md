@@ -1,3 +1,15 @@
+#BBDS,FSU 命令专用
+
+- 在BBDS中显示内核的打印信息
+
+``` shell
+
+	> echo 7 > /sys/module/Netlink_HAL/parameters/debug
+	
+	> tail -f /var/log/messages 
+	
+```
+
 
 - FSU，BBDS中获取linux系统的版本
 
