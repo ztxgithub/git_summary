@@ -56,6 +56,9 @@
 
 	> cat /dev/null > filename   ( >:代表全部替换， >> :代表追加 )
 	
+	或者
+	
+	>$(命令行) > filename
 ```
 
 - 通过 sz 命令传输有问题可以用 scp
