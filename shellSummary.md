@@ -10,6 +10,46 @@
 	
 ```
 
+- iostat 看linux系统的io操作(读写sd卡，磁盘等s)
+
+``` shell
+
+	> iostat [ 选项 ] [ <时间间隔> [ <次数> ] ]
+
+	> iostat -k 1    (以每秒KB为单位显示,一秒刷新一次)
+	
+	avg-cpu:  %user   %nice %system %iowait  %steal   %idle
+               0.99    0.00    1.98    0.00    0.00   97.03
+
+	Device:            tps    kB_read/s    kB_wrtn/s    kB_read    kB_wrtn
+	mmcblk0           6.93         0.00        27.72          0         28
+	mmcblk0p1         6.93         0.00        27.72          0         28
+	
+	> iostat --help
+	
+```
+
+- lsof: 看某个程序打开那些文件
+
+``` shell
+
+	> lsof
+	
+	PID          程序名						打开文件
+	391     /opt/CASS/BIN/battery   /media/sd/CASS/battery_data.db
+	
+```
+
+- 时刻监测一个命令的运行结果
+
+``` shell
+
+	> watch[参数][命令]
+	
+	> watch -n 1 ls -l  (1秒钟刷新 ls -l 命令的结果)
+	
+```
+
 
 - FSU，BBDS中获取linux系统的版本
 
