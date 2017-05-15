@@ -93,3 +93,20 @@
 ```
 
 - 调试打印**太多**会占用程序执行的时间
+
+- C++类的对象中开启多个线程
+
+``` c++
+
+	void *handleSmplDataQueueProxy(void *data) {
+		SampleBattery *h = static_cast<SampleBattery*>(data);
+		h->handleSmplDataQueue();
+	}
+	
+	void SampleBattery::Start() {
+		pthread_t thSmplDataQueue;
+		pthread_create(&thSmplDataQueue, 0, handleSmplDataQueueProxy, static_cast<void*>(this));
+
+	} 
+	
+```
