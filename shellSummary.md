@@ -118,3 +118,31 @@
 	$ ulimit -s (显示The maximum stack size)
 	
 ```
+
+#linux 命令专用
+
+- 搜索某个命令的安装包
+
+``` shell
+
+	$ sudo yum search rz
+	
+	lrzsz.x86_64 : The lrz and lsz modem communications programs
+	
+```
+
+- 安装rz,sz命令,使SercureCRT能够使用托文件
+
+``` shell
+
+	$ sudo yum install lrzsz.x86_64
+	
+```
+
+- 安装rz,sz命令,使SercureCRT能够使用托文件
+
+``` shell
+
+	$ sudo yum install lrzsz.x86_64
+	
+```
