@@ -108,3 +108,13 @@
 	> scp CASSFSUService_Cloud_2017-04-27.log zhangtx@192.168.0.2:~/
 	
 ```
+
+- ulimit:获取和设置该用户权限下的限制(比如一个程序能够打开的最多的文件描述符的个数，一个栈最大空间等)
+
+``` shell
+
+	$ ulimit -a (显示所有的信息)
+	
+	$ ulimit -s (显示The maximum stack size)
+	
+```
