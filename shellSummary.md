@@ -1,4 +1,4 @@
-#BBDS,FSU 命令专用
+# BBDS,FSU 命令专用
 
 - 在BBDS中显示内核的打印信息
 
