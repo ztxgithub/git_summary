@@ -68,3 +68,21 @@
     #pragma pack()
         
 ```
+
+- 获取当前运行系统的配置信息
+
+``` c
+    
+   #include <unistd.h>
+   
+   long sysconf(int name);
+   
+        参数:
+            _SC_NPROCESSORS_CONF:处理器的个数
+            _SC_PAGESIZE:pagesize(页大小)
+            _SC_PHYS_PAGES：总共的页数量
+            _SC_AVPHYS_PAGES:当前可利用的页的数量
+            _SC_OPEN_MAX:最大的打开的文件描述符
+        
+```
+

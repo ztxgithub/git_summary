@@ -146,3 +146,23 @@
 	$ sudo yum install lrzsz.x86_64
 	
 ```
+
+- 内存占用率
+
+``` shell
+
+	$ ps -e -o 'rsz,pid,comm,args,pcpu,vsz,stime,user,uid' | sort -nr
+	
+	rsz:实际的物理内存
+	
+```
+
+- Cache相关信息
+
+``` shell
+
+	$ ps -e -o 'rsz,pid,comm,args,pcpu,vsz,stime,user,uid' | sort -nr
+	
+	rsz:实际的物理内存
+	
+```

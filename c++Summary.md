@@ -63,8 +63,12 @@
 - printf输出格式
 
 ``` c++
-	uint32_t --> %u
-	int32_t  --> %d
+	unsinged int,unsigned short,unsigned char --> %u
+	unsigned long int, unsigned long --> %lu
+	unsigned long long, unsigned long long int --> %llu
+	
+	int  --> %d
+	long int --> %ld
 	
 ```
 
