@@ -74,7 +74,9 @@
 ``` shell
 
 	$ file /bin/ls
-	/bin/ls: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=eca98eeadafddff44caf37ae3d4b227132861218, stripped
+	/bin/ls: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, 
+	interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32, 
+	BuildID[sha1]=eca98eeadafddff44caf37ae3d4b227132861218, stripped
 	
 ```
 
@@ -139,30 +141,16 @@
 	
 ```
 
-- 安装rz,sz命令,使SercureCRT能够使用托文件
-
-``` shell
-
-	$ sudo yum install lrzsz.x86_64
-	
-```
-
 - 内存占用率
 
 ``` shell
 
 	$ ps -e -o 'rsz,pid,comm,args,pcpu,vsz,stime,user,uid' | sort -nr
 	
-	rsz:实际的物理内存
-	
-```
-
-- Cache相关信息
-
-``` shell
-
-	$ ps -e -o 'rsz,pid,comm,args,pcpu,vsz,stime,user,uid' | sort -nr
-	
+	参数：
+	    -e:等于-A,　Select all processes：选择所有的进程
+	    -o:  -o format:指定输出的格式及内容
+	    
 	rsz:实际的物理内存
 	
 ```
