@@ -11,3 +11,12 @@
 - [字符编码笔记：ASCII，Unicode和UTF-8](http://www.ruanyifeng.com/blog/2007/10/ascii_unicode_and_utf-8.html)
 
 
+- 可重入函数
+
+``` c
+    多个线程可以同时调用该函数,该函数不会有操作静态变量
+    
+	
+```
+
+- 一个block的大小为512 bytes

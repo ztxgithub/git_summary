@@ -59,6 +59,40 @@
 	
 ```
 
+- FSU中 udhcpc 进程
+
+``` shell
+
+	$ udhcpc -S -i eth1 -p /var/run/udhcpc.pid
+	
+	参数:
+	    -S,--syslog             Log to syslog too
+	    -i,--interface IFACE    Interface to use (default eth0)
+	    -p,--pidfile FILE       Create pidfile
+	
+```
+
+- FSU中 udhcpc 进程
+
+``` shell
+
+	$ udhcpc -S -i eth1 -p /var/run/udhcpc.pid
+	
+	参数:
+	    -S,--syslog             Log to syslog too
+	    -i,--interface IFACE    Interface to use (default eth0)
+	    -p,--pidfile FILE       Create pidfile
+	
+```
+
+- 将后台的程序打印到显示器上 
+
+``` shell
+
+    console_redirect
+	
+```
+
 - 查看文件夹下的大小 du(disk usage)
 
 ``` shell
@@ -115,9 +149,19 @@
 
 ``` shell
 
+    描述内容:
+        ulimit 用于限制 shell 启动进程所占用的资源,作为临时限制，ulimit 可以作用于通过使用其命令登录的 shell 会话，
+        在会话终止时便结束限制，并不影响于其他 shell 会话。而对于长期的固定限制，
+        ulimit 命令语句又可以被添加到由登录 shell 读取的文件中，作用于特定的 shell 用户。
+        ulimit 限制的是当前 shell 进程以及其派生的子进程。举例来说，如果用户同时运行了两个 shell 终端进程，
+        只在其中一个环境中执行了 ulimit – s 100，则该 shell 进程里创建文件的大小收到相应的限制，
+        而同时另一个 shell 终端包括其上运行的子程序都不会受其影响：
+
 	$ ulimit -a (显示所有的信息)
 	
 	$ ulimit -s (显示The maximum stack size)
+	
+	$ ulimit -Hu (用户最大的可用进程数(一旦设置不能增加.))
 	
 ```
 

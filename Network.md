@@ -1,0 +1,69 @@
+##基于SCClient 程序
+
+- 判断系统有没有eth0等网络接口
+
+``` c
+    
+    看有没有　/sys/class/net/eth0 文件
+	
+```
+
+- shell 命令 lsusb 其实从文件 /proc/bus/usb/devices 中读取
+
+- 获取 network interface Name 对应的 ip
+
+``` c
+    
+    string ConnectVPN::GetIfIpAddr(const string &interfaceName) {
+        string rec = "";
+        struct ifreq ifr;
+        int inetSock = socket(AF_INET, SOCK_DGRAM, 0);
+        memset(&ifr, 0, sizeof(ifr));
+        ifr.ifr_addr.sa_family = AF_INET;
+        strcpy(ifr.ifr_name, interfaceName.c_str());
+        if(!(ioctl(inetSock, SIOCGIFADDR, &ifr) < 0)){
+            rec =  inet_ntoa(((struct sockaddr_in*)&(ifr.ifr_addr))->sin_addr);
+        }
+        close(inetSock);
+        return rec;
+    
+    }
+	
+```
+
+- 在路由表中获取目的ip对应的网关(根据/proc/net/route)
+
+``` c
+    
+    string ConnectVPN::GetGateway(const string &destAddr) {
+        char devName[64];
+        unsigned long _destAddr, gateway, mask;
+        int flgs, ref, use, metric, mtu, win, ir;
+        struct in_addr gw;
+    
+        FILE *fp = fopen("/proc/net/route", "r");
+        if(!fp) return "";
+    
+        if(fscanf(fp, "%*[^\n]\n") < 0) {
+            fclose(fp);
+            return "";
+        }
+    
+        int r = 0;
+        while(r >= 0 && !feof(fp)) {
+            r = fscanf(fp, "%63s%lx%lx%X%d%d%d%lx%d%d%d\n",
+                       devName, &_destAddr, &gateway, &flgs, &ref, &use, &metric, &mask,
+                       &mtu, &win, &ir);
+    
+            if((r == 11) && (_destAddr == inet_addr(destAddr.c_str()))) {
+                gw.s_addr =  gateway;
+                fclose(fp);
+                return inet_ntoa(gw);
+            }
+        }
+        fclose(fp);
+        return "";
+    }
+	
+```
+
