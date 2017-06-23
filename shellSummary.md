@@ -1,3 +1,25 @@
+# 平台相关FSU
+
+- 将FSU恢复成出厂配置
+
+``` shell
+
+    1.$ rm -rf /media/sd/opt/*
+    2.$ cp /media/sd/CASS/.OS.bin /media/sd/CASS/UPDATE
+    3.$ mv /media/sd/CASS/UPDATE/.OS.bin /media/sd/CASS/UPDATE/OS.bin 
+    4.$ reboot
+	
+```
+
+- 查看平台的FSU有没有升级成功
+
+``` shell
+    
+    失败：产生 /media/sd/CASS/.SD_update_fail　文件
+	
+```
+
+
 # BBDS,FSU 命令专用
 
 - 在BBDS中显示内核的打印信息
@@ -59,18 +81,7 @@
 	
 ```
 
-- FSU中 udhcpc 进程
-
-``` shell
-
-	$ udhcpc -S -i eth1 -p /var/run/udhcpc.pid
-	
-	参数:
-	    -S,--syslog             Log to syslog too
-	    -i,--interface IFACE    Interface to use (default eth0)
-	    -p,--pidfile FILE       Create pidfile
-	
-```
+- 
 
 - FSU中 udhcpc 进程
 
@@ -198,3 +209,4 @@
 	rsz:实际的物理内存
 	
 ```
+
