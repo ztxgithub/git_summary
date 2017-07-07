@@ -86,3 +86,22 @@
         
 ```
 
+- 在C语言中只要遇到位域的一定要用无符号
+
+``` c
+    
+    struct adpt_ssbi_t
+    {
+        UINT8_T type;             ///< The signal point's type, AI, AO, DI, DO.
+        UINT8_T dev_type;       ///< The device's type of the signal point belongs to.
+        int addr;               ///< Relative offset of the register.
+        int addr_len;           ///< The register's length.
+        unsigned int bit_shift:4;        ///< If the signal point's type is DI,
+        int scale;              ///< Decimal places of the point's value.
+        union sig_val_t val;    ///< The signal point's value.
+        char name[NAME_SIZE];   ///< The signal point's name.
+        unsigned int valid:1;          ///< Whether this point is valid.
+    };
+        
+        
+```

@@ -69,3 +69,30 @@
 	       失败: -1.
 
 ```
+
+- 获取系统的时间和设置系统时间
+
+```c
+
+	 #include <sys/time.h>
+	
+    struct timeval {
+               time_t      tv_sec;     /* seconds */
+               suseconds_t tv_usec;    /* microseconds */　１us = 10−6 s
+           };
+           
+           
+    int gettimeofday(struct timeval *tv, struct timezone *tz);
+           
+    int settimeofday(const struct timeval *tv, const struct timezone *tz);
+    
+    返回值:
+        0:成功
+        -1:失败 
+    
+    注意:
+        struct timezone *tz 被废弃,一般置为NULL
+        
+    
+
+```

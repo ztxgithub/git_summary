@@ -126,4 +126,10 @@
     }
 	
 ```
+- 当一个结构体的字节存放在string 中时,一定要考虑到显式的构造大小(默认按/0结尾)
 
+``` c++
+    
+    mqtt_content.payload = string((char*)message->payload, message->payloadlen);
+	
+```
