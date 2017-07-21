@@ -105,3 +105,109 @@
         
         
 ```
+
+- sscanf
+
+``` c
+
+    1. 取指定长度的字符串。如在下例中，取最大长度为4字节的字符串。
+    　sscanf("123456 ", "%4s", buf);
+    　printf("%s\n", buf);
+    　结果为：1234
+    
+    2.遇到空格停止读取
+        char buf[512] ={};
+        sscanf("123456 789", "%s", buf);
+        printf("%s\n", buf);
+        
+        结果为：123456
+        
+    3.取仅包含指定字符集的字符串。如在下例中，取仅包含1到9和小写字母的字符串。
+      　　sscanf("123456abcdedfBCDEF", "%[1-9a-z]", buf);
+      　　printf("%s\n", buf);
+      　　结果为：123456abcdedf
+      
+      %*:表示跳过以下条件的字符
+    4.给定一个字符串iios/12DDWDFF@122，获取 / 和 @ 之间的字符串，先将 "iios/"过滤掉，再将非'@'的一串内容送到buf中
+      　　sscanf("iios/12DDWDFF@122", "%*[^/]/%[^@]", buf);
+      　　printf("%s\n", buf);
+      
+    5.给定一个字符串iios/12DDWDFF@122,只读取iios到buf
+            char buf[512] ={};
+            sscanf("iios/12DDWDFF@122", "%[^/]", buf);
+            printf("%s\n", buf);
+            
+            结果为：iios
+            
+    6.给定一个字符串iios/12DDWDFF@122,只读取12DDWDFF@122到buf
+            char buf[512] ={};
+            sscanf("iios/12DDWDFF@122", "%*[^/]/%s", buf);
+            printf("%s\n", buf);
+            
+            结果为：12DDWDFF@122
+            
+    7.2006:03:18-2006:04:18 将日期分别存到2个字符串数组中
+    format-type中有%[]这样的type field。如果读取的字符串，不是以空格来分隔的话，就可以使用%[]。
+        char sztime1[16] = "", sztime2[16] = "";
+        sscanf("2006:03:18-2006:04:18", "%[0-9,:]-%[0-9,:]", sztime1, sztime2);
+        printf("sztime1:%s\n", sztime1);
+        printf("sztime2:%s\n", sztime2);
+        
+    8.
+        int no = -1;
+        int type = -1;
+        int no_three = -1;
+        int no_four = -1;
+        sscanf("1,2,3,,1,1,,,,,,,,,1,1,1,,1,aaaa,,bbbb,cccc", "%*d,%d,%d%*[,]%d", &type, &no_three, &no_four);
+        printf("no[%d],type[%d],no_three[%d],no_four[%d]\n", no, type, no_three, no_four);
+        
+        1,2,3,,1 剔除多个,,取１
+        
+    9.
+            int no = -1;
+            int type = -1;
+            int no_three = -1;
+            int no_four = -1;
+            char str1[16] = "", str2[16] = "", str3[16] = "";
+            sscanf(",aaaa,,bbbb,cccc", "%*[,]%[^,]%*[,]%[^,]%*[,]%[^,]", str1, str2, str3);
+            printf("str1:%s\n", str1);
+            printf("str2:%s\n", str2);
+            printf("str3:%s\n", str3);
+            
+            截取多个字符串
+        
+```
+
+ [相关资料](http://www.cnblogs.com/lyq105/archive/2009/11/28/1612677.html)
+ 
+ - printf输出格式
+ 
+ ``` c
+ 	unsinged int,unsigned short,unsigned char --> %u
+ 	unsigned long int, unsigned long --> %lu
+ 	unsigned long long, unsigned long long int --> %llu
+ 	
+ 	int  --> %d
+ 	long int --> %ld
+ 	
+ ```
+ 
+ - scanf或者sscanf读取值转化为枚举的值要用 %u
+ 
+  ``` c
+  
+     enum enable_c1
+     {
+         DISABLE_C1 = 0,
+         ENABLE_C1 = 1
+     };
+     
+     enum enable_c1 en;
+     
+     scanf(%u", &en);
+                        
+  ```
+  
+  - strlen和printf("%s)的实现原理都是以'\0'为结尾的标准
+  
+    

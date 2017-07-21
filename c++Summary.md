@@ -60,18 +60,6 @@
 	
 ```
 
-- printf输出格式
-
-``` c++
-	unsinged int,unsigned short,unsigned char --> %u
-	unsigned long int, unsigned long --> %lu
-	unsigned long long, unsigned long long int --> %llu
-	
-	int  --> %d
-	long int --> %ld
-	
-```
-
 - vector 内存释放
 
 ``` c++
