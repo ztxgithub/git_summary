@@ -210,4 +210,29 @@
   
   - strlen和printf("%s)的实现原理都是以'\0'为结尾的标准
   
+  - 将数字转化为字符串(不足位数左边补０)
+  
+  ``` c
+  
+     int sprintf( char *buffer, const char *format [, argument] ... )
+     
+     返回值：
+            实际的字符串的大小(不包括\0)
+     
+     
+     
+    char dig[8];
+    sprintf(dig, "%04d", 123);
+    
+    ---结果为 int(123)->char *("0123")-----
+    
+    for(int i = 0; i < 8; i++)
+        printf("val[%d]\n", dig[i]);
+    printf("dig[%s]\n", dig);
+                          
+```
+
+-  strncpy(char *dst, char *src, int size)　会使dst剩余的值为 '\0'
+   
+  
     

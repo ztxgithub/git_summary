@@ -32,3 +32,5 @@ string sqlCmd = "SELECT capcity_array FROM "\
 功能：此函数返回最近完成的INSERT修改的行数，UPDATE插入的行数或DELETE语句删除的行数。 执行任何其他类型的SQL语句返回0。
 			
 ```
+
+- 
