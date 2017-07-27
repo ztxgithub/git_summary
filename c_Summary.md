@@ -108,6 +108,10 @@
 
 - sscanf
 
+    描述：
+        1.可以进行字符串的分割
+        2.可以进行 字符串->数字
+
 ``` c
 
     1. 取指定长度的字符串。如在下例中，取最大长度为4字节的字符串。
@@ -208,19 +212,34 @@
                         
   ```
   
-  - strlen和printf("%s)的实现原理都是以'\0'为结尾的标准
+- strlen和printf("%s)的实现原理都是以'\0'为结尾的标准
   
-  - 将数字转化为字符串(不足位数左边补０)
+-  strncpy(char *dst, char *src, int size)　会使dst剩余的值为 '\0'
+
+
+- sprintf
+
+ ``` c
   
-  ``` c
-  
+     功能:
+        1.数字(int,double)转为字符串
+        2.
+     
      int sprintf( char *buffer, const char *format [, argument] ... )
+     
+     参数：
+        format：%[flags][width][.precision][length]specifier
+        
+                specifier:说明符
+                          d/i:有符号的十进制整数
+                
      
      返回值：
             实际的字符串的大小(不包括\0)
      
      
      
+    1.将数字转化为字符串(不足位数左边补０)
     char dig[8];
     sprintf(dig, "%04d", 123);
     
@@ -232,7 +251,27 @@
                           
 ```
 
--  strncpy(char *dst, char *src, int size)　会使dst剩余的值为 '\0'
+- union 可以进行无差别赋值,但不能进行无差别比较
+
+```c
+
+ union sig_val_t
+  {
+      int ival;    ///< Integer value.
+      float fval;  ///< Float value.
+  };
+  
+      union sig_val_t l;
+      union sig_val_t r;
+      l.fval = 1.3;
+      r = l;      //这个操作是可以的
+      if(l.fval == r.fval)　　
+          printf("l == r\n");
+          
+      if(l == r) //这个操作是不行的
+    
+```
+
    
   
     
