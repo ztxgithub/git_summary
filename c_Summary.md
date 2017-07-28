@@ -232,7 +232,39 @@
         
                 specifier:说明符
                           d/i:有符号的十进制整数
-                
+                          f:十进制浮点数
+                          o:有符号八进制
+                          s:字符串格式
+                          u:无符号十进制
+                          x:无符号十六进制(如果转化后有字母,则显示小写)
+                          X:无符号十六进制(如果转化后有字母,则显示大写)
+                          %:字符'%'
+                          
+                flags:标识
+                        -:在给定的字段宽度内左对齐,默认是右对齐
+                        +:强制在结果之前显示加号或减号（+ 或 -），即正数前面会显示 + 号。
+                        默认情况下，只有负数前面会显示一个 - 号。
+                        #:与 o、x 或 X 说明符一起使用时，非零值前面会分别显示 0、0x 或 0X。
+                        0:在指定的固定宽度(width),有效数不足,用0补,而不是用默认的空格(' ')补
+                        
+                width:宽度
+                        number(例如7):要输出的字符的最小数目。如果输出的值短于该数，
+                        结果会用空格填充。如果输出的值长于该数，结果不会被截断。
+                        
+                .precision :精度
+                        
+                        .number: 
+                            对于整数说明符（d、i、o、u、x、X）,效果与%0width 一样
+                            对于浮点数(f),代表小数点保留number位
+                            对于 s: 要输出的最大字符数。默认情况下，所有字符都会被输出，直到遇到末尾的空字符。
+                                    不管怎么样,后面都会跟一个'\0'.
+                                    
+                length :长度
+                        h:参数被解释为短整型或无符号短整型（仅适用于整数说明符：i、d、o、u、x 和 X）
+                        hh: signed char (hhd),unsigned char(hhu)
+                        l:参数被解释为长整型或无符号长整型，适用于整数说明符（i、d、o、u、x 和 X）
+                        ll: long long int or unsigned long long int
+                        L: 参数被解释为长双精度型
      
      返回值：
             实际的字符串的大小(不包括\0)
@@ -248,6 +280,81 @@
     for(int i = 0; i < 8; i++)
         printf("val[%d]\n", dig[i]);
     printf("dig[%s]\n", dig);
+    
+    2.sprintf格式化到字符数组中,除去有效的字符和'\0',剩余的目的字符数组中保存原来的值．
+    
+        char dig[8];
+        memset(dig, ' ', 8);
+        int valid_len = sprintf(dig, "%d", 12);
+        
+        
+        ---结果为 dig[0] == '1'
+                 dig[1] == '2'
+                 dig[2] == '\0'
+                 dig[3] == ' '
+                 dig[4] == ' '
+                 dig[5] == ' '
+        
+        for(int i = 0; i < 8; i++)
+            printf("val[%d]\n", dig[i]);
+        printf("dig[%s]\n", dig);
+        printf("valid_len[%d]\n", valid_len);
+        
+    3.format中%flags标示的在给定的字段宽度(width)内对齐问题
+        (1):flags默认是右对齐(给定的字段宽度(width))
+        
+            char dig[8];
+            memset(dig, 1, 8);
+            int valid_len = sprintf(dig, "%2d", 0x5);
+            
+            在起始地址dig,取字段宽度为2(取2个字节),再根据右对齐的原则,如果字段宽度充足,则没填充的字节
+            按空格' '填充,
+            dig[0] == ' '  //不足空格填充
+            dig[1] == '5'  //右对齐,字段宽度为2
+            dig[2] == '\0'
+            dig[3] == 1  //原来初始化的值
+            
+            
+         (2):flags 为　'-',左对齐
+         
+                 char dig[8];
+                 memset(dig, 1, 8);
+                 int valid_len = sprintf(dig, "%-3d", 0x5);
+                 
+                 在起始地址dig,取字段宽度为2(取2个字节),再根据右对齐的原则,如果字段宽度充足,则没填充的字节
+                 按空格' '填充,
+                 dig[0] == '5'  //左对齐
+                 dig[1] == ' '  //不足空格填充
+                 dig[2] == ' '  //字段宽度为3,不足空格填充
+                 dig[3] == '\0'
+                 dig[4] == 1
+                 
+    4. %.precision ,字符串的应用
+    
+          char dig[8];
+          memset(dig, 1, 8);
+          int valid_len = sprintf(dig, "%.1s", "123");
+          
+          
+          dig[0] == '1'   //只输出一个字符
+          dig[1] == '\0'　//后面紧接着'\0'
+          dig[2] == 1
+          
+    5.使用sprintf 的 % 时.一定要注意 %f 对应的是浮点数, %d 对应的是 int
+        char dig[8];
+        memset(dig, 1, 8);
+        int i_value  = 10;
+        float f_value = 10.3;
+        double d_value = 10.3;
+        int valid_len = sprintf(dig, "%.2f", i_value);  //错误用法
+        结果dig打印出来0.00(结果错误)
+        
+        int valid_len = sprintf(dig, "%d", i_value);  //正确用法
+          
+            
+        
+        
+     
                           
 ```
 
