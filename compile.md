@@ -29,3 +29,13 @@
 ```
 [参考资料](http://ticktick.blog.51cto.com/823160/431329)
 
+- 设置好相关动态链接库
+
+``` shell
+    
+    1.修改 /etc/ld.so.conf文件
+    新增内容： /usr/local/lib/
+	
+    2.输入linux命令行: ldconfig
+
+```

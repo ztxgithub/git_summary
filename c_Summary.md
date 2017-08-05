@@ -114,6 +114,26 @@
 
 ``` c
 
+    int sscanf(const char * src, const char * format, ...);
+    描述:
+        the format 其实有一系列的指令集(directives),它将用于如何处理源字符串(src),即源字符串
+        要与format一一匹配
+        (1):如果源字符串有"abc",则format 中位置要一致且有"abc"
+        (2):Each conversion specification in format begins with 
+        either the character '%' or the character sequence "%n$"
+            I: %*:代表滤过对应的值,不需要指针指向的内存来保存.同时sscanf返回值不计数在内
+            II:m 只适用于%s,%c,%[
+                 char *s; 
+                 scanf("%ms", &s);
+                 printf("%s", s);
+                 free(s);
+                 
+    参数:
+        format:相关的格式,conversion specifications,将源字符串中按format格式进行
+               匹配,将对应的数据保存在指针指向的内存中(注意数据类型要一一对应),数量也要一一对应
+    返回值:
+        成功:则返回全部匹配的值
+        
     1. 取指定长度的字符串。如在下例中，取最大长度为4字节的字符串。
     　sscanf("123456 ", "%4s", buf);
     　printf("%s\n", buf);
@@ -179,6 +199,19 @@
             printf("str3:%s\n", str3);
             
             截取多个字符串
+            
+    10.     %n: 看总共读取的字节数(不包含'\0'), sscanf 返回值中不进行计数
+            char str[]="192.168.0.5:8080";
+            unsigned int a, b, c, d, port = 0;
+            int len = 0;
+            int s_ret_len = 0;
+            s_ret_len = sscanf(str, "%u.%u.%u.%u:%u%n", &a, &b, &c, &d, &port, &len);
+            
+            printf("a[%u], b[%u], c[%u], d[%u], port[%u], len[%d], s_ret_len[%d]\n",
+            a, b, c, d, port, len, s_ret_len);
+
+            结果:a[192], b[168], c[0], d[5], port[8080], len[16], s_ret_len[5]
+            注意:只有当s_ret_len==5时,len的长度才有效
         
 ```
 
@@ -223,7 +256,7 @@
   
      功能:
         1.数字(int,double)转为字符串
-        2.
+        2.可以在程序中用变量指定width或者.precision
      
      int sprintf( char *buffer, const char *format [, argument] ... )
      
@@ -331,6 +364,8 @@
                  
     4. %.precision ,字符串的应用
     
+         (1):对于字符串 %.7s :代表取源字符串中的头7个字符,之后再加上'\0',形成一个字符串 
+            
           char dig[8];
           memset(dig, 1, 8);
           int valid_len = sprintf(dig, "%.1s", "123");
@@ -339,6 +374,11 @@
           dig[0] == '1'   //只输出一个字符
           dig[1] == '\0'　//后面紧接着'\0'
           dig[2] == 1
+          
+          (2)
+            　char a1[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G'};
+            　char a2[] = {'H', 'I', 'J', 'K', 'L', 'M', 'N'};
+              sprintf(s, "%.7s%.7s", a1, a2);//产生："ABCDEFGHIJKLMN"
           
     5.使用sprintf 的 % 时.一定要注意 %f 对应的是浮点数, %d 对应的是 int
         char dig[8];
@@ -351,10 +391,21 @@
         
         int valid_len = sprintf(dig, "%d", i_value);  //正确用法
           
+    6. 用变量指定相应的字段宽度(width)或者精度(.precision)  %*中 *代替变量
+    
+            char dig[8];
+            memset(dig, 1, 8);
+            int i_value  = 1;
+            int width = 4;
+            int valid_len = sprintf(dig, "%0*d", width, i_value);
             
-        
-        
-     
+            结果:
+             dig[0] == '0'   
+             dig[1] == '0'　
+             dig[2] == '0'　
+             dig[3] == '1'　
+             dig[4] == '\0'　
+             dig[5] == 1　
                           
 ```
 
@@ -378,6 +429,55 @@
       if(l == r) //这个操作是不行的
     
 ```
+
+- static 变量在函数内只会被申明一次(同时有初始化则只初始化一次)
+
+```c
+    void static_inc()
+    {
+        static int i = 0;  //只初始化一次
+        printf("i[%d]\n", i++);
+    }
+    
+```
+
+- fcntl系统调用(根据文件描述词来操作文件的特性)
+```c
+
+    int fcntl(int fd, int cmd, long arg); 
+    
+    参数: 
+        fd:文件描述符
+        cmd:命令操作
+            F_SETFD:设置文件描述词标志
+          
+     返回值:
+        成功则返回0
+    
+    1.fcntl(fd, F_SETFD, FD_CLOEXEC) 
+        It sets the close-on-exec flag for the file descriptor, which causes the file descriptor to be automatically
+         (and atomically) closed when any of the exec-family functions succeed.This is useful to keep from 
+         leaking your file descriptors to random programs run by e.g. system().
+         
+    2.  设置文件非阻塞模式
+        int flags = fcntl(sock, F_GETFL, 0);
+        fcntl(sock, F_SETFL, flags | O_NONBLOCK);
+    
+```
+
+- Error: free(): invalid next size (fast) 原因
+
+```c
+    注意:
+        程序在写请求的内存时,一定不能写越界,要不然free会出问题ss
+  1.free 不是由malloc或则calloc得来的指针
+  2.多次free内存,其中包括free 重叠的内存
+  You may be overflowing a buffer or 
+  otherwise writing to memory to which you shouldn't be writing, 
+  causing heap corruption.
+       
+```
+
 
    
   

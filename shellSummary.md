@@ -19,6 +19,14 @@
 	
 ```
 
+- dbclient 远程登陆
+``` shell
+    
+   跟ssh一样
+   $ dbclient root@192.0.0.65
+	
+```
+
 
 # BBDS,FSU 命令专用
 

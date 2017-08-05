@@ -85,3 +85,39 @@ inline uint32_t BDM2currentProbeRange(CurrentProbeRangeBDM currentProbeRange) {
 	string sid = TypeTransfer::U64ToString(*iterSucId);		
 	
 ```
+- 宏定义的表示方式
+
+``` c++
+
+        #define DOSOMETHING() \
+                do{ \
+                  foo1();\
+                  foo2();\
+                }while(0)\
+        	
+```
+- 循环最好用for
+
+``` c++
+
+        for(int i = 0; i < 10; i++) {
+            printf("i[%d]\n", i);
+            if(erro)
+                continue;
+                
+            do something;
+        }
+
+        continue之后i++也会执行,用while则想要继续循环下去还得写一次i++
+        while(i < 10)
+        {
+            if(erro)
+            {
+                i++;
+                continue;
+            }
+            do something;
+            i++
+        }
+        	
+```

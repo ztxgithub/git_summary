@@ -52,3 +52,10 @@ enum packet_type_c1 {
 };
    
 ```
+## c语言变量缩写
+
+``` c
+    
+    manager  <-->  mgr
+   
+```
