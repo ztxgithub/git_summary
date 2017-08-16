@@ -469,13 +469,70 @@
 
 ```c
     注意:
-        程序在写请求的内存时,一定不能写越界,要不然free会出问题ss
+        程序在写请求的内存时,一定不能写越界,要不然free会出问题
   1.free 不是由malloc或则calloc得来的指针
   2.多次free内存,其中包括free 重叠的内存
   You may be overflowing a buffer or 
   otherwise writing to memory to which you shouldn't be writing, 
   causing heap corruption.
        
+```
+
+- sizeof struct数据结构
+
+```c
+    
+    struct ctl_msg {
+        void (*mg_event_handler_t)(struct mg_connection *nc, int ev,
+                                   void *ev_data);  //函数指针
+    };
+    
+    1.在32位linux上,
+    sizeof(struct ctl_msg) == 4 
+    sizeof(void *) == 4
+    
+    2.在64位linux上
+     sizeof(struct ctl_msg) == 8
+     sizeof(void *) == 8   
+    
+    (1)考虑字节对齐
+     在64位linux上:
+        struct ctl_msg {
+            void (*mg_event_handler_t)(struct mg_connection *nc, int ev,
+                                       void *ev_data);  //函数指针
+            char size[100];
+        };
+        
+        sizeof(struct ctl_msg) == 8 + 13*8(考虑到字节对齐 char[100] 不能被8整除) == 112
+```
+
+- realloc 的应用
+
+```c
+    
+    void * realloc ( void * ptr, size_t new_size );
+    1.对ptr进行判断，如果ptr为NULL，则函数相当于malloc(new_size),
+      试着分配一块大小为new_size的内存，如果成功将地址返回，否则返回NULL。
+      如果ptr不为NULL，则进入2
+    2.查看ptr是不是在堆中，如果不是的话会跑出异常错误，会发生realloc invalid pointer（具体原因在后面讲.
+      如果ptr在堆中，则查看new_size大小.
+      如果new_size大小为0，则相当于free(ptr)，将ptr指针释放，返回NULL.
+      如果new_size小于原大小，则ptr中的数据可能会丢失，只有new_size大小的数据会保存（这里很重要）.
+      如果size等于原大小，等于啥都没做.
+      如果size大于原大小，则看ptr所在的位置还有没有足够的连续内存空间，如果有的话，分配更多的空间，返回的地址和ptr相同，
+                        如果没有的话，在更大的空间内查找，如果找到size大小的空间，
+                        将旧的内容拷贝到新的内存中，把旧的内存释放掉，则返回新地址，否则返回NULL。
+    这里解释一下，为什么ptr要在堆中，学过编译原理的同学应该都知道C语言中的malloc，realloc，calloc()这种用户主动分配的内存放在堆区，
+    而临时变量放在栈区，这是两块不同的区域。堆区的变量由用户通过free释放空间，而栈区的变量在函数退出后就自动释放，
+    所以这两个区域的变量生存时间不同，不能相互间进行内存分配操作。
+    所以要求ptr必须在堆区，即ptr必须是malloc，realloc或者calloc的返回值，要不然可以为NULL，把realloc变为malloc。
+    所以使用realloc函数应该注意一下几点：
+    1.ptr必须为NULL，或者为malloc，realloc或者calloc的返回值，否则发生realloc invalid pointer错误
+    2.new_size如果小于old_size，只有new_size大小的数据会被保存，可能会发生数据丢失，慎重使用。
+    3.如果new_size大于old_size，可能会分配一块新的内存，这时候ptr指向的内存会被释放，ptr成为野指针，再访问的时候会发生错误。
+    4.最后不要将返回结果再赋值给ptr，即ptr=realloc(ptr,new_size)是不建议使用的，
+    因为如果内存分配失败，ptr会变为NULL，如果之前没有将ptr所在地址赋给其他值的话，会发生无法访问旧内存空间的情况，
+    所以建议使用temp=realloc(ptr,new_size)。
 ```
 
 

@@ -8,6 +8,11 @@
     2.$ cp /media/sd/CASS/.OS.bin /media/sd/CASS/UPDATE
     3.$ mv /media/sd/CASS/UPDATE/.OS.bin /media/sd/CASS/UPDATE/OS.bin 
     4.$ reboot
+    
+    将云平台的升级回FSU铁塔
+    1.$ rm -rf /media/sd/opt/*
+    2.$ mv /media/sd/CASS/UPDATE/OS.bin /media/sd/CASS/UPDATE/
+    3.$ reboot
 	
 ```
 
@@ -218,3 +223,18 @@
 	
 ```
 
+- telnet 功能
+
+``` shell
+
+    查看某个ip的port是否打开
+    
+    telnet ip port
+    例如:
+    telnet 223.93.172.225 7000 (什么都没显示则该port正常打开)
+    
+     telnet 223.93.172.225 7009 
+     
+     该端口没有打开提示(telnet: can't connect to remote host (223.93.172.225): Connection refused)
+	
+```
