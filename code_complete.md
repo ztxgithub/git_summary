@@ -41,3 +41,18 @@
     
     
 ```
+
+## 组织直线型代码
+
+- 将代码相关的语句组织在一起
+
+```c++
+
+    SalesData saleData;
+    saleData.ComputeQuarterly();
+    saleData.ComputeAnnual();
+    saleData.Print();
+    
+    代码可读性较强,易于封装成一个函数.
+    
+```

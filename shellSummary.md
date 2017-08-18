@@ -238,3 +238,16 @@
      该端口没有打开提示(telnet: can't connect to remote host (223.93.172.225): Connection refused)
 	
 ```
+
+- grep 
+
+``` shell
+
+    grep命令是一种强大的文本搜索工具，它能使用正则表达式搜索文本，并把匹 配的行打印出来。
+    grep全称是Global Regular Expression Print
+    
+    没有加任何参数只能使用基本正则表达式,像 ? , +, {3,4}无法使用
+    要使用扩展正则表达式--> grep -E "[0-9]{3,4}" filename.txt
+	
+```
+
