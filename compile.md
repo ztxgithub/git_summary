@@ -39,3 +39,54 @@
     2.输入linux命令行: ldconfig
 
 ```
+
+
+- 交叉编译依赖库 libpcap.so.1.8.1 
+
+``` shell
+    
+    源代码libpcap-1.8.1 路径: /home/jame/soft/libpcap-1.8.1
+    1.确保安装 flex和bison (sudo apt-get install bison，sudo apt-get install flex)
+    2. $ ./configure --host=arm-linux --with-pcap=linux
+    3. $ make  (这个时候就生成 libpcap.so.1.8.1)
+    4.cp ~/soft/libpcap-1.8.1/libpcap.so.1.8.1 /home/jame/gcc-4.4.4-glibc-2.11.1-multilib-1.0/arm-fsl-linux-gnueabi/lib
+    5.ln -s libpcap.so.1.8.1 libpcap.so 
+   
+```
+
+- Makefile
+
+``` shell
+    
+    更改编译工具
+    make CC=arm-linux-gcc 
+    
+    引入外部的.h 
+    
+    make CFLAGS+= -I/home/jame/soft/libpcap-1.8.1/include (路径名)
+   
+```
+
+## 交叉编译 xl2tpd
+
+``` shell
+    
+    在 xl2tpd-1.3.10 目录下
+    1.在Makefile中这行 all: $(EXEC) pfc $(CONTROL_EXEC) 删除 "pfc"
+    2.make CC=arm-linux-gcc
+    
+```
+
+## 交叉编译 动态链接库 libpaho-mqtt3a.so
+
+``` shell
+    
+    在 mqtt_client 目录下
+    1.make CC=arm-linux-gcc
+    2.在./mqtt_client/build/output 目录下找到对应的动态链接库
+    
+```
+
+
+
+
