@@ -36,7 +36,7 @@ ubi2_0 on /yy/log type ubifs (rw,sync,relatime)
 
 ``` shell
 
-mmcblk0p1 
+    mmcblk0p1 
 
 ```
 
@@ -44,6 +44,3 @@ mmcblk0p1
 
 
 
-## 网络方面
-
-- 在配置ip时要注意mac地址会不会冲突

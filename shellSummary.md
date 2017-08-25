@@ -73,6 +73,8 @@
 	PID          程序名						打开文件
 	391     /opt/CASS/BIN/battery   /media/sd/CASS/battery_data.db
 	
+	lsof 可以看出某个进程打开的文件和动态链接库等
+	
 ```
 
 - 时刻监测一个命令的运行结果
