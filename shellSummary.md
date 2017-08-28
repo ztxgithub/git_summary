@@ -253,3 +253,122 @@
 	
 ```
 
+### 备用命令
+
+ - man页面所属的分类标识(常用的是分类1和分类3)
+
+``` shell
+
+    分类1: shell 命令帮助文档
+           $ man 1 ulimit
+    
+    分类3: 一些常用函数申明
+           $ man 3 ulimit
+          
+	
+```
+
+- whereis :查看shell命令(二进制可执行文件)的位置
+
+``` shell
+
+    $ whereis supervisord
+    
+    结果:
+        supervisord: /usr/bin/supervisord /etc/supervisord.conf
+         
+```
+
+- ls 
+
+``` shell
+
+    1. 按文件的修改时间排序
+        $ ls -lt 
+            -l : 每一个file一行
+            -t: 按文件修改日期
+            
+    2. 给每一个文件前面加序号
+        $ ll | cat -n
+         
+```
+
+- 给文件增加别名 (ln)
+
+``` shell
+
+    1.创建一个软连接,删除源文件，另一个无法使用
+    
+               源文件    软连接名字
+    $ ln -s src_file  dst_symlink
+    
+    2.创建一个硬链接,删除一个,另一个继续能用
+    $ ln src_file dst_hardlink
+    
+         
+```
+
+- Linux 输入输出重定向
+
+``` shell
+
+    在shell中,文件描述符 0:标准输入stdin 
+             文件描述符 1:标准输出stdout 
+             文件描述符 2:标准错误stderr
+          
+    test.sh 内容:
+        t
+        date
+    
+    1. $./test.sh > test1.log
+         date的执行结果被重定向到log文件中了，而t无法执行的错误则只打印在屏幕上
+         
+    2. $ ./test.sh > test2.log 2>&1  == $ ./test.sh 1> test2.log 2>&1 
+        stderr和stdout的内容都被重定向到log文件中
+    
+    > 就相当于 1> 也就是重定向标准输出,不包括标准错误.通过2>&1,就将标准错误重定向到标准输出了，
+    那么再使用>重定向就会将标准输出和标准错误信息一同重定向.如果只想重定向标准错误到文件中，则可以使用2> file。
+    
+    
+    cmd >a 2>a 和 cmd >a 2>&1 为什么不同？
+    cmd >a 2>a ：stdout和stderr都直接送往文件 a ，a文件会被打开两遍，由此导致stdout和stderr互相覆盖。
+    cmd >a 2>&1 ：stdout直接送往文件a ，stderr是继承了FD1的管道之后，再被送往文件a 。a文件只被打开一遍，就是FD1将其打开.
+         
+```
+
+- bash 快捷键
+
+``` shell
+
+    Ctl-w   删除当前光标到前边的最近一个空格之间的字符
+    Ctl-r   查找历史shell命令
+         
+```
+
+- find 查找
+
+``` shell
+
+    1.只查找文件夹名为 "mqtt*"
+        find / -name "mqtt*" -type d
+        
+         
+```
+
+### 进程管理工具
+
+- 查询指定的进程PID(23295)打开的文件
+
+``` shell
+
+    $ lsof -p 23295
+         
+```
+
+- 查询指定的进程(可执行二进制文件)打开的文件
+
+``` shell
+
+    $ lsof -c sengine
+         
+```

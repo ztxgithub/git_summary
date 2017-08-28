@@ -69,6 +69,14 @@
 
 ```
 
+- 停止开机自启服务
+
+```shell
+    
+    $ sudo systemctl disable supervisord.service
+
+```
+
 - 重载所有修改过的配置文件(针对所有的服务的配置文件)
 
 ```bash
