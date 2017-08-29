@@ -2,6 +2,14 @@
 
 - 在配置ip时要注意mac地址会不会冲突
 
+- 网段表示 172.16.82.0/25
+
+``` shell
+    
+   172.16.82.0是子网号,25是子网掩码的位数(代表前面25位是子网号,后面7位是主机号)
+	
+```
+
 ##基于SCClient 程序
 
 - 一个网卡增加多个虚拟ip
@@ -258,31 +266,46 @@
                         如果出现! -o eth0，那么将从eth0以外的接口输出, 如果出现-i eth+,那么将仅从eth开头的接口输出
                         还可以使用–out-interface参数
        
-                        描述规则的扩展参数:
-                          --sport 源端口（source port）针对 -p tcp 或者 -p udp
-                              缺省情况下，将匹配所有端口, 可以指定端口号或者端口名称，例如”–sport 22″与”–sport ssh”, 
-                              /etc/services文件描述了上述映射关系, 从性能上讲，使用端口号更好,使用冒号可以匹配端口范围,
-                              如”–sport 22:100″
-                              还可以使用”–source-port”
-                              
-                          --dport 目的端口（destination port）针对-p tcp 或者 -p udp
-                          参数和–sport类似还可以使用”–destination-port”
-                          
-                          --tcp-flags TCP标志 针对-p tcp
-                          可以指定由逗号分隔的多个参数,有效值可以是：SYN, ACK, FIN, RST, URG, PSH,可以使用ALL或者NONE
-                          
-                          -–icmp-type ICMP类型 针对-p icmp
-                          –icmp-type 0 表示Echo Reply
-                          –icmp-type 8 表示Echo
-                          
-                          
-                              新的规则将追加到链尾,一般而言,最后一条规则用于丢弃(DROP)所有数据包.如果你已经有这样的规则了,
-                              并且使用 -A参数添加新规则，那么就是无用功
-                              
-                              1.语法
-                                   iptables -A chain firewall-rule
-                                      -A chain – 指定要追加规则的链(INPUT链, OUTPUT链等)
-                                      firewall-rule – 具体的规则参数
+                 描述规则的扩展参数:
+                     --sport 源端口（source port）针对 -p tcp 或者 -p udp
+                         缺省情况下，将匹配所有端口, 可以指定端口号或者端口名称，例如”–sport 22″与”–sport ssh”, 
+                         /etc/services文件描述了上述映射关系, 从性能上讲，使用端口号更好,使用冒号可以匹配端口范围,
+                         如”--sport 22:100″(--sport 22-100) 
+                         还可以使用”–source-port”
+                         
+                     --dport 目的端口（destination port）针对-p tcp 或者 -p udp
+                     参数和–sport类似还可以使用”–destination-port”
+                     
+                     显式扩展（-m）:扩展各种模块
+                     -m multiport：表示启用多端口扩展,之后我们就可以启用比如 --dports 21,23,80
+                     
+                     --tcp-flags TCP标志 针对-p tcp
+                     可以指定由逗号分隔的多个参数,有效值可以是：SYN, ACK, FIN, RST, URG, PSH,可以使用ALL或者NONE
+                     
+                     -–icmp-type ICMP类型 针对-p icmp
+                     –icmp-type 0 表示Echo Reply
+                     –icmp-type 8 表示Echo
+                     
+         -j ACTION:
+                 常用的ACTION：
+                    DROP：悄悄丢弃,一般我们多用DROP来隐藏我们的身份，以及隐藏我们的链表
+                    ACCEPT：接受
+                    REJECT：明示拒绝
+                    custom_chain：转向一个自定义的链
+                    DNAT
+                    SNAT
+                    MASQUERADE：源地址伪装
+                    REDIRECT：重定向：主要用于实现端口重定向
+                    MARK：打防火墙标记的
+                    RETURN：返回
+                     
+        新的规则将追加到链尾,一般而言,最后一条规则用于丢弃(DROP)所有数据包.如果你已经有这样的规则了,
+        并且使用 -A参数添加新规则，那么就是无用功
+        
+        1.语法
+             iptables -A chain firewall-rule
+                -A chain – 指定要追加规则的链(INPUT链, OUTPUT链等)
+                firewall-rule – 具体的规则参数
 ```
 
 - iptable 配置文件保存
