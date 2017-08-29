@@ -64,18 +64,34 @@
 	
 ```
 
-- lsof: 看某个程序打开那些文件
+- lsof
 
 ``` shell
 
-	$ lsof
+   1. $ lsof
 	
 	PID          程序名						打开文件
 	391     /opt/CASS/BIN/battery   /media/sd/CASS/battery_data.db
 	
 	lsof 可以看出某个进程打开的文件和动态链接库等
 	
+   2. 查询指定的进程PID(23295)打开的文件
+   
+    $ lsof -p 23295
+    
+   3. 查询指定的进程(可执行二进制文件)打开的文件
+   
+    $ lsof -c sengine
+          
+   4. 查询port端口现在运行什么程序
+         (1)
+            $ lsof -i :port   得出程序的 pid
+            $ ps aux | grep pid  得出具体的程序名
+         (2)
+            $ netstat -tnulnp | grep port
+         
 ```
+
 
 - 时刻监测一个命令的运行结果
 
@@ -355,20 +371,70 @@
          
 ```
 
-### 进程管理工具
-
-- 查询指定的进程PID(23295)打开的文件
+- top
 
 ``` shell
 
-    $ lsof -p 23295
+    P：根据CPU使用百分比大小进行排序。
+    M：根据驻留内存大小进行排序。
          
 ```
 
-- 查询指定的进程(可执行二进制文件)打开的文件
+- pmap : 进程用了多少内存(虚拟内存)
 
 ``` shell
 
-    $ lsof -c sengine
+    pmap pid
+    
+    结果:
+         total  612040K   (虚拟内存)
+         
+```
+
+### 用户管理
+
+- 用户
+
+``` shell
+
+    1.添加用户
+        $ useradd -m username
+            -d： 指定用户的主目录
+            -m： 如果存在不再创建，但是此目录并不属于新创建用户；如果主目录不存在，则强制创建； -m和-d一块使用。
+            -s： 指定用户登录时的shell版本
+            
+    2.设置用户密码
+        $ passwd username
+        
+    3.删除用户
+        $userdel -r username
+            -r: 同时删除用户的主目录 /home/username
+         
+```
+
+- 用户组
+
+``` shell
+
+    1.添加用户到特定的组中
+        $ usermod -G groupNmame username
+            
+    2.修改用户所属于的组
+        $ usermod -g groupName username
+        
+    3.删除用户
+        $userdel -r username
+            -r: 同时删除用户的主目录 /home/username
+         
+```
+
+### linux 环境变量
+
+``` shell
+
+    /etc/profile: 用来设置系统环境参数,比如$PATH. 这里面的环境变量是对系统内所有用户生效的.
+    /etc/bashrc:  这个文件设置系统bash shell相关的东西，对系统内所有用户生效。只要用户运行bash命令，那么这里面的东西就在起作用.
+    ~/.bash_profile 是交互式、login 方式进入 bash 运行的，意思是只有用户登录时才会生效。
+    ~/.bashrc 是交互式 non-login 方式进入 bash 运行的，用户不一定登录，只要以该用户身份运行命令行就会读取该文件。
          
 ```

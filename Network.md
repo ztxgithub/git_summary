@@ -106,3 +106,186 @@
 	
 ```
 
+### iptables 防火墙
+
+#### 概述:
+    当我们用iptables添加规则，这些规则保存在/etc/sysconfig/iptables 文件中.
+    iptables的结构：
+        iptables -> Tables -> Chains -> Rules. tables由chains组成，而chains又由rules组成的.
+        
+    iptables具有Filter, NAT, Mangle, Raw四种内建表:
+        1. Filter表
+        Filter表示iptables的默认表,因此如果你没有自定义表,那么就默认使用filter表,它具有以下三种内建链：
+            INPUT链 – 处理来自外部的数据。
+            OUTPUT链 – 处理向外发送的数据。
+            FORWARD链 – 将数据转发到本机的其他网卡设备上.
+            
+        2. NAT表
+        NAT表有三种内建链：
+            PREROUTING链 – 处理刚到达本机并在路由转发前的数据包.它会转换数据包中的目标IP地址（destination ip address）,
+                            通常用于DNAT(destination NAT)。
+            POSTROUTING链 – 处理即将离开本机的数据包.它会转换数据包中的源IP地址（source ip address）,通常用于SNAT(source NAT)
+            OUTPUT链 – 处理本机产生的数据包.
+            
+        3. Mangle表
+        Mangle表用于指定如何处理数据包.它能改变TCP头中的QoS位。Mangle表具有5个内建链：
+            PREROUTING
+            OUTPUT
+            FORWARD
+            INPUT
+            POSTROUTING
+            
+        4. Raw表
+        Raw表用于处理异常，它具有2个内建链：
+            PREROUTING chain
+            OUTPUT chain
+            
+    IPTABLES 规则(Rules):
+        Rules包括一个条件和一个目标(target)
+        如果满足条件，就执行目标(target)中的规则或者特定值
+        如果不满足条件，就判断下一条Rules
+        
+    目标值（Target Values）
+    下面是你可以在target里指定的特殊值：
+        ACCEPT – 允许防火墙接收数据包
+        DROP – 防火墙丢弃包
+        QUEUE – 防火墙将数据包移交到用户空间
+        RETURN – 防火墙停止执行当前链中的后续Rules，并返回到调用链(the calling chain)中
+    
+#### 防火墙命令:
+    
+- 查看防火墙表的规则
+
+``` shell
+    
+    iptables -t table --list
+    
+        -L == --list
+    
+    例如:查看filter表的规则
+    $ iptables -t filter --list
+       
+```
+
+- 清空所有iptables规则
+
+``` shell
+    
+    iptables -F
+    
+    清空后仍然需要查看规则,有的linux并不会清空 NAT 表,此时需要手动清除(iptables -t NAT -F)
+       
+```
+
+- 追加iptables规则
+
+``` shell
+    
+    iptables [-t table] COMMAND chain CRETIRIA -j ACTION
+        
+        table: filter, nat, mangle
+        
+        COMMAND:
+            1.链管理命令
+            
+                (1) -P :设置默认策略的（设定默认门是关着的还是开着的）
+                    iptables -P INPUT DROP 这就把默认规则给拒绝了.并且没有定义哪个动作，
+                    所以关于外界连接的所有规则包括Xshell连接之类的，远程连接都被拒绝了
+                    
+                (2) -F: FLASH,清空规则链的
+                        iptables -t nat -F PREROUTING  (清空nat表的PREROUTING链)
+                        iptables -t nat -F (清空nat表的所有链)
+                        
+                (3) -N: 支持用户新建一个链
+                        iptables -N inbound_tcp_web 表示附在tcp表上用于检查web的.
+                 
+                (4) -X: 用于删除用户自定义的空链
+                        iptables -X inbound_tcp_web, 但是在删除之前必须要将里面的链给清空昂了
+                        
+                (5) -E：用来Rename chain主要是用来给用户自定义的链重命名
+                        iptables -E oldname newname
+                        
+             2. 规则管理命令
+             
+                (1) -A：追加,在当前链的最后新增一个规则
+                
+                (2) -I num : 插入，把当前规则插入为第几条
+                
+                (3) -R num：Replays替换/修改第几条规则
+                
+                (4) -D num：删除，明确指定删除第几条规则
+    
+    
+    新的规则将追加到链尾,一般而言,最后一条规则用于丢弃(DROP)所有数据包.如果你已经有这样的规则了,
+    并且使用 -A参数添加新规则，那么就是无用功
+    
+    1.语法
+         iptables -A chain firewall-rule
+            -A chain – 指定要追加规则的链(INPUT链, OUTPUT链等)
+            firewall-rule – 具体的规则参数
+            
+    firewall-rule:
+      这些描述是对规则的基本描述。
+            -p 协议（protocol）
+                指定规则的协议，如tcp, udp, icmp等，可以使用all来指定所有协议。
+                如果不指定-p参数，则默认是all值。这并不明智,最好要指定协议
+                可以使用协议名(如tcp)，或者是协议值（比如6代表tcp）来指定协议,映射关系请查看/etc/protocols
+                还可以使用–protocol参数代替-p参数
+            -s 源地址（source）
+                指定数据包的源地址
+                参数可以使IP地址、网络地址、主机名
+                例如：-s 192.168.1.101指定IP地址
+                例如：-s 192.168.1.10/24指定网络地址
+                如果不指定-s参数，就代表所有地址
+                还可以使用–src或者–source
+            -d 目的地址（destination）
+                指定目的地址
+                参数和-s相同
+                还可以使用–dst或者–destination
+            -j 执行目标（jump to target）
+                 代表”jump to target”
+                 ACCEPT, DROP, QUEUE, RETURN
+                还可以指定其他链（Chain）作为目标
+            -i 输入接口（input interface）
+                -i代表输入接口(input interface),指定了要处理来自哪个接口的数据包,这些数据包即将进入INPUT, FORWARD, PREROUTE链
+                例如：-i eth0指定了要处理经由eth0进入的数据包
+                如果不指定-i参数，那么将处理进入所有接口的数据包
+                如果出现! -i eth0，那么将处理所有经由eth0以外的接口进入的数据包
+                如果出现-i eth+，那么将处理所有经由eth开头的接口进入的数据包
+                还可以使用–in-interface参数
+            -o 输出（out interface）
+                -o代表”output interface”
+                -o指定了数据包由哪个接口输出
+            这些数据包即将进入FORWARD, OUTPUT, POSTROUTING链, 如果不指定-o选项,那么系统上的所有接口都可以作为输出接口
+            如果出现! -o eth0，那么将从eth0以外的接口输出, 如果出现-i eth+,那么将仅从eth开头的接口输出
+            还可以使用–out-interface参数
+       
+      描述规则的扩展参数:
+        --sport 源端口（source port）针对 -p tcp 或者 -p udp
+            缺省情况下，将匹配所有端口, 可以指定端口号或者端口名称，例如”–sport 22″与”–sport ssh”, 
+            /etc/services文件描述了上述映射关系, 从性能上讲，使用端口号更好,使用冒号可以匹配端口范围，如”–sport 22:100″
+            还可以使用”–source-port”
+            
+        --dport 目的端口（destination port）针对-p tcp 或者 -p udp
+        参数和–sport类似还可以使用”–destination-port”
+        
+        --tcp-flags TCP标志 针对-p tcp
+        可以指定由逗号分隔的多个参数,有效值可以是：SYN, ACK, FIN, RST, URG, PSH,可以使用ALL或者NONE
+        
+        -–icmp-type ICMP类型 针对-p icmp
+        –icmp-type 0 表示Echo Reply
+        –icmp-type 8 表示Echo
+```
+
+- iptable 配置文件保存
+
+``` shell
+    设置完防火墙配置后,要保存到 /etc/sysconfig/iptables文件中,
+    
+    方法一:
+        service iptables save
+        
+    方法二:
+        iptables-save > /etc/sysconfig/iptables
+       
+```
