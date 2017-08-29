@@ -214,67 +214,75 @@
                 (3) -R num：Replays替换/修改第几条规则
                 
                 (4) -D num：删除，明确指定删除第几条规则
-    
-    
-    新的规则将追加到链尾,一般而言,最后一条规则用于丢弃(DROP)所有数据包.如果你已经有这样的规则了,
-    并且使用 -A参数添加新规则，那么就是无用功
-    
-    1.语法
-         iptables -A chain firewall-rule
-            -A chain – 指定要追加规则的链(INPUT链, OUTPUT链等)
-            firewall-rule – 具体的规则参数
+                
+         chain: 
+            filter表的链: INPUT链, OUTPUT链, FORWARD链
+            nat表的链: PREROUTING链, POSTROUTING链, OUTPUT链
+            mangle表的链: filter表的链 和  nat表的链
             
-    firewall-rule:
-      这些描述是对规则的基本描述。
-            -p 协议（protocol）
-                指定规则的协议，如tcp, udp, icmp等，可以使用all来指定所有协议。
-                如果不指定-p参数，则默认是all值。这并不明智,最好要指定协议
-                可以使用协议名(如tcp)，或者是协议值（比如6代表tcp）来指定协议,映射关系请查看/etc/protocols
-                还可以使用–protocol参数代替-p参数
-            -s 源地址（source）
-                指定数据包的源地址
-                参数可以使IP地址、网络地址、主机名
-                例如：-s 192.168.1.101指定IP地址
-                例如：-s 192.168.1.10/24指定网络地址
-                如果不指定-s参数，就代表所有地址
-                还可以使用–src或者–source
-            -d 目的地址（destination）
-                指定目的地址
-                参数和-s相同
-                还可以使用–dst或者–destination
-            -j 执行目标（jump to target）
-                 代表”jump to target”
-                 ACCEPT, DROP, QUEUE, RETURN
-                还可以指定其他链（Chain）作为目标
-            -i 输入接口（input interface）
-                -i代表输入接口(input interface),指定了要处理来自哪个接口的数据包,这些数据包即将进入INPUT, FORWARD, PREROUTE链
-                例如：-i eth0指定了要处理经由eth0进入的数据包
-                如果不指定-i参数，那么将处理进入所有接口的数据包
-                如果出现! -i eth0，那么将处理所有经由eth0以外的接口进入的数据包
-                如果出现-i eth+，那么将处理所有经由eth开头的接口进入的数据包
-                还可以使用–in-interface参数
-            -o 输出（out interface）
-                -o代表”output interface”
-                -o指定了数据包由哪个接口输出
-            这些数据包即将进入FORWARD, OUTPUT, POSTROUTING链, 如果不指定-o选项,那么系统上的所有接口都可以作为输出接口
-            如果出现! -o eth0，那么将从eth0以外的接口输出, 如果出现-i eth+,那么将仅从eth开头的接口输出
-            还可以使用–out-interface参数
+        CRETIRIA:
+                这些描述是对规则的基本描述。
+                      -p 协议（protocol）
+                          指定规则的协议，如tcp, udp, icmp等，可以使用all来指定所有协议。
+                          如果不指定-p参数，则默认是all值。这并不明智,最好要指定协议
+                          可以使用协议名(如tcp)，或者是协议值（比如6代表tcp）来指定协议,映射关系请查看/etc/protocols
+                          还可以使用–protocol参数代替-p参数
+                      -s 源地址（source）
+                          指定数据包的源地址
+                          参数可以使IP地址、网络地址、主机名
+                          例如：-s 192.168.1.101指定IP地址
+                          例如：-s 192.168.1.10/24指定网络地址
+                          如果不指定-s参数，就代表所有地址
+                          还可以使用–src或者–source
+                      -d 目的地址（destination）
+                          指定目的地址
+                          参数和-s相同
+                          还可以使用–dst或者–destination
+                      -j 执行目标（jump to target）
+                           代表”jump to target”
+                           ACCEPT, DROP, QUEUE, RETURN
+                          还可以指定其他链（Chain）作为目标
+                      -i 输入接口（input interface）
+                          -i代表输入接口(input interface),指定了要处理来自哪个接口的数据包,
+                          这些数据包即将进入INPUT, FORWARD, PREROUTE链
+                          例如：-i eth0指定了要处理经由eth0进入的数据包
+                          如果不指定-i参数，那么将处理进入所有接口的数据包
+                          如果出现! -i eth0，那么将处理所有经由eth0以外的接口进入的数据包
+                          如果出现-i eth+，那么将处理所有经由eth开头的接口进入的数据包
+                          还可以使用–in-interface参数
+                      -o 输出（out interface）
+                      -o代表”output interface”
+                      -o指定了数据包由哪个接口输出
+                        这些数据包即将进入FORWARD, OUTPUT, POSTROUTING链, 如果不指定-o选项,
+                        那么系统上的所有接口都可以作为输出接口
+                        如果出现! -o eth0，那么将从eth0以外的接口输出, 如果出现-i eth+,那么将仅从eth开头的接口输出
+                        还可以使用–out-interface参数
        
-      描述规则的扩展参数:
-        --sport 源端口（source port）针对 -p tcp 或者 -p udp
-            缺省情况下，将匹配所有端口, 可以指定端口号或者端口名称，例如”–sport 22″与”–sport ssh”, 
-            /etc/services文件描述了上述映射关系, 从性能上讲，使用端口号更好,使用冒号可以匹配端口范围，如”–sport 22:100″
-            还可以使用”–source-port”
-            
-        --dport 目的端口（destination port）针对-p tcp 或者 -p udp
-        参数和–sport类似还可以使用”–destination-port”
-        
-        --tcp-flags TCP标志 针对-p tcp
-        可以指定由逗号分隔的多个参数,有效值可以是：SYN, ACK, FIN, RST, URG, PSH,可以使用ALL或者NONE
-        
-        -–icmp-type ICMP类型 针对-p icmp
-        –icmp-type 0 表示Echo Reply
-        –icmp-type 8 表示Echo
+                        描述规则的扩展参数:
+                          --sport 源端口（source port）针对 -p tcp 或者 -p udp
+                              缺省情况下，将匹配所有端口, 可以指定端口号或者端口名称，例如”–sport 22″与”–sport ssh”, 
+                              /etc/services文件描述了上述映射关系, 从性能上讲，使用端口号更好,使用冒号可以匹配端口范围,
+                              如”–sport 22:100″
+                              还可以使用”–source-port”
+                              
+                          --dport 目的端口（destination port）针对-p tcp 或者 -p udp
+                          参数和–sport类似还可以使用”–destination-port”
+                          
+                          --tcp-flags TCP标志 针对-p tcp
+                          可以指定由逗号分隔的多个参数,有效值可以是：SYN, ACK, FIN, RST, URG, PSH,可以使用ALL或者NONE
+                          
+                          -–icmp-type ICMP类型 针对-p icmp
+                          –icmp-type 0 表示Echo Reply
+                          –icmp-type 8 表示Echo
+                          
+                          
+                              新的规则将追加到链尾,一般而言,最后一条规则用于丢弃(DROP)所有数据包.如果你已经有这样的规则了,
+                              并且使用 -A参数添加新规则，那么就是无用功
+                              
+                              1.语法
+                                   iptables -A chain firewall-rule
+                                      -A chain – 指定要追加规则的链(INPUT链, OUTPUT链等)
+                                      firewall-rule – 具体的规则参数
 ```
 
 - iptable 配置文件保存
