@@ -48,7 +48,7 @@
 ``` c
 
     1.Linux的/proc/sys/fs/file-max决定了当前内核可以打开的最大的文件句柄数.
-    这个是系统即限制,限制所有用户打开文件描述符的总和.
+    这个是系统限制,限制所有用户打开文件描述符的总和.
     
      一般为内存大小（KB）的10%来计算，如果使用shell，可以这样计算：
         grep -r MemTotal /proc/meminfo | awk '{printf("%d",$2/10)}'
@@ -162,5 +162,61 @@
 
     ulimit -n 65535  (设置用户最大文件描述符数为65535)
 
+```
 
+### sysctl
+
+#### sysctl简介
+
+``` shell
+
+    sysctl是一个用来在系统运作中查看及调整系统参数的工具, /etc/sysctl.conf就是sysctl的配置文件
+         
+```
+
+#### sysctl 使用
+
+``` shell
+
+    1. 临时改变某个指定参数的值
+       sysctl -w net.ipv4.ip_forward=1  //开启NAT地址转发
+       
+    2. 显示所有的系统参数
+       sysctl -a
+       
+    3.从指定的文件加载系统参数(使/etc/sysctl.conf文件改变的值立即生效)
+       sysctl -p /etc/sysctl.conf
+       
+    /etc/sysctl.conf 内容参数含义(sysctl -a):
+    
+        1. net.ipv4.ip_forward 地址转发, 值为0禁止数据包转发,值为1允许数据包转发.
+           临时修改地址转发功能, echo "1" > /proc/sys/net/ipv4/ip_forward 
+           
+        2. kernel.shmmax (单位:字节)
+            用于定义单个共享内存段的最大值. 32位linux系统：可取最大值为4294967296 - 1 == 4294967295(bytes)
+            64位linux 系统,可取的最大值为 物理内存值-1 byte
+            
+        3. kernel.shmall
+            控制可以使用的共享内存的总页数.
+            
+        4. kernel.shmmni
+            该参数是共享内存段的最大数量。shmmni缺省值4096，一般肯定是够用了。
+            
+        5. fs.file-max:
+            决定了当前内核可以打开的最大的文件句柄数.这个是系统限制,限制所有用户打开文件描述符的总和.
+            
+        6. net.ipv4.ip_local_port_range
+            net.ipv4.ip_local_port_range = 32768 59000   表示应用程序可使用的IPv4端口范围.
+            
+        7.net.core.rmem_default：(单位字节)
+            表示套接字接收缓冲区大小的缺省值 (net.core.rmem_default = 212992 ->208KB)
+            
+        8.net.core.rmem_max：(单位字节)
+          表示套接字接收缓冲区大小的最大值 ( net.core.rmem_max = 212992  ->208 KB)
+          
+        9.net.core.wmem_default：(单位字节)
+            表示套接字发送缓冲区大小的缺省值(net.core.wmem_default = 212992 ->208 KB) 
+         
+        10.net.core.wmem_max：(单位字节)
+           表示套接字发送缓冲区大小的最大值(net.core.wmem_max = 212992 ->208 KB)
 ```
