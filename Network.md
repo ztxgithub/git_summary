@@ -262,7 +262,7 @@
                           如果出现-i eth+，那么将处理所有经由eth开头的接口进入的数据包
                           还可以使用–in-interface参数
                       -o 输出（out interface）
-                      -o代表”output interface”
+                      -o eth0
                       -o指定了数据包由哪个接口输出
                         这些数据包即将进入FORWARD, OUTPUT, POSTROUTING链, 如果不指定-o选项,
                         那么系统上的所有接口都可以作为输出接口
@@ -334,5 +334,47 @@
         
     方法二:
         iptables-save > /etc/sysconfig/iptables
+       
+```
+
+- SNAT和DNAT的实现(IP地址转化)
+
+``` shell
+
+    要进行地址转发,首先要开启Linux系统中的地址转发功能
+        (1): 修改/etc/sysctl.conf配置文件件，将ip_forward的值设置为1
+             vim /etc/sysctl.conf   net.ipv4.ip_forwaed=1  
+             
+        (2): sysctl -p     //重新读取修改后的配置
+
+    1.SNAT基于源地址的转换
+        处理即将离开本机的数据包.它会转换数据包中的源IP地址（source ip address）,通常用于将内网段的ip转化为一个外网ip地址.
+        SNAT只能用在nat表的POSTROUTING链
+        
+        将所有192.168.10.0网段的IP在发送的时候全都转换成172.16.100.1这个外网地址
+            iptables -t net -A POSTROUTING -s 192.168.10.0/24 -j SNAT --to-source 172.16.100.1
+            
+        如果外网的ip不固定,外网地址换成 MASQUERADE(动态伪装):它可以实现自动寻找到外网地址,而自动将其改为正确的外网地址
+        对于ADSL宽带连接来说，连接名称通常为ppp0，ppp1等。操作如下
+        # iptables -t nat -A POSTROUTING -s 192.168.1.0/24 -o ppp0 -j MASQUERADE
+            
+    2.DNAT目标地址转换
+        处理刚到达本机并在路由转发前的数据包.它会转换数据包中的目标IP地址（destination ip address）
+        DNAT只能用在nat表的PREROUTING链和OUTPUT链中
+        
+      1) 公司内部局域网内搭建了一台web服务器，IP地址为192.168.1.7，现在需要将其发布到互联网上,
+          希望通过互联网访问web服务器。那么我们可以执行如下操作
+          
+            在iptables的PREROUTING中编写DNAT规则。
+            # iptables -t nat -A PREROUTING -i eth0 -d 218.29.30.31(外网ip) -p tcp --dport 80 -j DNAT 
+              --to-destination 192.168.1.7:80
+            
+      2) 公司的web服务器192.168.1.7需要通过互联网远程管理,由于考虑到安全问题,管理员不希望使用默认端口进行访问,
+          这时我们可以使用DNAT修改服务的默认端口。操作如下：
+            #iptables -t nat -A PREROUTING -i eth0 -d 218.29.30.31 -p tcp --dport 2346 -j DNAT 
+             --to-destination 192.168.1.7:22
+             
+      3）在外网客户端浏览器中访问网关服务器的外网接口，可以发现访问的居然是内网192.168.1.7的web服务器的网页。
+        而在使用sshd连接2346端口时,居然可以远程连接到192.168.1.7服务器上。
        
 ```
