@@ -169,6 +169,9 @@
     iptables -t table --list
     
         -L == --list
+        --line-numbers : 显示规则的行号
+        -n：以数字的方式显示ip，它会将ip直接显示出来，如果不加-n，则会将ip反向解析成主机名。
+        -v：显示详细信息
     
     例如:查看filter表的规则
     $ iptables -t filter --list
@@ -185,7 +188,7 @@
        
 ```
 
-- 追加iptables规则
+- iptables规则
 
 ``` shell
     
@@ -286,6 +289,13 @@
                      –icmp-type 0 表示Echo Reply
                      –icmp-type 8 表示Echo
                      
+                     我们允许自己ping别人，但是别人ping自己ping不通
+                        iptables -A INPUT -p icmp --icmp-type 0 -j ACCEPT
+                        iptables -A OUTPUT -p icmp --icmp-type 8 -j ACCEPT
+                        
+                        iptables -A INPUT -s 127.0.0.1 -d 127.0.0.1 -j ACCEPT
+                        iptables -A OUTPUT -s 127.0.0.1 -d 127.0.0.1 -j ACCEPT
+                     
          -j ACTION:
                  常用的ACTION：
                     DROP：悄悄丢弃,一般我们多用DROP来隐藏我们的身份，以及隐藏我们的链表
@@ -298,14 +308,20 @@
                     REDIRECT：重定向：主要用于实现端口重定向
                     MARK：打防火墙标记的
                     RETURN：返回
-                     
-        新的规则将追加到链尾,一般而言,最后一条规则用于丢弃(DROP)所有数据包.如果你已经有这样的规则了,
-        并且使用 -A参数添加新规则，那么就是无用功
         
-        1.语法
+        1.添加新规则
+        
+         新的规则将追加到链尾,一般而言,最后一条规则用于丢弃(DROP)所有数据包.如果你已经有这样的规则了,
+                并且使用 -A参数添加新规则，那么就是无用功
              iptables -A chain firewall-rule
                 -A chain – 指定要追加规则的链(INPUT链, OUTPUT链等)
                 firewall-rule – 具体的规则参数
+                
+        2.允许已建立的或相关连的通行
+        
+          $ iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT 
+          
+         
 ```
 
 - iptable 配置文件保存
