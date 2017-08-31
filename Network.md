@@ -350,6 +350,8 @@
         
         2.临时改变,重启恢复
         # echo "1" > /proc/sys/net/ipv4/ip_forward
+        
+    iptables -t nat 过滤条件(筛选条件) DNAT/SNAT 执行动作
 
     1.DNAT目标地址转换
         处理刚到达本机并在路由转发前的数据包.它会转换数据包中的目标IP地址（destination ip address）
@@ -380,6 +382,21 @@
         如果外网的ip不固定,外网地址换成 MASQUERADE(动态伪装):它可以实现自动寻找到外网地址,而自动将其改为正确的外网地址
         对于ADSL宽带连接来说，连接名称通常为ppp0，ppp1等。操作如下
         # iptables -t nat -A POSTROUTING -s 192.168.1.0/24 -o ppp0 -j MASQUERADE
+        
+        
+    具体实例:
+        FSU有2个网卡,对应2个ip,一个是fsu_vpn_ip,一个是192.0.0.65,现在在同一个vpn域的pc,要对FSU的 fsu_vpn_ip:8088操作,实际
+        是对连接在fsu下ip为192.0.0.64:80的摄像头进行操作.
+        
+        1.在FSU内部只要目的端口是8088,将dst_ip(应该是fsu_vpn_ip)改为摄像头ip(192.0.0.64):80
+        
+                                         |-----筛选条件-----------|         |--执行动作,将目的ip改成 192.0.0.64:80|
+        iptables -t nat -A PREROUTING  -m tcp -p tcp --dport 8088 -j DNAT --to-destination 192.0.0.64:80
+        
+        2.将对应的数据包的源地址修改一下,改成FSU的本地ip(192.0.0.65)
+        
+                                       |------------筛选条件------------------|
+        iptables -t nat -A POSTROUTING -m tcp -p tcp --dport 80 -d 192.0.0.64 -j SNAT --to-source 192.0.0.65
            
 ```
 [参考资料](http://blog.51yip.com/linux/1404.html)
