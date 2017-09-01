@@ -30,6 +30,7 @@
 ``` shell
     
     -f: 除了跟踪当前进程外,还跟踪其子进程(跟踪由fork调用所产生的子进程)
+    -F 尝试跟踪vfork调用.在-f时,vfork不被跟踪. 
     -o file: 将输出信息写到文件file中，而不是显示到标准错误输出（stderr）
     -p PID: 绑定到一个由PID对应的正在运行的进程,此参数常用来调试后台进程（守护进程）
     
@@ -103,11 +104,11 @@
 
 ``` shell
 
-[00007f55c18fe460] open("/etc/shadow", O_RDONLY) = -1 EACCES (Permission denied)
-[00007f55c18fe054] fstat(1, {st_mode=S_IFCHR|0620, st_rdev=makedev(136, 18), ...}) = 0
-[00007f55c18fe6e0] write(1, "Error!\n", 7Error!) = 7
-[00007f55c18d3b98] exit_group(1)        = ?
-[????????????????] +++ exited with 1 +++
+        [00007f55c18fe460] open("/etc/shadow", O_RDONLY) = -1 EACCES (Permission denied)
+        [00007f55c18fe054] fstat(1, {st_mode=S_IFCHR|0620, st_rdev=makedev(136, 18), ...}) = 0
+        [00007f55c18fe6e0] write(1, "Error!\n", 7Error!) = 7
+        [00007f55c18d3b98] exit_group(1)        = ?
+        [????????????????] +++ exited with 1 +++
         
 各行开头[]中的数字就是执行系统调用的代码的地址。在GDB中可以指定该地址并显示backstrace.
 暂时不知道怎么用.
@@ -143,8 +144,10 @@
   
     -e trace=set 只跟踪指定的系统调用
     例如:-e trace=open,close,rean,write表示只跟踪这四个系统调用.默认的为set=all. 
+     $ strace -e poll,select,connect,recvfrom,sendto nc www.news.com 80
     
     -e trace=file 只跟踪有关文件操作的系统调用. 
+        相当于 -e trace=open.stat,chmod,unlink...
     -e trace=process 只跟踪有关进程控制的系统调用. 
     -e trace=network 跟踪与网络有关的所有系统调用. 
     -e strace=signal 跟踪所有与系统信号有关的系统调用 
@@ -161,8 +164,59 @@
 ``` shell
 
   指定系统调用参数(传入)的字符串的最大长度.默认为32, 如果传入参数的字符串是文件名,则字符串全部输出
+  要尽量大一点.  -s 300
     
 ```
+
+- -c 统计每一系统调用的所执行的时间,次数和出错的次数等. 
+
+``` shell
+
+    启用strace -c -p命令后，在你按ctrl-c退出前程序的调用时间将会打印出来
+    
+```
+
+### strace 应用
+
+- 通过已知的fd,找到对应的文件位置
+
+  
+``` shell
+
+    #include<stdio.h>  
+    #include<unistd.h>  
+    #include<sys/types.h>  
+    #include<sys/stat.h>  
+    #include<fcntl.h>  
+      
+    int main()  
+    {  
+        open("wcdj", O_CREAT|O_RDONLY);// open file foo  
+        sleep(1200);// sleep 20 mins 方便调试  
+      
+        return 0;  
+    }  
+    
+    $ gcc -Wall -g -o testlsof testlsof.c            
+    $ ./testlsof &  
+    [1] 12371  
+    
+    # strace -s 300 lsof -p 117573 2>&1 | grep "wcdj"
+    结果:
+        readlink("/proc/118630/fd/3", "/home/jame/c++/test123/test_example/wcdj", 4096) = 40
+  
+    可以利用对 lsof -p pid 进行strace,得到核心的系统调用.lsof利用了/proc/pid/fd目录,
+    Linux内核会为每一个进程在/proc建立一个以其pid为名的目录用来保存进程的相关信息,而其子目录fd保存的是该进程打开的所有文件的fd。
+    进入/proc/pid/fd目录下，发现每一个fd文件都是符号链接，而此链接就指向被该进程打开的一个文件.
+    我们只要用readlink()系统调用就可以获取某个fd对应的文件了.
+    
+    # 
+    
+```
+
+- 可以通过 strace -s 300 -o log ./exe 发现Segment Fault的原因
+
+- 可以只看特定的系统函数 $ strace -e poll,select,connect,recvfrom,sendto ./exe
 
 ## ltrace 跟踪进程调用库函数的情况
 
