@@ -113,15 +113,57 @@
 暂时不知道怎么用.
 
 ```
- - -p PID (或 -p `pidof ProcName`): attach到进程上，调试后台程序
+
+- -p PID (或 -p `pidof ProcName`): attach到进程上，调试后台程序
  
- ``` shell
+``` shell
  
     此选项主要用于查看运行中的进程（如守护进程）的行为
     
+```
  
- ```
+- -t / -tt ——显示系统调用的执行时刻
  
+``` shell
+  
+     此选项主要用于查看运行中的进程（如守护进程）的行为
+     -t    精确到s, 显示的是运行系统调用的当前时间(10:34:04)
+     -tt   精确到微秒 (10:30:15.568853)
+     -ttt  时间戳(精确到微妙) 1504233246.223193
+     
+     -T  显示每一调用所耗的时间. 
+                                                                            |--调用耗的时间--|
+     open("/etc/shadow", O_RDONLY)           = -1 EACCES (Permission denied) <0.000221>
+  
+```
+
+- -e expr 指定一个表达式,用来控制如何跟踪
+  
+``` shell
+  
+    -e trace=set 只跟踪指定的系统调用
+    例如:-e trace=open,close,rean,write表示只跟踪这四个系统调用.默认的为set=all. 
+    
+    -e trace=file 只跟踪有关文件操作的系统调用. 
+    -e trace=process 只跟踪有关进程控制的系统调用. 
+    -e trace=network 跟踪与网络有关的所有系统调用. 
+    -e strace=signal 跟踪所有与系统信号有关的系统调用 
+    -e trace=ipc 跟踪所有与进程通讯有关的系统调用 
+    -e abbrev=set 设定strace输出的系统调用的结果集.-v 等与 abbrev=none.默认为abbrev=all. 
+    -e raw=set 将指定的系统调用的参数以十六进制显示. 
+    -e signal=set 指定跟踪的系统信号.默认为all.如 signal=!SIGIO(或者signal=!io),表示不跟踪SIGIO信号. 
+    -e read=set 输出从指定文件中读出 的数据.例如: -e read=3,5 -e write=set 输出写入到指定文件中的数据.
+    
+```
+ 
+-  -s strsize 
+  
+``` shell
+
+  指定系统调用参数(传入)的字符串的最大长度.默认为32, 如果传入参数的字符串是文件名,则字符串全部输出
+    
+```
+
 ## ltrace 跟踪进程调用库函数的情况
 
 ### ltrace简介
