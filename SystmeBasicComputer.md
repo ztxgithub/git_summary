@@ -189,66 +189,73 @@
        
     /etc/sysctl.conf 内容参数含义(sysctl -a):
     
-        1. net.ipv4.ip_forward 地址转发, 值为0禁止数据包转发,值为1允许数据包转发.
+         net.ipv4.ip_forward 地址转发, 值为0禁止数据包转发,值为1允许数据包转发.
            临时修改地址转发功能, echo "1" > /proc/sys/net/ipv4/ip_forward 
            
-        2. kernel.shmmax (单位:字节)
+         kernel.shmmax (单位:字节)
             用于定义单个共享内存段的最大值. 32位linux系统：可取最大值为4294967296 - 1 == 4294967295(bytes)
             64位linux 系统,可取的最大值为 物理内存值-1 byte
             
-        3. kernel.shmall
+         kernel.shmall
             控制可以使用的共享内存的总页数.
             
-        4. kernel.shmmni
+         kernel.shmmni
             该参数是共享内存段的最大数量。shmmni缺省值4096，一般肯定是够用了。
             
-        5. fs.file-max:
+         fs.file-max:
             决定了当前内核可以打开的最大的文件句柄数.这个是系统限制,限制所有用户打开文件描述符的总和.
             
-        6. net.ipv4.ip_local_port_range
+         net.ipv4.ip_local_port_range
             net.ipv4.ip_local_port_range = 32768 59000   表示应用程序可使用的IPv4端口范围.
+            改为1024到65000
             
-        7. net.core.rmem_default：(单位字节)
+         net.core.rmem_default：(单位字节)
             表示套接字接收缓冲区大小的缺省值 (net.core.rmem_default = 212992 ->208KB)
             
-        8. net.core.rmem_max：(单位字节)
+         net.core.rmem_max：(单位字节)
             表示套接字接收缓冲区大小的最大值 ( net.core.rmem_max = 212992  ->208 KB)
           
-        9. net.core.wmem_default：(单位字节)
+         net.core.wmem_default：(单位字节)
             表示套接字发送缓冲区大小的缺省值(net.core.wmem_default = 212992 ->208 KB) 
          
-        10. net.core.wmem_max：(单位字节)
+         net.core.wmem_max：(单位字节)
             表示套接字发送缓冲区大小的最大值(net.core.wmem_max = 212992 ->208 KB)
            
-        11. net.ipv4.tcp_tw_reuse(默认是 0)
+         net.ipv4.tcp_tw_reuse(默认是 0)
                 这个参数设置为1,表示允许将TIME-WAIT状态的socket重新用于新的TCP链接.这个对服务器来说很有意义,
                 因为服务器上总会有大量TIME-WAIT状态的连接
+             
+         net.ipv4.tcp_tw_recycle
+            开启TCP连接中TIME-WAIT sockets的快速回收，默认为0，表示关闭
             
-        12. net.ipv4.tcp_keepalive_time(单位 秒)
+         net.ipv4.tcp_keepalive_time(单位 秒)
                 这个参数表示当keepalive启用时,TCP发送keepalive消息的频度.默认是7200 seconds,
                 意思是如果某个TCP连接在idle 2小时后,内核才发起probe.若将其设置得小一点,可以更快地清理无效的连接.
             
-        13. net.ipv4.tcp_fin_timeout (单位秒)
+         net.ipv4.tcp_fin_timeout (单位秒)
                 这个参数表示当服务器主动关闭连接时,socket保持在FIN-WAIT-2状态的最大时间,默认是60秒
                 
-        14. net.ipv4.tcp_max_tw_buckets
+         net.ipv4.tcp_max_tw_buckets
                 这个参数表示操作系统允许TIME_WAIT套接字数量的最大值,如果超过这个数字,
                 TIME_WAIT套接字将立刻被清除并打印警告信息.默认是 65536,过多TIME_WAIT套接字会使Web服务器变慢.
                 
-        15. net.ipv4.tcp_max_syn_backlog
+         net.ipv4.tcp_max_syn_backlog
                 这个参数表示TCP三次握手建立阶段接受WYN请求队列的最大长度
                 将其设置大一些可以使出现Nginx繁忙来不及accept新连接的情况时,Linux不至于丢失客户端发起的连接请求.
+                加大队列长度为8192
                 
-        16. net.ipv4.tcp_rmem
+         net.ipv4.tcp_rmem
                 (net.ipv4.tcp_rmem =4096 32768 262142)
                 这个参数定义了用于TCP接收滑动窗口的最小值，默认值，最大值
                 
-        17. net.ipv4.tcp_wmem
+         net.ipv4.tcp_wmem
                 (net.ipv4.tcp_wmem =4096 32768 262142)
                 这个参数定义了用于TCP发送滑动窗口的最小值，默认值，最大值
                 
-        18. net.core.netdev_max_backlog
+         net.core.netdev_max_backlog
                 当网卡接收数据包的速度大于内核处理的速度时，会有一个队列保存这些数据包。这个参数表示该队列的最大值
+                
+              
             
            
     4. 如果希望屏蔽别人 ping 你的主机,则加入以下代码：
@@ -263,6 +270,8 @@
         # sysctl -w net.ipv4.route.flush=1
       
 ```
+
+[参考资料](http://linxucn.blog.51cto.com/1360306/740130)
 
 #### /proc
 

@@ -399,4 +399,5 @@
         iptables -t nat -A POSTROUTING -m tcp -p tcp --dport 80 -d 192.0.0.64 -j SNAT --to-source 192.0.0.65
            
 ```
+
 [参考资料](http://blog.51yip.com/linux/1404.html)
