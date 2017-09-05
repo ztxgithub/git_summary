@@ -32,12 +32,12 @@
   #释放pagecache
   echo 1 > /proc/sys/vm/drop_caches
 	
-  #釋放dentries與inodes
+  #释放dentries與inodes
   echo 2 > /proc/sys/vm/drop_caches
   
     
   echo 3 > /proc/sys/vm/drop_caches
-  3 是指釋放pagecache、dentries與inodes，也就是釋放所有的cache
+  3 是指释放pagecache、dentries與inodes，也就是釋放所有的cache
 
 ```
 
@@ -313,3 +313,6 @@
      
      可以使用下面命令查询所有可修改的变量名
      # sysctl –a
+     
+     
+
