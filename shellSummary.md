@@ -156,6 +156,16 @@
 	
 ```
 
+- 查看Core文件是由哪个程序生成
+
+``` shell
+
+	$ file core-fault_seg
+	结果:
+    core-fault_seg: ELF 64-bit LSB core file x86-64, version 1 (SYSV), SVR4-style, from './fault_seg'
+	
+```
+
 - linux 获取主机开机时的运行时间 uptime
 
 ``` shell
@@ -376,7 +386,9 @@
 ``` shell
 
     P：根据CPU使用百分比大小进行排序。
-    M：根据驻留内存大小进行排序。
+    M：根据驻留内存大小进行排序.
+    1 : 可监控每个逻辑CPU的状况
+    
          
 ```
 
