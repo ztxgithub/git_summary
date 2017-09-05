@@ -473,6 +473,8 @@
 ``` shell
 
     -v: 列出详细信息
+    -u: 进程所属的用户
+    -k: kill 所有跟特定文件相关的进程
     
     
 ```
@@ -489,12 +491,12 @@
       /yytd/sengine/sengine: 20114e
       
     每个进程号后面都跟随一个字母，该字母指示进程如何使用文件.
-     c：指示进程的工作目录.
+     c：进程的工作目录.
      e：该文件为进程的可执行文件(即进程由该文件拉起)
-     f：指示该文件被进程打开，默认情况下f字符不显示。 
-     F：指示该文件被进程打开进行写入，默认情况下F字符不显示。 
-     r：指示该目录为进程的根目录。 
-     m：指示进程使用该文件进行内存映射，抑或该文件为共享库文件，被进程映射进内存。
+     f：该文件被进程打开，默认情况下f字符不显示。 
+     F：该文件被进程打开进行写入，默认情况下F字符不显示。 
+     r：该目录为进程的根目录。 
+     m：进程使用该文件进行内存映射，抑或该文件为共享库文件，被进程映射进内存。
     
 ```
 
@@ -502,10 +504,44 @@
 
 ``` shell
 
-    $  fuser -v ./sengine
+    $  fuser -v  /yytd/logs/sengine/sengine_stdout.log
     
     结果:
-      /yytd/sengine/sengine: 20114e
+                                              USER    PID    ACCESS      COMMAND
+    /yytd/logs/sengine/sengine_stdout.log:    root   2872     F....   supervisord
       
+```
+
+- 列出进程所属的用户
+
+``` shell
+
+    $  fuser -u  /yytd/logs/sengine/sengine_stdout.log
     
+    结果:
+    /yytd/logs/sengine/sc_stdout.log:  2872(root)
+      
+```
+
+- 杀死所有正在访问指定文件的进程 
+
+``` shell
+
+    $  fuser -u  /yytd/logs/sengine/sengine_stdout.log
+    
+    结果:
+    /yytd/logs/sengine/sc_stdout.log:  2872(root)
+      
+```
+
+- 列出所有正在访问端口的进程 
+
+``` shell
+
+    $  fuser -v 1883/tcp
+    
+    结果:
+                         USER        PID ACCESS COMMAND
+    1883/tcp:            root       1010 F.... beam.smp
+      
 ```
