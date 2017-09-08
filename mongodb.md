@@ -27,3 +27,14 @@
     
 			
 ```
+
+# 要从阿里云数据库下载恢复到线下的数据库
+
+``` shell
+
+    > cat hins2132121_data_20170906160327.ar |  
+    mongorestore -h 192.168.0.6 --port 27017 -d  scloud-product -u product -p YYtd_product  
+    --drop --gzip --archive -vvvv --stopOnError
+    
+			
+```

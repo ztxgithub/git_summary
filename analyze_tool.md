@@ -44,9 +44,10 @@
 ``` shell
 
     strace: Trace system calls and signals 
-    strace常用来跟踪进程执行时的系统调用和所接收的信号. Linux进程不能直接访问硬件(设备读取磁盘文件，接收网络数据等等),需要
-    由用户态模式切换至内核态模式,通过系统调用访问硬件设备.strace可以跟踪到一个进程产生的系统调用,包括参数，返回值，执行消耗的时间.
-    一般比较适用于调试不明的故障,用strace找出系统调用中出错的地方,通常能得到故障发生的线索,特别是与文件有关的错误、参数错误等.
+    strace常用来跟踪进程执行时的系统调用和所接收的信号. Linux进程不能直接访问硬件(设备读取磁盘文件,
+    接收网络数据等等),需要由用户态模式切换至内核态模式,通过系统调用访问硬件设备.strace可以跟踪到一个
+    进程产生的系统调用,包括参数，返回值，执行消耗的时间.一般比较适用于调试不明的故障,用strace找出系统
+    调用中出错的地方,通常能得到故障发生的线索,特别是与文件有关的错误、参数错误等.
     注意：
         使用strace能够有效地发现系统调用失败有关的故障,但无法发现用户写出的程序或共享库中发生的错误。
          
@@ -206,7 +207,8 @@
         readlink("/proc/118630/fd/3", "/home/jame/c++/test123/test_example/wcdj", 4096) = 40
   
     可以利用对 lsof -p pid 进行strace,得到核心的系统调用.lsof利用了/proc/pid/fd目录,
-    Linux内核会为每一个进程在/proc建立一个以其pid为名的目录用来保存进程的相关信息,而其子目录fd保存的是该进程打开的所有文件的fd。
+    Linux内核会为每一个进程在/proc建立一个以其pid为名的目录用来保存进程的相关信息,而其子目录fd保存的是该进程打开的
+    所有文件的fd。
     进入/proc/pid/fd目录下，发现每一个fd文件都是符号链接，而此链接就指向被该进程打开的一个文件.
     我们只要用readlink()系统调用就可以获取某个fd对应的文件了.
     
@@ -299,7 +301,8 @@
 
    W 未明确指定的弱链接符号；同链接的其他对象文件中有它的定义就用上，否则就用一个系统特别指定的默认值
    C 该符号为common,common symbol是未初始化数据段.该符号没有包含于一个普通section中.只有在链接过程中才进行分配.
-     符号的值表示该符号需要的字节数。例如在一个c文件中，定义int test，并且该符号在别的地方会被引用，则该符号类型即为C。否则其类型为B.
+     符号的值表示该符号需要的字节数。例如在一个c文件中，定义int test，并且该符号在别的地方会被引用，则该符号类型即为C。
+     否则其类型为B.
      
    G 该符号也位于初始化数据段中。主要用于small object提高访问small data object的一种方式.
    I 该符号是对另一个符号的间接引用
@@ -544,4 +547,107 @@
                          USER        PID ACCESS COMMAND
     1883/tcp:            root       1010 F.... beam.smp
       
+```
+
+## lsof
+
+### lsof 简介
+
+``` shell
+    
+    lsof [option] [filename]
+    在linux环境下,任何事物都以文件的形式存在,通过文件不仅仅可以访问常规数据,还可以访问网络连接和硬件.
+    如传输控制协议 (TCP) 和用户数据报协议 (UDP) 套接字等
+    在终端输入lsof来显示系统打开的文件,需要访问核心内存和各种系统文件,必须以 root 用户运行.
+      
+```
+
+### lsof 参数
+
+``` shell
+    
+    -a 列出打开文件存在的进程
+    -c<进程名> 列出指定进程所打开的文件
+    -g  列出GID号进程详情
+    -d<文件号> 列出占用该文件号的进程
+    +d<目录>  列出目录下被打开的文件
+    +D<目录>  递归列出目录下被打开的文件
+    -n<目录>  列出使用NFS的文件
+    -i<条件>  列出符合条件的进程。（4、6、协议、:端口、 @ip ）
+        lsof -i[46] [protocol][@hostname|@hostaddr][:service|:port]
+          46 --> IPv4 or IPv6
+          protocol --> TCP or UDP
+          hostname --> Internet host name
+          hostaddr --> IPv4地址
+          service --> /etc/service中的 service name (可以不止一个)
+          port --> 端口号 (可以不止一个)
+    -p<进程号> 列出指定进程号所打开的文件
+    -u  列出UID号进程详情
+    -h 显示帮助信息
+    -v 显示版本信息
+      
+```
+
+### lsof示例
+
+- 查找某个文件相关的进程
+
+``` shell
+    
+    # lsof /yytd/logs/sengine/sc_stdout.log
+    结果:
+      COMMAND    PID  USER    FD    TYPE  DEVICE  SIZE/OFF     NODE                  NAME
+    supervisord  2872  root   20w   REG    253,1  2658184    74470608   /yytd/logs/sengine/sc_stdout.log 
+      
+    COMMAND：进程的名称
+    PID：进程号
+    USER：进程所有者
+    FD：文件描述符
+        fd+文件状态模式 例如(3u)
+        文件状态模式:
+            （1）u：表示该文件被打开并处于读取/写入模式
+            （2）r：表示该文件被打开并处于只读模式
+            （3）w：表示该文件被打开并处于
+            （4）空格：表示该文件的状态模式为unknow，且没有锁定
+            （5）-：表示该文件的状态模式为unknow，且被锁定
+        
+    DEVICE：指定磁盘的名称
+    SIZE：文件的大小
+    NODE：索引节点（文件在磁盘上的标识）
+    NAME：打开文件的确切名称
+    
+```
+
+- 列出目录下被打开的文件的信息
+
+``` shell
+    
+    1.非递归,只显示当前目录的被进程打开的文件
+        # lsof +d /yytd/logs/sengine/
+        结果:
+          COMMAND    PID  USER    FD    TYPE  DEVICE  SIZE/OFF     NODE                  NAME
+        supervisord  2872  root   20w   REG    253,1  2658184    74470608   /yytd/logs/sengine/sc_stdout.log
+         
+    2.递归显示指定目录下所有被进程打开的文件
+        # lsof +D /yytd/logs/
+        结果:
+            COMMAND     PID USER   FD   TYPE DEVICE SIZE/OFF   NODE NAME
+            superviso 16229 root    6w   REG  253,1 12269096 798680 /yytd/logs/sengine/sengine_stdout.log
+            superviso 16229 root    9w   REG  253,1 59042262 798671 /yytd/logs/emqttd/emqttd_stdout.log
+      
+    
+```
+
+- 查看端口22号相关的文件
+
+``` shell
+    
+    # lsof -i :22
+    结果:
+        COMMAND   PID USER    FD   TYPE  DEVICE SIZE/OFF NODE      NAME
+        sshd     1533 root    3u  IPv4   18803      0t0  TCP      *:ssh (LISTEN)
+        sshd     1533 root    4u  IPv6   18805      0t0  TCP      *:ssh (LISTEN)
+        sshd    11768 root    3u  IPv4 6250323      0t0  TCP     localhost.localdomain:ssh->10.0.7.140:53090 (ESTABLISHED)
+        sshd    14433 root    3u  IPv4  217905      0t0  TCP     localhost.localdomain:ssh->10.0.5.98:50689 (ESTABLISHED)
+    
 ```
