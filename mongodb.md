@@ -35,6 +35,9 @@
     > cat hins2132121_data_20170906160327.ar |  
     mongorestore -h 192.168.0.6 --port 27017 -d  scloud-product -u product -p YYtd_product  
     --drop --gzip --archive -vvvv --stopOnError
-    
-			
+    	
 ```
+
+# 总结
+
+- mongodb 函数调用成功不一定数据成功写到数据库中,一段时间内调用大量的数据库操作,会导致数据库崩溃.

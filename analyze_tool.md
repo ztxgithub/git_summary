@@ -379,7 +379,7 @@
                 
         堆（heap ）： 堆是用于存放进程运行中被动态分配的内存段，它的大小并不固定，可动态扩张或缩减。
                     当进程调用malloc 等函数分配内存时，新分配的内存就被动态添加到堆上（堆被扩张）；
-                    当利用free 等函数释放内存时，被释放的内存从堆中被剔除（堆被缩减）\
+                    当利用free 等函数释放内存时，被释放的内存从堆中被剔除（堆被缩减）
                     
         栈(stack) ：栈又称堆栈，是用户存放程序临时创建的局部变量，也就是说我们函数括弧“{} ”中定义的变量
                     （但不包括static 声明的变量，static 意味着在数据段中存放变量）。
@@ -530,7 +530,7 @@
 
 ``` shell
 
-    $  fuser -u  /yytd/logs/sengine/sengine_stdout.log
+    $  fuser -k  /yytd/logs/sengine/sengine_stdout.log
     
     结果:
     /yytd/logs/sengine/sc_stdout.log:  2872(root)
@@ -650,4 +650,19 @@
         sshd    11768 root    3u  IPv4 6250323      0t0  TCP     localhost.localdomain:ssh->10.0.7.140:53090 (ESTABLISHED)
         sshd    14433 root    3u  IPv4  217905      0t0  TCP     localhost.localdomain:ssh->10.0.5.98:50689 (ESTABLISHED)
     
+```
+
+- 恢复删除的文件
+
+``` shell
+    
+    1. 用lsof 命令 加入 删除文件的参数,得到对应的 /proc目录下进程号目录的信息
+        # lsof /var/log/message
+        结果:
+            COMMAND    PID USER   FD   TYPE DEVICE SIZE/OFF      NODE NAME
+            abrt-watc  831 root    4r   REG  253,1    79925 149712343 /var/log/messages
+            rsyslogd  1174 root    6w   REG  253,1    79925 149712343 /var/log/messages
+            
+    2.再通过查看 /proc/PID/fd/FD 信息
+        # cat /proc/831/fd/6 > /var/log/message
 ```
