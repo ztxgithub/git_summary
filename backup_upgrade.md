@@ -5,6 +5,7 @@
 
 ```shell
          下载sshpass  下载地址https://sourceforge.net/projects/sshpass/files/sshpass/
+         软件在/
 
          #tar -xvf sshpass文件名.tar.gz
          #cd sshpass文件夹名
