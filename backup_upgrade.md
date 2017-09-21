@@ -5,7 +5,7 @@
 
 ```shell
          下载sshpass  下载地址https://sourceforge.net/projects/sshpass/files/sshpass/
-         软件在/
+         软件在 D:\云平台项目\Scloud\日志备份
 
          #tar -xvf sshpass文件名.tar.gz
          #cd sshpass文件夹名
@@ -47,10 +47,26 @@
     PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
     50 10 * * * /home/yytd/product_log/backup_log.sh
     
-    
-
+   
 ```
 
+## crontab 命令解析
+
+### 基本概念
+
+```shell
+
+    主要用来定期的执行一些脚本和任务,crontab命令通常需要配置环境变量.
+    PATH=/sbin:/bin:/usr/sbin:/usr/bin 用来指定系统执行命令的路劲
+    
+    一般有2中类型,系统任务调度(/etc)和用户任务调度(用户自定义的定时任务)
+    在系统任务调度中,cat /etc/crontab
+    在用户任务调度中,用户定义的crontab 文件都被保存在 /var/spool/cron目录中,其文件名与用户名一致.
+    
+    规定 某些用户禁止使用crontab, vim /etc/cron.deny
+    
+   
+```
 
 
 

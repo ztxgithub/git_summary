@@ -121,3 +121,5 @@
     mqtt_content.payload = string((char*)message->payload, message->payloadlen);
 	
 ```
+
+- 段错误不能用try,catch来捕获

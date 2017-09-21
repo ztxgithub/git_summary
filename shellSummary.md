@@ -392,6 +392,20 @@
          
 ```
 
+- pidof
+
+``` shell
+
+    查看进程名对应的pid
+    
+    $ pidof sengine
+    
+    结果:
+        16541
+    
+         
+```
+
 - pmap : 进程用了多少内存(虚拟内存)
 
 ``` shell
