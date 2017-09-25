@@ -425,6 +425,22 @@
          
 ```
 
+- exec 
+
+``` shell
+
+    作为 find 命令的一个选项, -exec 选项通常要以';'结尾
+    (1)在当前目录下(包含子目录),查找所有txt文件并找出含有字符串”bin”的行
+      find ./ -name “*.txt” -exec grep “bin” {} \;
+      
+    (2)在当前目录下(包含子目录),删除所有txt文件
+      find ./ -name "*ls" -exec rm {} \;   ('{}'与'\' 之间要有空格,'\'紧接加';')
+      
+    3. 要在找到结果中进行2次 exec 
+      find ./ -name "ba*" -exec cat {} \; -exec grep "test" {} \;
+    
+     
+
 ### 用户管理
 
 - 用户
