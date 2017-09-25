@@ -389,6 +389,14 @@
     M：根据驻留内存大小进行排序.
     1 : 可监控每个逻辑CPU的状况
     
+    用top查看单一的进程情况
+    $ top -p `pidof sengine`
+    
+    结果:
+            
+     PID   USER  PR   NI    VIRT      RES     SHR   S  %CPU   %MEM     TIME+     COMMAND 
+    15629  root  20   0    1266924   49668    4732  S   0.0   1.3     21:20.74    sengine 
+    
          
 ```
 

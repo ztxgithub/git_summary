@@ -123,3 +123,13 @@
 ```
 
 - 段错误不能用try,catch来捕获
+
+- 不管是list,map,vector 都可以重复删除相同的键名
+``` c++
+    
+    map<int, int > repeat_test;
+    repeat_test[1] = 1;
+    repeat_test.erase(1);
+    repeat_test.erase(1);
+	
+```
