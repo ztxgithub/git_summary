@@ -440,6 +440,90 @@
       find ./ -name "ba*" -exec cat {} \; -exec grep "test" {} \;
       
 ```
+
+- ps 
+
+``` shell
+
+    ps: process status,该命令可以确定有哪些进程正在运行和运行的状态,进程是否结束,进程有没有僵死,哪些进程占用了过多的资源等
+    
+    进程的状态:
+       1. 运行(正在运行或在运行队列中等待) ---> R (runnable) 
+       2. 中断(休眠中, 受阻, 在等待某个条件的形成或接受到信号)   ---> S  (sleeping)
+       3. 不可中断(收到信号不唤醒和不可运行, 进程必须等待直到有中断发生)  ---> D (uninterruptible sleep)
+       4. 僵死(进程已终止, 但进程描述符存在, 直到父进程调用wait4()系统调用后释放) ----> Z (zombie)
+       5. 停止(进程收到SIGSTOP, SIGSTP, SIGTIN, SIGTOU信号后停止运行运行)   -----> T  (traced or stopped)
+       
+    参数:
+        1. -A: 显示所有进程信息(进程名不是全路径)
+            $ ps -A
+            
+        2. -x : 显示没有控制终端的进程
+           -a : 所有进程(all)
+        
+            (1)列出目前所有的正在内存当中的程序
+                $ ps aux
+                结果:
+                USER   PID  %CPU  %MEM    VSZ     RSS   TTY  STAT  START   TIME    COMMAND
+                root  23015  0.0   0.1   762996  9800    ?    Sl   Sep26   0:24    /home/yytd/sengine/sengine
+                
+                %CPU：该 process 使用掉的 CPU 资源百分比
+                %MEM：该 process 所占用的物理内存百分比
+                VSZ ：该 process 使用掉的虚拟内存量 (Kbytes),它包含可执行二进制(binary),动态链接库,堆栈总大小
+                RSS ：该 process 实际的物理内存 (Kbytes),包含实际在内存中的可执行二进制(binary),动态链接库,堆栈总大小
+                      RSS一般会小于VSZ
+                TTY ：该 process 是在那个终端机上面运作,若与终端机无关，则显示 ?
+                      tty1-tty6 是本机上面的登入者程序,若为 pts/0 等等的，则表示为由网络连接进主机的程序.
+                      
+                START：该 process 被触发启动的时间
+                TIME ：该 process 实际使用 CPU 运作的时间
+                COMMAND：该程序的实际指令
+                
+            (2) 按cpu利用率排序(--sort 后面跟着'-'是降序)
+                $ ps aux --sort -pcpu (降序)
+                $ ps aux --sort +pcpu (升序)
+                
+            (3) 按内存利用率排序(--sort 后面跟着'-'是降序)
+                  $ ps aux --sort -pmem (降序)
+                  $ ps aux --sort +pmem (升序)
+                  
+        3. -L :显示进程中的线程(-L pid)
+            $ ps -L 23015
+            
+              PID   LWP TTY      STAT   TIME COMMAND
+            23015 23015 ?        Sl     0:00 /home/yytd/sengine/sengine
+            23015 23016 ?        Sl     0:01 /home/yytd/sengine/sengine
+            23015 23017 ?        Sl     0:04 /home/yytd/sengine/sengine
+            23015 23018 ?        Sl     0:08 /home/yytd/sengine/sengine
+            23015 23019 ?        Sl     0:00 /home/yytd/sengine/sengine
+            23015 23021 ?        Sl     0:00 /home/yytd/sengine/sengine
+            23015 23022 ?        Sl     0:03 /home/yytd/sengine/sengine
+            23015 23023 ?        Sl     0:00 /home/yytd/sengine/sengine
+            23015 23024 ?        Sl     0:02 /home/yytd/sengine/sengine
+            23015 23025 ?        Sl     0:02 /home/yytd/sengine/sengine
+            
+            LWP:(thread ID)
+            
+            可以用pstack 更加详细
+            
+         4. -o format : 输出指定的选项
+                format的值: User, PID, %CPU, %MEM, VSZ, RSS, TTY, 
+                           STAT, START, TIME 和 COMMAND, lstart(详细的时间信息)
+                $ ps aux -o pid
+                
+         5. u :用来决定以针对用户的格式输出，由User, PID, %CPU, %MEM, VSZ, RSS,
+               TTY, STAT, START, TIME 和 COMMAND这几列组成。
+               
+         6. -u username : 指定某个用户的进程情况
+                $ ps -u yytd u (显示yytd用户进程情况,按用户的格式输出)
+                结果:
+                USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+                yytd      2498  0.0  0.0   4296   588 ?        Ss   Sep20   0:02  memsup
+                yytd      2499  0.0  0.0   4296   360 ?        Ss   Sep20   0:00  cpu_sup
+           
+         7. 不加任何参数的ps 是 只显示控制终端的进程
+            
+```
      
 
 ### 用户管理
