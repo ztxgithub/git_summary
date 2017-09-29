@@ -41,3 +41,19 @@
 # 总结
 
 - mongodb 函数调用成功不一定数据成功写到数据库中,一段时间内调用大量的数据库操作,会导致数据库崩溃.
+
+# c++ driver
+
+## update函数结果
+
+```c++
+     auto result = update_one_document(fsu_collection, condition, update);
+        if(!result) {
+            log_e("update fsu_lgoinstate[%s][%s] fail", fsu_collection.c_str(), fsuid.c_str());
+            return FUNC_FAIL;
+        } else {
+            log_d("update fsu_lgoinstate[%s][%s] success", fsu_collection.c_str(), fsuid.c_str());
+        }
+		
+	update_one_document 不成功 result也不会为空
+```
