@@ -124,12 +124,21 @@
 
 - 段错误不能用try,catch来捕获
 
-- 不管是list,map,vector 都可以重复删除相同的键名
+- STL 特性
 ``` c++
     
-    map<int, int > repeat_test;
-    repeat_test[1] = 1;
-    repeat_test.erase(1);
-    repeat_test.erase(1);
-	
+    1.不管是list,map,vector 都可以重复删除相同的键名
+        map<int, int > repeat_test;
+        repeat_test[1] = 1;
+        repeat_test.erase(1);
+        repeat_test.erase(1);
+        
+    2.可以erase(删除)空值
+        map<int, int > repeat_test;
+        repeat_test.erase("");
+        
+    3.可以erase(删除)未存在的值
+	     map<int, int > repeat_test;
+         repeat_test.erase("11111");
+       
 ```
