@@ -227,6 +227,7 @@
              
          net.ipv4.tcp_tw_recycle
             开启TCP连接中TIME-WAIT sockets的快速回收，默认为0，表示关闭
+            (服务器不建议开启 tcp_tw_recycle 快速回收，会导致大局域网用户访问失败)
             
          net.ipv4.tcp_keepalive_time(单位 秒)
                 这个参数表示当keepalive启用时,TCP发送keepalive消息的频度.默认是7200 seconds,
