@@ -187,7 +187,28 @@
                         control-group（默认值）：当前控制组里面的所有子进程，都会被杀掉
                         process：只杀主进程
                         mixed：主进程将收到 SIGTERM 信号，子进程收到 SIGKILL 信号
-                        none：没有进程会被杀掉，只是执行服务的 stop 命令   
+                        
+             LimitCORE=infinity  开启core dump
+             LimitNOFILE=65536   设置文件描述符的数量为65536     
+                     
+                         
+            关键字的对应关系:             
+                Directive        ulimit equivalent     Unit
+                LimitCPU=        ulimit -t             Seconds      
+                LimitFSIZE=      ulimit -f             Bytes
+                LimitDATA=       ulimit -d             Bytes
+                LimitSTACK=      ulimit -s             Bytes
+                LimitCORE=       ulimit -c             Bytes
+                LimitRSS=        ulimit -m             Bytes
+                LimitNOFILE=     ulimit -n             Number of File Descriptors 
+                LimitAS=         ulimit -v             Bytes
+                LimitNPROC=      ulimit -u             Number of Processes 
+                LimitMEMLOCK=    ulimit -l             Bytes
+                LimitLOCKS=      ulimit -x             Number of Locks 
+                LimitSIGPENDING= ulimit -i             Number of Queued Signals 
+                LimitMSGQUEUE=   ulimit -q             Bytes
+                LimitNICE=       ulimit -e             Nice Level 
+                LimitRTPRIO=     ulimit -r             Realtime Priority 
             
      例如:
            1. sshd.service:

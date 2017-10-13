@@ -112,6 +112,14 @@
 	
 ```
 
+- 查看 Centos的版本号
+
+``` shell
+
+	$ cat /etc/redhat-release
+	
+```
+
 - 
 
 - FSU中 udhcpc 进程
@@ -208,6 +216,10 @@
         ulimit 限制的是当前 shell 进程以及其派生的子进程。举例来说，如果用户同时运行了两个 shell 终端进程，
         只在其中一个环境中执行了 ulimit – s 100，则该 shell 进程里创建文件的大小收到相应的限制，
         而同时另一个 shell 终端包括其上运行的子程序都不会受其影响：
+        ulimit 修改不加指定的(-H和-S),则会同时修改 hard” and “soft” 的值
+        
+        一般情况下,修改完ulimit设置后都要重启一下进程,可以通过 $ cat /proc/pid/limits 看是否有变化
+    
 
 	$ ulimit -a (显示所有的信息)
 	
