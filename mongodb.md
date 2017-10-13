@@ -218,14 +218,14 @@
            其中 参数scale是可选择的, scale = 1024,则结果是以KB为单位
         > db.stats()
             {
-                    "db" : "scloud-test2",
-                    "collections" : 24,
-                    "objects" : 694,
-                    "avgObjSize" : 828.3876080691642,
+                    "db" : "scloud-test2",  数据库名
+                    "collections" : 24,    集合的数量
+                    "objects" : 694,       该数据库中所有documents数量(查询所有collectons)
+                    "avgObjSize" : 828.3876080691642,  每个documents的平均大小,单位Byte
                     "dataSize" : 574901,  单位Byte
                     "storageSize" : 778240,
                     "numExtents" : 0,
-                    "indexes" : 23,
+                    "indexes" : 23,   该数据库的所有索引数
                     "indexSize" : 569344, 单位Byte
                     "ok" : 1
             }
@@ -291,8 +291,9 @@
 	     视图(数据).
 	     当要写入磁盘时,WiredTiger将Snapshots里的所有数据一致的写到磁盘的文件中,同时作为Checkpoint的数据一定是
 	     可持久性的数据,Checkpoint可以充当数据恢复点.创建checkpoints间隔是60秒或则journal data.容量达到
-	     2 gigabytes(千兆字节).
+	     2 gigabytes(千兆字节).可以通过 $ mongod --syncdelay <value> 来改变频率,不过不建议.
 	     
 	     Snapshots and Checkpoints 是为了保证mongo异常退出时,数据可以恢复.
+	     
 	     
 ```
