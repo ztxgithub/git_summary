@@ -191,6 +191,7 @@
                               
 			
 ```
+## mongostat shell 命令
 
 
 - mongo 命令
@@ -210,7 +211,25 @@
     	
     2. 查看连接数
         > db.serverStatus().connections
-```
+        
+    3. 容量大小
+    
+        > db.stats(scale)
+           其中 参数scale是可选择的, scale = 1024,则结果是以KB为单位
+        > db.stats()
+            {
+                    "db" : "scloud-test2",
+                    "collections" : 24,
+                    "objects" : 694,
+                    "avgObjSize" : 828.3876080691642,
+                    "dataSize" : 574901,  单位Byte
+                    "storageSize" : 778240,
+                    "numExtents" : 0,
+                    "indexes" : 23,
+                    "indexSize" : 569344, 单位Byte
+                    "ok" : 1
+            }
+``` 
 
 
 
@@ -252,4 +271,28 @@
         }
 		
 	update_one_document 不成功 result也不会为空
+	
+```
+
+# Storage (mongod 的存储方式)
+
+## WiredTiger Storage Engine
+
+```c++
+    在版本3.2以后,默认的存储方式采用WiredTiger Storage Engine
+    
+    1.Document Level Concurrency(文档级别的并发)
+	    WiredTiger机制对数据库的写操作是基于文档级别的并发,这就意味着可以有多个客户端同时对同一个collection的不同
+	    documents(进行操作).
+	    
+	2. Snapshots and Checkpoints(快照和检查点)
+	    
+	     WiredTiger使用了多版本并发控制,当数据开始一个操作时,WiredTiger对当时的数据进行了快照,保存了在内存中的相同
+	     视图(数据).
+	     当要写入磁盘时,WiredTiger将Snapshots里的所有数据一致的写到磁盘的文件中,同时作为Checkpoint的数据一定是
+	     可持久性的数据,Checkpoint可以充当数据恢复点.创建checkpoints间隔是60秒或则journal data.容量达到
+	     2 gigabytes(千兆字节).
+	     
+	     Snapshots and Checkpoints 是为了保证mongo异常退出时,数据可以恢复.
+	     
 ```
