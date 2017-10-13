@@ -189,11 +189,27 @@
                                { user : 0 }
                               ).sort( { millis : -1 } )
                               
-   
-
-        
-    
 			
+```
+
+
+- mongo 命令
+
+``` shell
+
+    1.监控mongod的内存情况
+        > db.serverStatus().mem
+            {
+                    "bits" : 64,
+                    "resident" : 97,  物理内存单位 MB
+                    "virtual" : 432,  虚拟内存 MB
+                    "supported" : true,
+                    "mapped" : 0,
+                    "mappedWithJournal" : 0
+            }
+    	
+    2. 查看连接数
+        > db.serverStatus().connections
 ```
 
 

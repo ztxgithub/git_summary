@@ -29,6 +29,9 @@
 
   应用程序(process)实际需要使用时,kernel仍会自动从memory釋放cache給process使用
     
+  在释放之前 最好是使用命令 
+    $ sync
+    
   #释放pagecache
   echo 1 > /proc/sys/vm/drop_caches
 	
@@ -38,6 +41,8 @@
     
   echo 3 > /proc/sys/vm/drop_caches
   3 是指释放pagecache、dentries與inodes，也就是釋放所有的cache
+  
+  这些显式释放Cache虽然不会造成数据错误,但会影响性能,因为Cache被清空了,程序又需要读文件,只能通过IO磁盘操作重新加载Cache中.
 
 ```
 
