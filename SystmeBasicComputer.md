@@ -237,16 +237,23 @@
          net.ipv4.tcp_keepalive_time(单位 秒)
                 这个参数表示当keepalive启用时,TCP发送keepalive消息的频度.默认是7200 seconds,
                 意思是如果某个TCP连接在idle 2小时后,内核才发起probe.若将其设置得小一点,可以更快地清理无效的连接.
+                可以有效的防止空连接攻击.
             
          net.ipv4.tcp_fin_timeout (单位秒)
                 这个参数表示当服务器主动关闭连接时,socket保持在FIN-WAIT-2状态的最大时间,默认是60秒
+                减少处于FIN-WAIT-2连接状态的时间,使系统可以处理更多的连接
+                例如:
+                    在一个tcp会话过程中,在会话结束时,A首先向B发送一个fin包,在A获得B的ack确认包后,
+                    A就进入FIN-WAIT-2状态等待B的fin包,然后A给B发ack确认包.
+                    net.ipv4.tcp_fin_timeout参数用来设置A进入FIN-WAIT-2状态等待对方fin包的超时时间.
+                    如果时间到了仍未收到对方的fin包就主动释放该会话.
                 
          net.ipv4.tcp_max_tw_buckets
                 这个参数表示操作系统允许TIME_WAIT套接字数量的最大值,如果超过这个数字,
                 TIME_WAIT套接字将立刻被清除并打印警告信息.默认是 65536,过多TIME_WAIT套接字会使Web服务器变慢.
                 
          net.ipv4.tcp_max_syn_backlog
-                这个参数表示TCP三次握手建立阶段接受WYN请求队列的最大长度
+                这个参数表示TCP三次握手建立阶段接受SYN请求队列的最大长度
                 将其设置大一些可以使出现Nginx繁忙来不及accept新连接的情况时,Linux不至于丢失客户端发起的连接请求.
                 加大队列长度为8192
                 
@@ -259,8 +266,30 @@
                 这个参数定义了用于TCP发送滑动窗口的最小值，默认值，最大值
                 
          net.core.netdev_max_backlog
-                当网卡接收数据包的速度大于内核处理的速度时，会有一个队列保存这些数据包。这个参数表示该队列的最大值
+                当网卡接收数据包的速度大于内核处理的速度时,会有一个队列保存这些数据包.这个参数表示该队列的最大值
                 
+         net.ipv4.tcp_syncookies
+                表示是否打开SYN Cookie.tcp_syncookies是一个开关,该参数的功能有助于保护服务器免受SyncFlood攻击.
+                默认值为0,这里设置为1.
+                
+         net.ipv4.tcp_max_orphans
+                表示系统中最多有多少TCP套接字不被关联到任何一个用户文件句柄上.如果超过这里设置的数字,
+                连接就会复位并输出警告信息.这个限制仅仅是为了防止简单的DoS攻击.此值不能太小
+         
+         net.ipv4.tcp_synack_retries：
+                这个参数用于设置内核放弃连接之前发送SYN+ACK包的数量,(主要是针对服务器而言,没有收到客户端最后一步的ack时,
+                持续发送多少个SYN+ACK包)
+                对于远端的连接请求SYN,内核会发送(SYN ＋ ACK)数据报,以确认收到上一个远端SYN连接请求包.
+                这是所谓的三次握手(threewayhandshake)机制的第二个步骤.这里决定内核在放弃连接之前所送出的 SYN+ACK 数目.
+                不应该大于255,默认值是5.对应于180秒左右时间.
+                
+         net.ipv4.tcp_syn_retries：
+                此参数表示在内核放弃建立连接之前发送SYN包的数量.(主要针对客户端而言,再没有收到服务器SYN+ACK包时,持续发送
+                多少个SYN包)
+                对于一个新建连接,内核要发送多少个 SYN 连接请求才决定放弃.不应该大于255,默认值是5,对应于180秒左右时间.
+   
+
+         
          vm.swappiness
             swap分区的使用,减少对swap使用可以提高系统的性能,内存为512M对应vm.swappiness = 10,
             大内存服务器中我们需要设置这个值为0,尤其是在Mysql服务器上(0表示最大限度使用物理内存,然后才是 swap空间)

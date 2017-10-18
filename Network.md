@@ -220,12 +220,14 @@
              
                 (1) -A：追加,在当前链的最后新增一个规则
                 
-                (2) -I num : 插入，把当前规则插入为第几条
+                (2) -I chain num : 插入，把当前规则插入为第几条
+                        iptables -t filter -I INPUT 5 -s 192.168.0.1/24 -j ACCEPT 
                 
-                (3) -R num：Replays替换/修改第几条规则
+                (3) -R chain num：Replays替换/修改第几条规则
+                        
                 
                 (4) -D num：删除，明确指定删除第几条规则
-                
+                        iptables -t filter -D INPUT 6   (删除filter表的INPUT链的第六条规则)
          chain: 
             filter表的链: INPUT链, OUTPUT链, FORWARD链
             nat表的链: PREROUTING链, POSTROUTING链, OUTPUT链
