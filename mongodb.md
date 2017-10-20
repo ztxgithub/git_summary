@@ -191,8 +191,107 @@
                               
 			
 ```
+
+## mongodb 索引
+
+``` shell
+
+    当你往某各个集合插入多个文档后,每个文档在经过底层的存储引擎持久化后,会有一个位置信息,通过这个位置信息,
+    就能从存储引擎里读出该文档.例如,person集合里包含插入了4个文档，假设其存储后位置信息如下
+    
+    位置信息	文档
+        pos1	{“name” : “jack”, “age” : 19 }
+        pos2	{“name” : “rose”, “age” : 20 }
+        pos3	{“name” : “jack”, “age” : 18 }
+        pos4	{“name” : “tony”, “age” : 21}
+    	
+    假设现在有个查询 db.person.find( {age: 18} ), 查询所有年龄为18岁的人,这时需要遍历所有的文档（『全表扫描』）,
+    首先根据位置信息读出文档,然后在文档中对比age字段是否为18.当然如果只有4个文档,全表扫描的开销并不大,
+    但如果集合文档数量到百万,甚至千万上亿的时候,对集合进行全表扫描开销是非常大的,一个查询耗费数十秒甚至几分钟都有可能.
+    
+    如果想加速 db.person.find({age: 18})就可以考虑对person表的age字段建立索引.
+    
+        > db.person.createIndex( {age: 1} )  // 按age字段创建升序索引
+        
+    建立索引后,MongoDB会额外存储一份按age字段升序排序的索引数据,索引结构类似如下，
+    索引通常采用类似btree的结构持久化存储,以保证从索引里快速（O(logN)的时间复杂度）找出某个age值对应的位置信息,
+    然后根据位置信息就能读取出对应的文档.
+        AGE	位置信息
+        18	pos3
+        19	pos1
+        20	pos2
+        21	pos4
+        
+    索引就是将某个(某些)字段顺序的组织起来,这样可以按某个算法查找该字段,并得出对应的文档.
+    
+    至少能优化如下场景的效率：
+    
+        查询,比如查询年龄为18的所有人
+        更新/删除,将年龄为18的所有人的信息更新或删除,因为更新或删除时,需要根据条件先查询出所有符合条件的文档,所以本质上还是在优化查询
+        排序,将所有人的信息按年龄排序，如果没有索引，需要全表扫描文档，然后再对扫描的结果进行排序
+        
+    MongoDB默认会为插入的文档生成_id字段(如果应用本身没有指定其他字段),_id是文档唯一的标识.
+    
+    查询集合的索引信息
+       > db.GuoDong_signal.getIndexes()
+       [
+               {
+                       "v" : 1,
+                       "key" : {
+                               "_id" : 1
+                       },
+                       "name" : "_id_",
+                       "ns" : "scloud-product.GuoDong_signal"
+               },
+               {
+                       "v" : 1,
+                       "key" : {
+                               "code" : 1
+                       },
+                       "name" : "signalCode",
+                       "ns" : "scloud-product.GuoDong_signal"
+               }
+       ]
+        
+    
+```
+
 ## mongostat shell 命令
 
+``` shell
+
+    1.监控mongod的内存情况
+        > db.serverStatus().mem
+            {
+                    "bits" : 64,
+                    "resident" : 97,  物理内存单位 MB
+                    "virtual" : 432,  虚拟内存 MB
+                    "supported" : true,
+                    "mapped" : 0,
+                    "mappedWithJournal" : 0
+            }
+    	
+    2. 查看连接数
+        > db.serverStatus().connections
+        
+    3. 容量大小
+    
+        > db.stats(scale)
+           其中 参数scale是可选择的, scale = 1024,则结果是以KB为单位
+        > db.stats()
+            {
+                    "db" : "scloud-test2",  数据库名
+                    "collections" : 24,    集合的数量
+                    "objects" : 694,       该数据库中所有documents数量(查询所有collectons)
+                    "avgObjSize" : 828.3876080691642,  每个documents的平均大小,单位Byte
+                    "dataSize" : 574901,  单位Byte
+                    "storageSize" : 778240,
+                    "numExtents" : 0,
+                    "indexes" : 23,   该数据库的所有索引数
+                    "indexSize" : 569344, 单位Byte
+                    "ok" : 1
+            }
+``` 
 
 - mongo 命令
 
