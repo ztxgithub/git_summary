@@ -224,7 +224,8 @@
                         iptables -t filter -I INPUT 5 -s 192.168.0.1/24 -j ACCEPT 
                 
                 (3) -R chain num：Replays替换/修改第几条规则
-                        
+                         iptables -t filter -R INPUT 5 -s 193.168.0.1/24 -j ACCEPT 
+                         (删除filter表的INPUT链的第五条规则)
                 
                 (4) -D num：删除，明确指定删除第几条规则
                         iptables -t filter -D INPUT 6   (删除filter表的INPUT链的第六条规则)
@@ -284,6 +285,13 @@
                      显式扩展（-m）:扩展各种模块
                      -m multiport：表示启用多端口扩展,之后我们就可以启用比如 --dports 21,23,80
                      
+                      -m limit --limit :限制特定包传入速度
+                         iptables -A INPUT -m limit --limit 3/hour 限制每小时只传3个包.
+                         /second、 /minute、/day
+                         
+                         Ping洪水攻击(Ping of Death)
+                         iptables -A FORWARD -p icmp --icmp-type echo-request -m limit --limit 1/s -j ACCEPT
+                         
                      --tcp-flags TCP标志 针对-p tcp
                      可以指定由逗号分隔的多个参数,有效值可以是：SYN, ACK, FIN, RST, URG, PSH,可以使用ALL或者NONE
                      
@@ -346,7 +354,7 @@
     要进行地址转发,首先要开启Linux系统中的地址转发功能
         1.永久改变
         (1): 修改/etc/sysctl.conf配置文件件，将ip_forward的值设置为1
-             vim /etc/sysctl.conf   net.ipv4.ip_forwaed=1  
+             vim /etc/sysctl.conf   net.ipv4.ip_forward=1  
              
         (2): sysctl -p     //重新读取修改后的配置
         
