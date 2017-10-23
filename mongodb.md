@@ -216,11 +216,11 @@
     建立索引后,MongoDB会额外存储一份按age字段升序排序的索引数据,索引结构类似如下，
     索引通常采用类似btree的结构持久化存储,以保证从索引里快速（O(logN)的时间复杂度）找出某个age值对应的位置信息,
     然后根据位置信息就能读取出对应的文档.
-        AGE	位置信息
-        18	pos3
-        19	pos1
-        20	pos2
-        21	pos4
+        AGE ----	位置信息
+        18	----     pos3
+        19	----     pos1
+        20	----     pos2
+        21	----     pos4
         
     索引就是将某个(某些)字段顺序的组织起来,这样可以按某个算法查找该字段,并得出对应的文档.
     
@@ -241,19 +241,57 @@
                                "_id" : 1
                        },
                        "name" : "_id_",
-                       "ns" : "scloud-product.GuoDong_signal"
+                       "ns" : "scloud-product.GuoDong_signal" 
                },
                {
-                       "v" : 1,
-                       "key" : {
-                               "code" : 1
+                       "v" : 1,      // 索引版本
+                       "key" : {     // 索引的字段及排序方向
+                               "code" : 1   //对该字段进行升序
                        },
-                       "name" : "signalCode",
-                       "ns" : "scloud-product.GuoDong_signal"
+                       "name" : "signalCode",                     // 索引的名称
+                       "ns" : "scloud-product.GuoDong_signal"     // 集合名
                }
        ]
         
-    
+        
+        
+    2.索引的分类
+        (1) 单字段索引(Single Field Index)
+                db.person.createIndex( {age: 1} )  // 按age字段创建升序索引
+                db.person.createIndex( {age: -1} )  // 按age字段创建降序索引
+                
+        (2) 复合索引(Compound Index)
+                它针对多个字段联合创建索引,先按第一个字段排序,第一个字段相同的文档按第二个字段排序,依次类推,
+                如下针对age, name这2个字段创建一个复合索引
+                
+                db.person.createIndex( {age: 1, name: 1} ) 
+                
+            上述索引对应的数据组织类似下表"
+                
+                AGE,NAME  ----	位置信息
+                18,adam	  ----   pos5
+                18,jack	  ----   pos3
+                19,jack	  ----   pos1
+                20,rose	  ----   pos2
+                
+            复合索引能满足的查询场景比单字段索引更丰富,不光能满足多个字段组合起来的查询,
+            比如db.person.find( {age： 18, name: "jack"} ),也能满足匹配复合索引前缀的查询,
+            这里{age: 1}即为{age: 1, name: 1}的前缀,所以类似db.person.find( {age： 18} )的查询也能通过该索引来加速；
+            但db.person.find( {name: "jack"} )则无法使用该复合索引.
+            如果经常需要根据『name字段』以及『name和age字段组合』来查询，则应该创建如下的复合索引
+                db.person.createIndex( {name: 1, age: 1} ) 
+                
+            age字段的取值很有限,即拥有相同age字段的文档会有很多；而name字段的取值则丰富很多,拥有相同name字段的文档很少；
+            显然先按name字段查找,再在相同name的文档里查找age字段更为高效。
+                db.person.createIndex({name:1,age:1})
+                
+        (3) 多key索引(Multikey Index）
+                当索引的字段为数组["AAA","BBB"]时,创建出的索引称为多key索引,多key索引会为数组的每个元素建立一条索引,
+                比如person表加入一个habbit字段（数组）用于描述兴趣爱好,需要查询有相同兴趣爱好的人就可以利用habbit字段的
+                多key索引。
+                    {"name" : "jack", "age" : 19, habbit: ["football, runnning"]}
+                    db.person.createIndex( {habbit: 1} )  // 自动创建多key索引
+                    db.person.find( {habbit: "football"} )
 ```
 
 ## mongostat shell 命令
