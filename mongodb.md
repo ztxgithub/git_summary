@@ -195,6 +195,123 @@
 			
 ```
 
+- 执行计划函数explain
+
+``` shell
+    
+    > db.GuoDong_signal.find({code:"371602000100600010406001001"}).explain("executionStats")
+    
+    expalin的参数:
+        1."queryPlanner"
+        2."executionStats"
+        3."allPlansExecution"
+        
+    explain()的返回值有：
+    
+    stage的分类:
+        COLLSCAN : for a collection scan (对一个集合中进行所有文档扫描)
+        IXSCAN  : for scanning index keys 
+        FETCH : for retrieving documents (检索文档)
+    
+{
+        "queryPlanner" : {
+                "plannerVersion" : 1,
+                "namespace" : "scloud-product.GuoDong_signal",  //运行查询的指定集合名
+                "indexFilterSet" : false,  //在查询中是否使用索引过滤
+                "parsedQuery" : {
+                        "code" : {
+                                "$eq" : "371602000100600010406001001"
+                        }
+                },
+                "winningPlan" : {  //查询优化选择的计划文档
+                        "stage" : "FETCH",  //查询阶段
+                        "inputStage" : {  //子过程的文档
+                                "stage" : "IXSCAN",
+                                "keyPattern" : {
+                                        "code" : 1
+                                },
+                                "indexName" : "signalCode",
+                                "isMultiKey" : false,  //本次查询是否使用了多键、复合索引
+                                "isUnique" : false,
+                                "isSparse" : false,
+                                "isPartial" : false,
+                                "indexVersion" : 1,
+                                "direction" : "forward",
+                                "indexBounds" : {
+                                        "code" : [
+                                                "[\"371602000100600010406001001\", \"371602000100600010406001001\"]"
+                                        ]
+                                }
+                        }
+                },
+                "rejectedPlans" : [ ]  //被查询优化备选并被拒绝的计划数组
+        },
+        "executionStats" : {  //被选中执行计划和被拒绝执行计划的详细说明
+                "executionSuccess" : true,  //是否成功
+                "nReturned" : 1,  //匹配查询条件的文档数
+                "executionTimeMillis" : 12,  //计划选择和查询执行所需的总时间（毫秒数）
+                "totalKeysExamined" : 1,     //扫描的索引总数
+                "totalDocsExamined" : 1,     //扫描的文档总数
+                "executionStages" : {      //显示执行成功细节的查询阶段树
+                        "stage" : "FETCH",
+                        "nReturned" : 1,
+                        "executionTimeMillisEstimate" : 20,
+                        "works" : 2,  //指定查询执行阶段执行的“工作单元”的数量
+                        "advanced" : 1,  //返回的中间结果数
+                        "needTime" : 0,   //未将中间结果推进到其父级的工作周期数
+                        "needYield" : 0,  //存储层要求查询系统产生的锁的次数
+                        "saveState" : 1,
+                        "restoreState" : 1,
+                        "isEOF" : 1,       //指定执行阶段是否已到达流结束
+                        "invalidates" : 0,
+                        "docsExamined" : 1,
+                        "alreadyHasObj" : 0,
+                        "inputStage" : {
+                                "stage" : "IXSCAN",
+                                "nReturned" : 1,
+                                "executionTimeMillisEstimate" : 20,
+                                "works" : 2,
+                                "advanced" : 1,
+                                "needTime" : 0,
+                                "needYield" : 0,
+                                "saveState" : 1,
+                                "restoreState" : 1,
+                                "isEOF" : 1,
+                                "invalidates" : 0,
+                                "keyPattern" : {
+                                        "code" : 1
+                                },
+                                "indexName" : "signalCode",
+                                "isMultiKey" : false,  //本次查询是否使用了多键、复合索引
+                                "isUnique" : false,
+                                "isSparse" : false,
+                                "isPartial" : false,
+                                "indexVersion" : 1,
+                                "direction" : "forward",
+                                "indexBounds" : {
+                                        "code" : [
+                                                "[\"371602000100600010406001001\", \"371602000100600010406001001\"]"
+                                        ]
+                                },
+                                "keysExamined" : 1,
+                                "dupsTested" : 0,
+                                "dupsDropped" : 0,
+                                "seenInvalidated" : 0
+                        }
+                }
+        },
+        "serverInfo" : {
+                "host" : "localhost.localdomain",
+                "port" : 27017,
+                "version" : "3.2.11",
+                "gitVersion" : "009580ad490190ba33d1c6253ebd8d91808923e4"
+        },
+        "ok" : 1
+}
+
+			
+```
+
 ## mongodb 索引
 
 ``` shell
@@ -296,7 +413,12 @@
                     > db.person.createIndex( {habbit: 1} )  // 自动创建多key索引
                     > db.person.find( {habbit: "football"} )
                     
-    3.查询计划
+        (4)文档索引:等同于复合索引
+                {name:"xyz",metro:{city:"New York",state:"NY"}}
+            > db.person.createIndex( {metro: 1} ) == db.person.createIndex({metro.city: 1, metro.state: 1}) 
+    
+     hint()函数:
+        要查询的内容中包含多个字段且都有索引，我们可以使用hint()函数来强制使用特定索引,这是一个优化方法.
      
 ```
 
@@ -353,7 +475,22 @@
             }
     	
     2. 查看连接数
-        > db.serverStatus().connections
+        > db.serverStatus().connections 
+        
+     > db.serverStatus() 如果出现not authorized on admin to execute command serverstatus 1.0,
+     可以选择先切换到admin数据库中,
+        > db.createUser(
+          {
+            user: "admin",
+            pwd: "password",
+            roles: [ { role: "root", db: "admin" } ]
+          }
+        );
+        > show users
+        
+        再使用db.serverStatus()
+        
+        
         
     3. 容量大小
     
