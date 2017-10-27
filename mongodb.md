@@ -224,7 +224,7 @@
                         }
                 },
                 "winningPlan" : {  //查询优化选择的计划文档
-                        "stage" : "FETCH",  //查询阶段
+                        "stage" : "FETCH",  //查询阶段,如果stage有子stage ,该子stage为inputStage
                         "inputStage" : {  //子过程的文档
                                 "stage" : "IXSCAN",
                                 "keyPattern" : {
@@ -246,14 +246,14 @@
                 },
                 "rejectedPlans" : [ ]  //被查询优化备选并被拒绝的计划数组
         },
-        "executionStats" : {  //被选中执行计划和被拒绝执行计划的详细说明
+        "executionStats" : {  //被选中执行计划和被拒绝执行计划的详细说明,对于写操作不会对数据库进行修改
                 "executionSuccess" : true,  //是否成功
                 "nReturned" : 1,  //匹配查询条件的文档数
                 "executionTimeMillis" : 12,  //计划选择和查询执行所需的总时间（毫秒数）
                 "totalKeysExamined" : 1,     //扫描的索引总数
                 "totalDocsExamined" : 1,     //扫描的文档总数
                 "executionStages" : {      //显示执行成功细节的查询阶段树
-                        "stage" : "FETCH",
+                        "stage" : "FETCH",  //如果stage有子stage ,该子stage为inputStage
                         "nReturned" : 1,
                         "executionTimeMillisEstimate" : 20,
                         "works" : 2,  //指定查询执行阶段执行的“工作单元”的数量
@@ -311,6 +311,19 @@
 
 			
 ```
+
+## Query Plans
+    mongodb查询优化plan会根据可用的索引制定出最有效的查询plan,query planner业务逻辑是有没有存在查询计划,
+    如果存在,那么评估一下该plan的性能是否符合要求,如果符合则根据该plan产生结果报告,如果不符合要求,则产生多个Query Plans
+    从中筛选出符合性能要求query plan,再执行该plan产生结果报告.
+    
+    Plan Cache Flushes(查询计划更新)
+        通过对索引和集合的操作都会导致query plan 被重新制定,如果mongod重启或则关闭,其query plan不会保存.
+        
+    Index Filters(索引过滤器)
+        index filter 存在在query shape中,那么optimizer(优化程序)就只会考虑索引过滤器里的索引,来产生对应的query plan.
+    这个时候hint()无效.
+
 
 ## mongodb 索引
 
@@ -577,3 +590,4 @@
 	     
 	     
 ```
+
