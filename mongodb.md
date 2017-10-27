@@ -213,6 +213,15 @@
         IXSCAN  : for scanning index keys 
         FETCH : for retrieving documents (检索文档)
     
+    keysExamined值:索引被查找的次数
+        在stage为IXSCAN的阶段时,如果查找的条件的值在一个连续的范围内,那么keysExamined的值只等于in-bounds keys,如果查找的
+        条件是多个不连续的值,那么索引执行查找程序会检测一个out-of-bounds 的索引,然后跳到下一个in-bounds key值.
+        那么keysExamined的值in-bounds keys + out-of-bounds keys,
+        例如 db.keys.find( { x : { $in : [ 3, 4, 50, 74, 75, 90 ] } } ).explain( "executionStats" )
+            先查询3,4,再查询5,发现5不是要找的值,直接跳到50,接着检查51,不是要找的值,直接跳到74,
+            这样3, 4, 50, 74, 75, 90 是in-bounds keys, 而 5,51,76,91 是out-of-bounds keys.
+    
+    
 {
         "queryPlanner" : {
                 "plannerVersion" : 1,
@@ -248,7 +257,7 @@
         },
         "executionStats" : {  //被选中执行计划和被拒绝执行计划的详细说明,对于写操作不会对数据库进行修改
                 "executionSuccess" : true,  //是否成功
-                "nReturned" : 1,  //匹配查询条件的文档数
+                "nReturned" : 1,  //符合查询条件的文档数
                 "executionTimeMillis" : 12,  //计划选择和查询执行所需的总时间（毫秒数）
                 "totalKeysExamined" : 1,     //扫描的索引总数
                 "totalDocsExamined" : 1,     //扫描的文档总数
