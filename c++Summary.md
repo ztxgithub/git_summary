@@ -142,3 +142,17 @@
          repeat_test.erase("11111");
        
 ```
+
+- 临时变量的使用
+
+``` c++
+
+    string foo( );
+    void bar(string&s)
+
+    bar(foo( ));  //错误
+    bar("hello world");  //错误
+    
+    foo( )和"hello world"字符串都会产生一个临时对象,而在C++中,这些临时对象都是const类型的.
+	
+```
