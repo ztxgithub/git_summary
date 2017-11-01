@@ -57,7 +57,8 @@
                 具体解决方法可以在MySQL中运行show full processlist命令查看线程等待情况,把其中的语句拿出来进行优化.
                 
     场景三：访问第三方api接口
-              如果我们访问第三方http api,例如接口的响应时间很慢，readTimeout=2000ms，在高并发的情况下，很多线程都被中断等待api的网络IO。导致cpu使用率很低，但是load很高。
+              如果我们访问第三方http api,例如接口的响应时间很慢，readTimeout=2000ms，
+              在高并发的情况下，很多线程都被中断等待api的网络IO。导致cpu使用率很低，但是load很高。
     		
 ```
 
