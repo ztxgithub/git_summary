@@ -128,7 +128,64 @@
      
     3.修改/yytd/emqttd/etc/plugins/emq_dashboard.conf 
         dashboard.listener.http = 18083
+   		
+```
+
+## 参数配置
+
+- Linux 操作系统参数
+
+``` shell
+
+    # 2M - 系统所有进程可打开的文件数量:
+
+        sysctl -w fs.file-max=2097152
+        sysctl -w fs.nr_open=2097152
+        
+    # 1M - 系统允许当前进程打开的文件数量:
+
+        ulimit -n 1048576
+   		
+```
+
+- TCP协议栈参数
+
+``` shell
+
+    # backlog - Socket 监听队列长度:
+    sysctl -w net.core.somaxconn=65536
+   		
+```
+
+- Erlang 虚拟机参数
+
+``` shell
+    ## Erlang Process Limit
+    node.process_limit = 2097152
+
+    ## Sets the maximum number of simultaneously existing ports for this system
+    node.max_ports = 1048576
+   		
+```
+
+- EMQ 最大允许连接数
+
+``` shell
+
+    ## Size of acceptor pool
+    mqtt.listener.tcp.acceptors = 64
     
-   
-			
+    ## Maximum number of concurrent clients
+    mqtt.listener.tcp.max_clients = 10000
+   		
+```
+
+## 部署架构
+
+``` shell
+
+    基本部署结构:
+        多个mqtt客户端->LB(负载均衡器)->多个mqtt服务器
+        
+  		
 ```
