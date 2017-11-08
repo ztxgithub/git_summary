@@ -160,10 +160,12 @@
 - Erlang 虚拟机参数
 
 ``` shell
-    ## Erlang Process Limit
+    ## Erlang Process Limit Erlang 虚拟机允许的最大进程数，EMQ 一个连接会消耗2个Erlang进程
     node.process_limit = 2097152
 
     ## Sets the maximum number of simultaneously existing ports for this system
+    ## Erlang 虚拟机允许的最大 Port 数量，EMQ 一个连接消耗1个 Port
+    ## Erlang 的 Port 非 TCP 端口，可以理解为文件句柄。
     node.max_ports = 1048576
    		
 ```
@@ -172,13 +174,20 @@
 
 ``` shell
 
-    ## Size of acceptor pool
+    ## Size of acceptor pool 
     mqtt.listener.tcp.acceptors = 64
     
     ## Maximum number of concurrent clients
     mqtt.listener.tcp.max_clients = 10000
    		
 ```
+
+- 客户端连接闲置时间
+  
+  设置 MQTT 客户端最大允许闲置时间(Socket 连接建立，但未收到 CONNECT 报文):
+  
+  ## Client Idle Timeout (Second)
+  mqtt.client.idle_timeout = 30
 
 ## 部署架构
 
