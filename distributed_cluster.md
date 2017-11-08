@@ -193,17 +193,8 @@
             第三阶段：这时网络服务已经成为主流产品,此时随着公司知名度也进一步扩展，相关人才的能力以及数量也随之提升,
                     这时无论从开发适合自身产品的定制,以及降低成本来讲开源的LVS,已经成为首选，这时LVS会成为主流.
                     
-        最终形成比较理想的基本架构为：Array/LVS — Nginx/Haproxy — Squid/Varnish — AppServer。
-
-
-
-               
-            
-        
-
-        
-
-                	
+        最终形成比较理想的基本架构为：Array/LVS — Nginx/Haproxy — Squid/Varnish — AppServer.
+                     	
 ```
 
 ## 反向代理
