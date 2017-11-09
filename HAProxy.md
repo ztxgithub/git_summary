@@ -195,6 +195,32 @@
              # 如果满足策略static_web时，就将请求交予backend static_server
              use_backend static_server if static_web
              
+        backend php_server #定义一个名为php_server的后端部分，frontend定义的请求会到到这里处理
+        
+             # 设置为http模式
+             mode http
+            
+            # 设置haproxy的调度算法为源地址hash
+             balance source
+             
+            # 允许向cookie插入SERVERID，每台服务器的SERVERID可在下面使用cookie关键字定义
+             cookie SERVERID
+             
+            # 开启对后端服务器的健康检测，通过GET /test/index.php来判断后端服务器的健康情况
+             option httpchk GET /test/index.php
+            
+            # server语法：server [:port] [param*]
+             使用server关键字来设置后端服务器；为后端服务器所设置的内部名称[php_server_1],该名称将会呈现在日志或警报中、
+               后端服务器的IP地址,支持端口映射[10.12.25.68:80]、指定该服务器的SERVERID为1[cookie 1],接受健康监测[check],
+               监测的间隔时长,单位毫秒[inter 2000]、监测正常多少次后被认为后端服务器是可用的[rise 3]、
+               监测失败多少次后被认为后端服务器是不可用的[fall 3]、分发的权重[weight 2]、最为备份用的后端服务器，
+               当正常的服务器全部都宕机后，才会启用备份服务器[backup]
+             server php_server_1 10.12.25.68:80 cookie 1 check inter 2000 rise 3 fall 3 weight 2
+             server php_server_2 10.12.25.72:80 cookie 2 check inter 2000 rise 3 fall 3 weight 1
+             server php_server_bak 10.12.25.79:80 cookie 3 check inter 1500 rise 3 fall 3 backup
+             
+          
+             
              
  
                 	
