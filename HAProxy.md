@@ -81,6 +81,84 @@
         
             # 定义haproxy的pid的具体位置
              pidfile /var/run/haproxy.pid 
+             
+             
+             
+      
+        defaults # 默认部分的定义
+            # mode语法：mode {http|tcp|health}  http是七层模式,tcp是四层模式,health是健康检测
+             mode http
+         
+            # 使用127.0.0.1上的syslog服务的local3设备记录错误信息
+             log 127.0.0.1 local3 err
+           
+            # 定义连接后端服务器的失败重连次数,连接失败次数超过此值后将会将对应后端服务器标记为不可用
+             retries 3
+
+            # 启用日志记录HTTP请求，默认haproxy日志记录是不记录HTTP请求的,只记录“时间[Jan 5 13:23:46] 
+              日志服务器[127.0.0.1] 实例名已经pid[haproxy[25218]] 信息[Proxy http_80_in stopped.]”
+             option httplog
+
+            # 当使用了cookie时,haproxy将其请求的后端服务器的serverID插入到cookie中,以保证会话的SESSION持久性；
+              此时如果后端的服务器宕掉了,客户端的cookie是不会刷新的,如果设置此参数,会将客户的请求强制定向到另外一个
+              后端server上,以保证服务的正常
+             option redispatch
+
+            # 当服务器负载很高的时候,自动结束掉当前队列处理比较久的链接
+             option abortonclose
+             
+            # 启用该项，日志中将不会记录空连接。所谓空连接就是在上游的负载均衡器或者监控系统为了探测该服务是否存活可用时,
+              需要定期的连接或者获取某一固定的组件或页面,或者探测扫描端口是否在监听或开放等动作被称为空连接；
+              如果该服务上游没有其他的负载均衡器的话，建议不要使用该参数，因为互联网上的恶意扫描或其他动作就不会被记录下来
+             option dontlognull
+
+             # 使用该参数,每处理完一个request时,haproxy都会去检查http头中的Connection的值,如果该值不是close,
+             haproxy将其***，如果该值为空将会添加为：Connection: close.使每个客户端和服务器端在完成一次传输后都会主动
+             关闭TCP连接。与该参数类似的另外一个参数是“option forceclose”,该参数的作用是强制关闭对外的服务通道
+             因为有的服务器端收到Connection: close时,也不会自动关闭TCP连接,如果客户端也不关闭,连接就会一直处于打开,
+             直到超时.
+             option httpclose
+
+             # 设置成功连接到一台服务器的最长等待时间,默认单位是毫秒,新版本的haproxy使用timeout connect替代,
+                该参数向后兼容
+             contimeout 5000 或则 timeout connect 50s
+
+             # 设置连接客户端发送数据时的成功连接最长等待时间,默认单位是毫秒，新版本haproxy使用,timeout client替代.
+               该参数向后兼容
+             clitimeout 3000 或则 timeout client 60s
+
+             # 设置服务器端回应客户度数据发送的最长等待时间,默认单位是毫秒,新版本haproxy使用timeout server替代.
+                该参数向后兼容   
+             srvtimeout 3000 或则 timeout server 50s
+             
+        listen status 
+             # 定义一个名为status的部分,可以在listen指令指定的区域中定义匹配规则和后端服务器ip，
+             #相当于需要在其中配置frontend,backend的功能。一般做tcp转发比较合适,不用太多的规则匹配.
+             
+             # 定义监听的套接字
+             bind 0.0.0.0:1080
+             
+              # 定义为HTTP模式
+             mode http
             
+            # 继承global中log的定义
+             log global
+             
+            # stats是haproxy的一个统计页面的套接字,该参数设置统计页面的刷新间隔为30s
+             stats refresh 30s
+             
+            # 设置统计页面的uri为/admin?stats
+             stats uri /admin?stats
+             
+            # 设置统计页面认证时的提示内容
+             stats realm Private lands
+             
+            # 设置统计页面认证的用户和密码，如果要设置多个，另起一行写入即可 
+             stats auth admin:password
+             
+            # 隐藏统计页面上的haproxy版本信息 
+             stats hide-version
+             
+ 
                 	
 ```
