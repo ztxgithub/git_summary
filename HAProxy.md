@@ -115,6 +115,7 @@
              
             # 启用该项，日志中将不会记录空连接。所谓空连接就是在上游的负载均衡器或者监控系统为了探测该服务是否存活可用时,
               需要定期的连接或者获取某一固定的组件或页面,或者探测扫描端口是否在监听或开放等动作被称为空连接；
+              也就是不记录健康检查日志信息
               如果该服务上游没有其他的负载均衡器的话，建议不要使用该参数，因为互联网上的恶意扫描或其他动作就不会被记录下来
                 option dontlognull
 
@@ -150,18 +151,20 @@
                     mode http
             
             # 继承global中log的定义
-                log global
+                    log global
              
-            # stats是haproxy的一个统计页面的套接字,该参数设置统计页面的刷新间隔为30s
-                stats refresh 30s
+            #  stats refresh [time]：监控数据刷新周期
+               stats是haproxy的一个统计页面的套接字,该参数设置统计页面的刷新间隔为30s
+                    stats refresh 30s
              
-            # 设置统计页面的uri为/admin?stats
+            # stats uri [uri] 设置统计页面的uri为/admin?stats
                 stats uri /admin?stats
              
             # 设置统计页面认证时的提示内容
                 stats realm Private lands
              
-            # 设置统计页面认证的用户和密码，如果要设置多个，另起一行写入即可 
+            # stats auth [user]:[password]：监控页面的认证用户名密码
+              设置统计页面认证的用户和密码，如果要设置多个，另起一行写入即可 
                 stats auth admin:password
              
             # 隐藏统计页面上的haproxy版本信息 
@@ -172,15 +175,38 @@
              # http_80_in定义前端部分监听的套接字
                     bind 0.0.0.0:80
              
-             # 定义为HTTP模式
+             # mode: 此frontend的工作模式,主要有http和tcp两种,对应L7和L4两种负载均衡模式
+               定义为HTTP模式
                     mode http
              
-             # 继承global中log的定义
+             # log 同global域的log配置,仅应用于此frontend。如果要沿用global域的log配置
                     log global
+                    
+             # maxconn：同global域的maxconn设置方式一样,仅应用于此frontend
              
              # 启用X-Forwarded-For,在requests头部插入客户端IP发送给后端的server,使后端server获取到客户端的真实IP
                     option forwardfor
-           
+                    
+             # 以KeepAlive模式提供服务
+                    option http-keep-alive
+                    
+             # 与http-keep-alive对应,关闭KeepAlive模式,如果HAProxy主要提供的是接口类型的服务,
+               可以考虑采用httpclose模式,以节省连接数资源.但如果这样做了,接口的调用端将不能使用HTTP连接池
+                    option httpclose
+                    
+             # 开启httplog,HAProxy将会以类似Apache HTTP或Nginx的格式来记录请求日志
+                    option httplog
+                    
+             # 开启tcplog,HAProxy将会在日志中记录数据包在传输层的更多属性
+                    option tcplog
+                    
+             # timeout client [time]：指连接创建后，客户端持续不发送数据的超时时间
+             
+             # timeout http-request [time]：指连接创建后，客户端没能发送完整HTTP请求的超时时间,主要用于防止DoS类攻击,
+               即创建连接后,以非常缓慢的速度发送请求包,导致HAProxy连接被长时间占用
+               
+             
+                           
              #acl [name] [criterion] [flags] [operator] [value]：定义一条ACL,
              ACL是根据数据包的指定属性以指定表达式计算出的true/false值.如"acl url_ms1 path_beg -i /ms1/"
              定义了名为url_ms1的ACL,该ACL在请求uri以/ms1/开头（忽略大小写）时为true
@@ -197,6 +223,7 @@
              
                     acl static_web path_end .gif .png .jpg .css .js .jpeg
             
+             # use_backend [backend] if|unless [acl]：与ACL搭配使用,在满足/不满足ACL时转发至指定的backend
              # 如果满足策略static_down时，就将请求交予backend php_server
                     use_backend php_server if static_down
             
@@ -205,9 +232,14 @@
              
              # 如果满足策略static_web时，就将请求交予backend static_server
                     use_backend static_server if static_web
-             
-             
-             #default_backend [name]：frontend对应的默认backend
+                    
+             # acl后面是规则名称,-i为忽略大小写，后面跟的是要访问的域名，如果访问www.abc.com这个域名，就触发web规则
+                    acl web hdr(host) -i www.abc.com  
+                    
+             #如果上面定义的web规则被触发，即访问www.abc.com，就将请求分发到php_server这个作用域。
+                    use_backend php_server if web   
+                    
+             #default_backend [name]：frontend对应的默认backend,不满足acl规则响应backend的默认页面
               请求定向至后端服务群php_server
                     default_backend php_server 
              
@@ -223,26 +255,31 @@
         5.backend php_server #定义一个名为php_server的后端部分，frontend定义的请求会到到这里处理
         
              # 设置为http模式
-             mode http
+                    mode http
             
             # 设置haproxy的调度算法为源地址hash
-             balance source
+                    balance source
              
             # 允许向cookie插入SERVERID，每台服务器的SERVERID可在下面使用cookie关键字定义
-             cookie SERVERID
+                    cookie SERVERID
              
-            # 开启对后端服务器的健康检测，通过GET /test/index.php来判断后端服务器的健康情况
-             option httpchk GET /test/index.php
+            # option httpchk [METHOD] [URL] [VERSION]：定义以http方式进行的健康检查策略 
+              开启对后端服务器的健康检测，通过GET /test/index.php来判断后端服务器的健康情况
+                     option httpchk GET /test/index.php
             
             # server语法：server [:port] [param*]
              使用server关键字来设置后端服务器；为后端服务器所设置的内部名称[php_server_1],该名称将会呈现在日志或警报中、
                后端服务器的IP地址,支持端口映射[10.12.25.68:80]、指定该服务器的SERVERID为1[cookie 1],接受健康监测[check],
                监测的间隔时长,单位毫秒[inter 2000]、监测正常多少次后被认为后端服务器是可用的[rise 3]、
-               监测失败多少次后被认为后端服务器是不可用的[fall 3]、分发的权重[weight 2]、最为备份用的后端服务器，
+               监测失败多少次后被认为后端服务器是不可用的[fall 3]、最为备份用的后端服务器，
                当正常的服务器全部都宕机后，才会启用备份服务器[backup],后端服务器最大连接数 [maxconn 3000]
-             server php_server_1 10.12.25.68:80 cookie 1 check inter 2000 rise 3 fall 3 weight 2
-             server php_server_2 10.12.25.72:80 cookie 2 check inter 2000 rise 3 fall 3 weight 1
-             server php_server_bak 10.12.25.79:80 cookie 3 check inter 1500 rise 3 fall 3 backup
+               maxqueue：等待队列的长度，当队列已满后，后续请求将会发至此backend下的其他server，默认为0，即无限
+               分发的权重[weight 2] weight：server的权重,0-256,权重越大,分给这个server的请求就越多.
+               weight为0的server将不会被分配任何新的连接,所有server默认weight为1
+               
+                    server php_server_1 10.12.25.68:80 cookie 1 check inter 2000 rise 3 fall 3 weight 2
+                    server php_server_2 10.12.25.72:80 cookie 2 check inter 2000 rise 3 fall 3 weight 1
+                    server php_server_bak 10.12.25.79:80 cookie 3 check inter 1500 rise 3 fall 3 backup
                           	
 ```
 
@@ -279,3 +316,46 @@
             server web2 192.168.1.2:80 cookie server02 check inter 500 rise 1 fall 2 
 
 ```
+
+## ACL 规则
+```shell
+    ########ACL策略定义#########################
+    1、#如果请求的域名满足正则表达式返回true -i是忽略大小写
+    acl denali_policy hdr_reg(host) -i ^(www.inbank.com|image.inbank.com)$
+    
+    2、#如果请求域名满足www.inbank.com 返回 true -i是忽略大小写
+    acl tm_policy hdr_dom(host) -i www.inbank.com
+    
+    3、#在请求url中包含sip_apiname=，则此控制策略返回true,否则为false
+    acl invalid_req url_sub -i sip_apiname=#定义一个名为invalid_req的策略
+    
+    4、#在请求url中存在timetask作为部分地址路径，则此控制策略返回true,否则返回false
+    acl timetask_req url_dir -i timetask
+    
+    5、#当请求的header中Content-length等于0时返回 true
+    acl missing_cl hdr_cnt(Content-length) eq 0
+    
+    #########acl策略匹配相应###################
+    1、#当请求中header中Content-length等于0 阻止请求返回403
+    block if missing_cl
+    
+    2、#block表示阻止请求，返回403错误，当前表示如果不满足策略invalid_req，或者满足策略timetask_req，则阻止请求。
+    block if !invalid_req || timetask_req
+    
+    3、#当满足denali_policy的策略时使用denali_server的backend
+    use_backend denali_server if denali_policy
+    
+    4、#当满足tm_policy的策略时使用tm_server的backend
+    use_backend tm_server if tm_policy
+    
+    5、#reqisetbe关键字定义，根据定义的关键字选择backend
+    reqisetbe ^Host:\ img dynamic
+    reqisetbe ^[^\ ]*\ /(img|css)/ dynamic
+    reqisetbe ^[^\ ]*\ /admin/stats stats
+    
+    6、#以上都不满足的时候使用默认mms_server的backend
+    default_backend mms
+
+```
+
+[参考资料](http://www.jianshu.com/p/c9f6d55288c0)
