@@ -159,6 +159,43 @@
             # 隐藏统计页面上的haproxy版本信息 
              stats hide-version
              
+        frontend http_80_in    # 定义一个名为http_80_in的前端部分,haproxy会监听bind的端口
+        
+             # http_80_in定义前端部分监听的套接字
+             bind 0.0.0.0:80
+             
+             # 定义为HTTP模式
+             mode http
+             
+             # 继承global中log的定义
+             log global
+             
+             # 启用X-Forwarded-For,在requests头部插入客户端IP发送给后端的server,使后端server获取到客户端的真实IP
+             option forwardfor
+           
+             # 定义一个名叫static_down的acl,当backend static_sever中存活机器数小于1时会被匹配到
+             acl static_down nbsrv(static_server) lt 1
+             
+             #acl php_web path_end .php 定义一个名叫php_web的acl,当请求的url末尾是以.php结尾的,将会被匹配到,下面两种写
+              法任选其一
+             acl php_web url_reg /*.php$
+             
+             # 定义一个名叫static_web的acl，当请求的url末尾是以.css、.jpg、.png、.jpeg、.js、.gif
+               结尾的,将会被匹配到，下面两种写法任选其一
+             acl static_web url_reg /*.(css|jpg|png|jpeg|js|gif)$
+             
+             acl static_web path_end .gif .png .jpg .css .js .jpeg
+            
+             # 如果满足策略static_down时，就将请求交予backend php_server
+             use_backend php_server if static_down
+            
+             # 如果满足策略php_web时，就将请求交予backend php_server
+             use_backend php_server if php_web
+             
+             # 如果满足策略static_web时，就将请求交予backend static_server
+             use_backend static_server if static_web
+             
+             
  
                 	
 ```
