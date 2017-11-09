@@ -184,10 +184,13 @@
 
 - 客户端连接闲置时间
   
-  设置 MQTT 客户端最大允许闲置时间(Socket 连接建立，但未收到 CONNECT 报文):
+``` shell
+  设置 MQTT 客户端最大允许闲置时间(Socket 连接建立,但未收到 CONNECT 报文):
   
   ## Client Idle Timeout (Second)
   mqtt.client.idle_timeout = 30
+
+```
 
 ## 部署架构
 
