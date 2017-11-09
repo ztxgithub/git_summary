@@ -140,6 +140,10 @@
              
              #TCP模式下，应将timeout client和timeout server设置为一样的值，以防止出现问题
              
+             # timeout check [time]：默认情况下,健康检查的连接+响应超时时间为server命令中指定的inter值,
+               如果配置了timeout check,HAProxy会以inter作为健康检查请求的连接超时时间,
+               并以timeout check的值作为健康检查请求的响应超时时间
+             
         3.listen status 
              # 定义一个名为status的部分,可以在listen指令指定的区域中定义匹配规则和后端服务器ip，
              #相当于需要在其中配置frontend,backend的功能。一般做tcp转发比较合适,不用太多的规则匹配.
@@ -273,7 +277,7 @@
                监测的间隔时长,单位毫秒[inter 2000]、监测正常多少次后被认为后端服务器是可用的[rise 3]、
                监测失败多少次后被认为后端服务器是不可用的[fall 3]、最为备份用的后端服务器，
                当正常的服务器全部都宕机后，才会启用备份服务器[backup],后端服务器最大连接数 [maxconn 3000]
-               maxqueue：等待队列的长度，当队列已满后，后续请求将会发至此backend下的其他server，默认为0，即无限
+               maxqueue：等待队列的长度，当队列已满后，后续请求将会发至此backend下的其他server，默认为0,即无限
                分发的权重[weight 2] weight：server的权重,0-256,权重越大,分给这个server的请求就越多.
                weight为0的server将不会被分配任何新的连接,所有server默认weight为1
                
