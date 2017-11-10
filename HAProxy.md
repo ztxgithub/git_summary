@@ -363,3 +363,61 @@
 ```
 
 [参考资料](http://www.jianshu.com/p/c9f6d55288c0)
+
+## 添加日志
+
+```shell
+    
+    HAProxy不会直接输出文件日志,所以我们要借助Linux的rsyslog来让HAProxy输出日志
+    1. 修改haproxy.cfg
+    
+            global
+                ...
+                log 127.0.0.1 local0 info
+                log 127.0.0.1 local1 warning
+                ...
+            
+            defaults
+                ...
+                log global
+                ...
+                
+        将info级（及以上）的日志推送到rsyslog的local0接口,将warn级（及以上）的日志推送到rsyslog的local1接口,
+        并且所有frontend都默认使用global中的日志配置.
+        注：info级的日志会打印HAProxy处理的每一条请求,会占用很大的磁盘空间,在生产环境中,建议将日志级别调整为notice
+        
+    2. 为rsyslog添加haproxy日志的配置
+          vi /etc/rsyslog.d/haproxy.conf
+            内容如下:
+                $ModLoad imudp
+                $UDPServerRun 514
+                $FileCreateMode 0644  #日志文件的权限
+                $FileOwner ha  #日志文件的owner
+                local0.*     /var/log/haproxy.log  #local0接口对应的日志输出文件
+                local1.*     /var/log/haproxy_warn.log  #local1接口对应的日志输出文件
+                
+    3.修改rsyslog的启动参数
+        vi /etc/sysconfig/rsyslog
+        
+            # Options for rsyslogd
+            # Syslogd options are deprecated since rsyslog v3.
+            # If you want to use them, switch to compatibility mode 2 by "-c 2"
+            # See rsyslogd(8) for more details
+            SYSLOGD_OPTIONS="-c 2 -r -m 0"
+            
+    4.重启rsyslog和HAProxy
+            service rsyslog restart
+            service haproxy restart
+            
+            此时就应该能在/var/log目录下看到haproxy的日志文件了
+            
+    5.用logrotate进行日志切分
+        通过rsyslog输出的日志是不会进行切分的,所以需要依靠Linux提供的logrotate来进行切分工作
+        
+        使用root用户,创建haproxy日志切分配置文件
+            mkdir /root/logrotate
+            vi /root/logrotate/haproxy
+            
+    6.并配置在crontab中运行
+        0 0 * * * /usr/sbin/logrotate /root/logrotate/haproxy
+```

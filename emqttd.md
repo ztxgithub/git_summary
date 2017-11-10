@@ -131,6 +131,19 @@
    		
 ```
 
+## emqttd 集群
+
+``` shell
+
+    1.	用supervisor开启emqttd时名字一定是node.name = emqttd@10.0.6.141
+                node.name = emqttd2@127.0.0.1  可以
+                node.name = emqttd2@10.0.6.141  不可以
+    2.  当emq.conf改了node.name之后,要重新将节点加到集群中.
+            > supervisorctl start emqttd  (不行再考虑用这个/yytd/emqttd/bin/emqttd start)
+            > /yytd/emqttd/bin/emqttd_ctl cluster join emqttd@192.168.0.8
+   		
+```
+
 ## 参数配置
 
 - Linux 操作系统参数
