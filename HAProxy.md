@@ -131,6 +131,7 @@
                     contimeout 5000 或则 timeout connect 50s
 
              # 设置连接客户端发送数据时的成功连接最长等待时间,默认单位是毫秒，新版本haproxy使用,timeout client替代.
+                time以内没有进行通讯，tcp 连接将重置
                该参数向后兼容
                     clitimeout 3000 或则 timeout client 60s
 
