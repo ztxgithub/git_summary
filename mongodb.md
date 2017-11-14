@@ -600,6 +600,14 @@
 	
 ```
 
+- 从数据库中取时间
+
+```c++
+
+    long long warn_db_time = result_view["tReport"].get_date().to_int64()/1000;
+	
+```
+
 # Storage (mongod 的存储方式)
 
 ## WiredTiger Storage Engine
