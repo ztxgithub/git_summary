@@ -411,3 +411,9 @@
 ```
 
 [参考资料](http://blog.51yip.com/linux/1404.html)
+
+- 查看tcp连接数
+
+```shell
+    > netstat -an | grep "ESTABLISHED" | wc -l
+```

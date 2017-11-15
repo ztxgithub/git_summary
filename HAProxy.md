@@ -422,3 +422,31 @@
     6.并配置在crontab中运行
         0 0 * * * /usr/sbin/logrotate /root/logrotate/haproxy
 ```
+
+## 可用的haproxy.cfg
+
+```shell
+    
+    global
+            log 127.0.0.1 local0 info
+            log 127.0.0.1 local1 warning
+            maxconn 60000
+    defaults
+            log global
+            timeout connect 1000s      ==这些timeout时间不能太短
+            timeout client 900s
+            timeout server 900s
+    frontend mqtt_proxy
+            bind 192.168.0.4:1111
+            mode tcp
+            maxconn 60000              == 这个很重要,决定了能接多少个FSU数量
+            default_backend mqtt_agent
+    backend mqtt_agent
+            mode tcp
+            option tcplog
+            option persist
+            balance roundrobin
+            server mqtt_01 192.168.0.8:1883 maxconn 5000 check  weight 1
+            server mqtt_02 192.168.0.10:1883 maxconn 5000 check  weight 1
+
+```
