@@ -159,9 +159,46 @@
         不要用Having,因为其要遍历所有的记录.性能差得不能再差.
 ```
 
+## 服务器程序开发
+
+``` shell
+    在Linux上编写高并发TCP连接应用程序时，必须使用合适的网络I/O技术和I/O事件分派机制。
+    可用的I/O技术有同步I/O,非阻塞式同步I/O(也称反应式I/O),以及异步I/O.在高TCP并发的情形下,如果使用同步I/O,
+    这会严重阻塞程序的运转,除非为每个TCP连接的I/O创建一个线程.过多的线程又会因系统对线程的调度造成巨大开销.
+    在高TCP并发的情形下使用同步 I/O是不可取的,这时可以考虑使用非阻塞式同步I/O或异步I/O.
+    非阻塞式同步I/O的技术包括使用select(),poll(),epoll等机制.
+    异步I/O的技术就是使用AIO.
+    
+    从I/O事件分派机制来看,使用select()是不合适的,因为它所支持的并发连接数有限(通常在1024个以内).
+    如果考虑性能,poll()也是不合适的,尽管它可以支持的较高的TCP并发数,但是由于其采用“轮询”机制,当并发数较高时,其运行效率相当低,
+    并可能存在I/O事件分派不均,导致部分TCP连接上的I/O出现“饥饿”现象.
+    而如果使用epoll或AIO，则没有上述问题
+    综上所述,在开发支持高并发TCP连接的Linux应用程序时，应尽量使用epoll或AIO技术来实现并发的TCP连接上的I/O控制,
+    这将为提升程序对高并发TCP连接的支持提供有效的I/O保证.
+```
+
 ## 系统网络TCP,socket配置
 
 ``` shell
     1.修改用户进程可打开文件数限制(ulimit -n 相关信息)
     2.查看本地端口范围(net.ipv4.ip_local_port_range)
+    
+    net.ipv4.ip_local_port_range = 1024 65536
+    net.core.rmem_max=16777216
+    net.core.wmem_max=16777216
+    net.ipv4.tcp_rmem=4096 87380 16777216
+    net.ipv4.tcp_wmem=4096 65536 16777216
+    net.ipv4.tcp_fin_timeout = 10
+    net.ipv4.tcp_tw_recycle = 1
+    net.ipv4.tcp_timestamps = 0
+    net.ipv4.tcp_window_scaling = 0
+    net.ipv4.tcp_sack = 0
+    net.core.netdev_max_backlog = 30000
+    net.core.somaxconn = 262144
+    net.ipv4.tcp_syncookies = 1
+    net.ipv4.tcp_max_orphans = 32768
+    net.ipv4.tcp_max_syn_backlog = 8192
+    net.ipv4.tcp_synack_retries = 2
+    net.ipv4.tcp_syn_retries = 2
 ```
+[参考资料](https://tonydeng.github.io/2015/05/25/linux-tcpip-tuning/)

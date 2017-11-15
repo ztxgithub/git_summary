@@ -219,12 +219,14 @@
             
          net.core.rmem_max：(单位字节)
             表示套接字接收缓冲区大小的最大值 ( net.core.rmem_max = 212992  ->208 KB)
+            推荐使用net.core.rmem_max=16777216
           
          net.core.wmem_default：(单位字节)
             表示套接字发送缓冲区大小的缺省值(net.core.wmem_default = 212992 ->208 KB) 
          
          net.core.wmem_max：(单位字节)
             表示套接字发送缓冲区大小的最大值(net.core.wmem_max = 212992 ->208 KB)
+            推荐使用 net.core.wmem_max=16777216
            
          net.ipv4.tcp_tw_reuse(默认是 0)
                 这个参数设置为1,表示允许将TIME-WAIT状态的socket重新用于新的TCP链接.这个对服务器来说很有意义,
@@ -242,6 +244,7 @@
          net.ipv4.tcp_fin_timeout (单位秒)
                 这个参数表示当服务器主动关闭连接时,socket保持在FIN-WAIT-2状态的最大时间,默认是60秒
                 减少处于FIN-WAIT-2连接状态的时间,使系统可以处理更多的连接
+                推荐使用 net.ipv4.tcp_fin_timeout = 10
                 例如:
                     在一个tcp会话过程中,在会话结束时,A首先向B发送一个fin包,在A获得B的ack确认包后,
                     A就进入FIN-WAIT-2状态等待B的fin包,然后A给B发ack确认包.
@@ -260,10 +263,12 @@
          net.ipv4.tcp_rmem
                 (net.ipv4.tcp_rmem =4096 32768 262142)
                 这个参数定义了用于TCP接收滑动窗口的最小值，默认值，最大值
+                推荐使用 net.ipv4.tcp_rmem=4096 87380 16777216
                 
          net.ipv4.tcp_wmem
                 (net.ipv4.tcp_wmem =4096 32768 262142)
                 这个参数定义了用于TCP发送滑动窗口的最小值，默认值，最大值
+                推荐使用 net.ipv4.tcp_wmem=4096 65536 16777216
                 
          net.core.netdev_max_backlog
                 当网卡接收数据包的速度大于内核处理的速度时,会有一个队列保存这些数据包.这个参数表示该队列的最大值
@@ -273,6 +278,8 @@
                 默认值为0,这里设置为1.
                 
          net.ipv4.tcp_max_orphans
+                系统所能处理不属于任何进程的TCP sockets最大数量.假如超过这个数量﹐那么不属于任何进程的连接会被立即reset,
+                并同时显示警告信息
                 表示系统中最多有多少TCP套接字不被关联到任何一个用户文件句柄上.如果超过这里设置的数字,
                 连接就会复位并输出警告信息.这个限制仅仅是为了防止简单的DoS攻击.此值不能太小
          
@@ -287,6 +294,11 @@
                 此参数表示在内核放弃建立连接之前发送SYN包的数量.(主要针对客户端而言,再没有收到服务器SYN+ACK包时,持续发送
                 多少个SYN包)
                 对于一个新建连接,内核要发送多少个 SYN 连接请求才决定放弃.不应该大于255,默认值是5,对应于180秒左右时间.
+                
+         net.core.somaxconn:
+                用来限制监听(LISTEN)队列最大数据包的数量,超过这个数量就会导致链接超时或者触发重传机制
+                web应用中listen函数的backlog默认会给我们内核参数的net.core.somaxconn限制到128,
+                而nginx定义的NGX_LISTEN_BACKLOG默认为511，所以有必要调整这个值。对繁忙的服务器,增加该值有助于网络性能
    
 
          
