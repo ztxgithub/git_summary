@@ -450,3 +450,48 @@
             server mqtt_02 192.168.0.10:1883 maxconn 5000 check  weight 1
 
 ```
+
+## 用supervisord 控制HAProxy的运行
+
+```shell
+    
+    supervisord的配置文件 yytd.conf
+    
+    [program:haproxy]
+    directory = /home/yytd/HAProxy/sbin/
+    command = /home/yytd/HAProxy/sbin/haproxy -f /home/yytd/HAProxy/conf/haproxy.cfg
+    priority = 9
+    autostart = true
+    startsecs = 3
+    autorestart = true
+    startretries = 3
+    user = yytd
+    redirect_stderr = true
+    stdout_logfile_maxbytes = 100MB
+    stdout_logfile_backups = 20
+    stdout_logfile = /yytd/logs/haproxy/haproxy_stdout.log
+    environment = HOME=/home
+    
+    
+    注意:
+        设置好supervisord的最大文件描述符的个数
+        
+        vim /lib/systemd/system/supervisord.service
+        
+        [Unit]
+        Description=Process Monitoring and Control Daemon
+        After=rc-local.service
+        
+        [Service]
+        Type=forking
+        ExecStart=/usr/bin/supervisord -c /etc/supervisord.conf
+        SysVStartPriority=99
+        
+        LimitCORE=infinity
+        LimitNOFILE= 65535
+        LimitNPROC= 65535
+        
+        [Install]
+        WantedBy=multi-user.target
+
+```
