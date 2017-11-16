@@ -82,9 +82,22 @@ mkdir nginx在home目录下创建nginx目录,作为nginx的安装目录.
         # 用于指定虚拟主机的服务端口(listen)
             listen 192.168.0.8:2222
             
-        
-        
-        
-        
-	
+        # 后端服务器连接的超时时间_发起握手等候响应超时时间,默认是60s,超时通常不能超过75秒 
+           proxy_connect_timeout 60
+         
+        #  该指令设置与代理服务器的读超时时间,它决定了nginx会等待多长时间来获得请求的响应,
+            这个时间不是获得整个response的时间,而是两次reading操作的时间,默认60s
+           proxy_read_timeout 60
+           
+        # 说明这个指定设置了发送请求给upstream服务器的超时时间.超时设置不是为了整个发送期间,而是在两次write操作期间.
+          如果超时后,upstream没有收到新的数据,nginx会关闭连接,默认60s
+            proxy_send_timeout 60
+            
+        # 在客户端或代理服务器连接上的两个连续的读取或写入操作之间设置timeout.如果在此时间内没有数据传输,则连接被关闭
+            proxy_timeout 10m
+            
+        # 对应于upstream 的名称    
+            proxy_pass AAA
+           
+           
 ```
