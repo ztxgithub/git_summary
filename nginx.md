@@ -39,7 +39,7 @@ mkdir nginx在home目录下创建nginx目录,作为nginx的安装目录.
 ``` shell
 
     基于http协议:3个部分:main(全局设置),events(nginx工作模式),
-                       http(sever(主机设置),location(URL匹配),upstream(负载均衡服务器设置) 等子配置)
+                       http(sever(主机设置 包含location(URL匹配)子子配置),upstream(负载均衡服务器设置) 等子配置)
                        
     基于tcp协议:3个部分:main(全局设置),events(nginx工作模式),
                       stream(sever(主机设置),upstream(负载均衡服务器设置) 等子配置)
@@ -78,6 +78,11 @@ mkdir nginx在home目录下创建nginx目录,作为nginx的安装目录.
         
         
     server 子模块: 它用来定一个虚拟主机
+    
+        # 用于指定虚拟主机的服务端口(listen)
+            listen 192.168.0.8:2222
+            
+        
         
         
         
