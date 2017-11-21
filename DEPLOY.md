@@ -266,6 +266,14 @@
 
 ```
 
+> ### supervisord 注意事项
+
+```bash
+
+    supervisor还要求管理的程序是非daemon程序,supervisord会帮你把它转成daemon程序
+
+```
+
 > ### supeivisor配置各子系统
 
 > #### supeivisor配置emqttd

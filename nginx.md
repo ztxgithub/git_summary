@@ -84,7 +84,14 @@ mkdir nginx在home目录下创建nginx目录,作为nginx的安装目录.
             
         # 后端服务器连接的超时时间_发起握手等候响应超时时间,默认是60s,超时通常不能超过75秒 
            proxy_connect_timeout 60
-         
+            
+        # 在客户端或代理服务器连接上的两个连续的读取或写入操作之间设置timeout.如果在此时间内没有数据传输,则连接被关闭
+            proxy_timeout 10m
+            
+        # 对应于upstream 的名称    
+            proxy_pass AAA
+            
+       http协议特有的
         #  该指令设置与代理服务器的读超时时间,它决定了nginx会等待多长时间来获得请求的响应,
             这个时间不是获得整个response的时间,而是两次reading操作的时间,默认60s
            proxy_read_timeout 60
@@ -93,15 +100,10 @@ mkdir nginx在home目录下创建nginx目录,作为nginx的安装目录.
           如果超时后,upstream没有收到新的数据,nginx会关闭连接,默认60s
             proxy_send_timeout 60
             
-        # 在客户端或代理服务器连接上的两个连续的读取或写入操作之间设置timeout.如果在此时间内没有数据传输,则连接被关闭
-            proxy_timeout 10m
-            
-        # 对应于upstream 的名称    
-            proxy_pass AAA
-            
             
     upstram 模块: 负载均衡模块,通过一个简单的调度算法来实现客户端IP到后端服务器的负载均衡
     
+        适用于http协议:
         Nginx的负载均衡模块目前支持4种调度算法:
         
             1.weight 轮询（默认）
@@ -132,6 +134,17 @@ mkdir nginx在home目录下创建nginx目录,作为nginx的安装目录.
             server 192.168.12.3:8080  max_fails=3  fail_timeout=20s;
             server 192.168.12.4:8080;
         }
+        
+        适用于tcp协议:
+            tcp也支持几种负载均衡方式 round-robin, least_conn , hash等
+            
+                upstream stream_backend {
+                     zone tcp_servers 64k;
+                    hash $remote_addr; // hash $remote_addr consistent (consistent指定一致性哈希算法)
+                    server 192.168.0.3:1883 max_fails=2 fail_timeout=30s max_conns=5000; 在这里添加要代理的mqtt
+                    server 10.0.0.250:1883 max_fails=2 fail_timeout=30s;    
+            }
+
            
            
 ```
