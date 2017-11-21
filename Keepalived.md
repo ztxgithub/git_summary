@@ -3,6 +3,12 @@
 ## Keepalived 基本原理
 
 ``` shell
+
+     KeepAlived是一个高可用方案,通过VIP(即虚拟IP)和心跳检测来实现高可用.其原理是存在一组（两台）服务器,分别赋予Master,Backup两个角色,
+     默认情况下Master会绑定VIP到自己的网卡上,对外提供服务.Master,Backup会在一定的时间间隔向对方发送心跳数据包来检测对方的状态,
+     这个时间间隔一般为2秒钟,如果Backup发现Master宕机,那么Backup会发送ARP包到网关,把VIP绑定到自己的网卡,此时Backup对外提供服务,
+     实现自动化的故障转移,当Master恢复的时候会重新接管服务.
+     
      Keepalived监控A、B上的HAproxy,利用Keepalived的VIP漂移技术,若A、B上的HAprox都工作正常,
      则VIP与优先级别高的服务器（主服务器）绑定,当主服务器当掉时,则与从服务器绑定,而VIP则是暴露给外部访问的ip.	
      	

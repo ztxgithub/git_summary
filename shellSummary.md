@@ -286,6 +286,9 @@
     grep命令是一种强大的文本搜索工具，它能使用正则表达式搜索文本，并把匹 配的行打印出来。
     grep全称是Global Regular Expression Print
     
+    参数:
+        －v sengine：显示不包含sengine的所有行
+        
     没有加任何参数只能使用基本正则表达式,像 ? , +, {3,4}无法使用
     要使用扩展正则表达式--> grep -E "[0-9]{3,4}" filename.txt
 	
@@ -649,6 +652,15 @@
     /etc/bashrc:  这个文件设置系统bash shell相关的东西，对系统内所有用户生效。只要用户运行bash命令，那么这里面的东西就在起作用.
     ~/.bash_profile 是交互式、login 方式进入 bash 运行的，意思是只有用户登录时才会生效。
     ~/.bashrc 是交互式 non-login 方式进入 bash 运行的，用户不一定登录，只要以该用户身份运行命令行就会读取该文件。
+         
+```
+
+### bash 快捷键
+
+``` shell
+    1.ctrl+a: 移到行首（a是首字母）
+    2.ctrl+e: 移到行尾（end）
+    3.ctrl+x: 行首位置和当前位置光标相互切换
          
 ```
 
