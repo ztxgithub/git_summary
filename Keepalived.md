@@ -185,3 +185,12 @@
 ```
 
 [参考资料](http://www.cpper.cn/2016/09/15/architecture/keepalived-for-master-backup/)
+
+## 注意事项
+
+```shell
+    1.通过虚IP无法访问到HAProxy，通过主机 IP 可以访问
+        解决方法：配置 HAProxy 时,bind 的配置,写成了固定IP:PORT的格式,此时HAProxy无法绑定虚拟 IP .
+        将改行配置改成 bind *：port,问题解决
+        
+```
