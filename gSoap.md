@@ -36,8 +36,6 @@
       
     4.还需要
         gsoap目录下的stdsoap2.h和stdsoap2.cpp文件
-     
-     
 ```
 
 ## soap(Simple Object Access Protocol)
@@ -83,7 +81,40 @@
                     http://www.w3.org/2001/12/soap-envelope里面有Envelope的schema的相关定义  
                 (2)soap:encodingStyle:指定了数据元素的类型
                         soap:encodingStyle="http://www.w3.org/2001/12/soap-encoding"
-     
+                        
+        b) Header
+        
+            这个是可选的,如果需要添加Header元素,那么它必须是Envelope的第一个元素。
+            Header的内容并没有严格的限制,我们可以自己添加一些和应用程序相关的内容，但是客户端一定要记得处理这些Header元素,
+            可以加上mustUnderstand强制进行处理.
+            
+        c) Body
+            这个就是请求的主题内容了,请求什么函数,参数是什么类型等等都在这里面指定. 
+            用标签表示一个函数,然后用子元素表示它的参数.
 ```
 
+## WSDL(Web Services Description Language)
 
+## 生成gsoap客户端基本流程
+
+``` shell
+    WSDL是用来描述WebService的,它用XML的格式描述了WebService有哪些方法、参数类型、访问路径等等。
+    我们要使用一个WebService肯定首先要获取它的WSDL(可以是url),对于C/C++来讲,可以用gsoap库
+    
+    一个WSDL文档由四部分组成：
+            1.types
+                指定了WebService用到的所有数据类型
+                
+            2.message
+                指明一个操作所用到的数据类型
+                
+            3.portType
+                指出了这个WebService所有支持的操作，就是说有哪些方法可供调用。
+                
+            4.binding
+            　　soap12:binding元素的transport指明传输协议，这里是http协议。
+            
+            　　operation 指明要暴露给外界调用的操作。
+            
+            　　use属性指定输入输出的编码方式，这里没有指定编码。
+```
