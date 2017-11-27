@@ -495,3 +495,11 @@
         WantedBy=multi-user.target
 
 ```
+
+## 其他
+
+```shell
+    HAProxy如果加上SSL协议可能会增加cpu的负担,不过可以通过HAProxy中的 SSL PassThrough option选项来关闭SSL,但直接关闭SSL
+    不通过HAProxy性能效果更好
+
+```

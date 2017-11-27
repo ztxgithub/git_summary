@@ -249,6 +249,10 @@
 ```bash
 
 	echo_supervisord_conf > /etc/supervisord.conf
+	
+	可以考虑一下 supervisord.conf里 
+	 [supervisord]section:
+          minfds=500000 (设置supervisord管理的各个进程的打开文件描述符数)
 
 ```
 
