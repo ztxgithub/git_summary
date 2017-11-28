@@ -182,9 +182,71 @@
             cburst: 这是ceil令牌桶的大小。HTB 会在令牌（ctokens）还没有到来的情况下提前发送 cburst 个字节的数据。
             
          HTB 规则
-            因为在HTB只有叶子节点会对流量进行整形，所以一个分类下的所有叶子节点的 rate 之和不应该超过这个分类的 ceil。
+            (1) 因为在HTB只有叶子节点会对流量进行整形，所以一个分类下的所有叶子节点的 rate 之和不应该超过这个分类的 ceil。
             通常我们建议将分类的 rate 值设定为其所有子节点的 rate 之和，这样，分类随时都能有剩余的带宽（ceil - rate）分配给子节点。
             在 HTB 中只有叶子节点才会对流量进行整形，数据包只会在叶子节点中被暂存，任何中间节点都不会对流量进行整形，
             中间节点只在租借模型中起作用
+            
+            (2) quantum 仅在当一个节点的速率大于 rate 而小于 ceil 时起作用,quantum的值应该至少设为和MTU 一样大，
+                或者比MUT更大。即使quantum 设置值过小，但一有机会 HTB 就会立即发送一个数据包，这将导致 HTB 无法正确计算带宽消耗，
+                也就无法正确地对流量进行整形
+    
+```
+
+## tc 实践
+
+``` shell
+    1.流量延时
+        > ping cyberciti.biz
+        结果:
+            64 bytes from 104.20.187.5: icmp_seq=2 ttl=50 time=243 ms
+            
+        > tc qdisc add dev eth0 root netem delay 200ms  (延时200ms)
+        
+        > ping cyberciti.biz
+        结果:
+            64 bytes from 104.20.187.5: icmp_seq=2 ttl=50 time=465 ms
+            
+    2.要列出当前规则
+        > tc -s qdisc ls dev eth0
+        
+    3.想删除全部规则
+        > tc qdisc del dev eth0 root
+        
+    4.令牌桶过滤器(TBF)
+        > tc qdisc add dev ppp0 root tbf rate 220kbit latency 50ms burst 1540
+        >tc qdisc add dev eno16780032 root tbf rate 3mbps latency 600s peakrate 4mbps mtu 307200 burst 6144000
+        
+       参数选项:
+            rate表示令牌的产生速率
+            limit/latency
+                limit确定最多有多少数据（字节数）在队列中等待令牌。你也可以通过设置latency来指定这个参数，
+                latency参数确定了一个包在TBF中等待传输的最长等待时间。两者计算决定桶的大小、速率和峰值速率.
+                
+            burst/buffer/maxburst
+                桶的大小，以字节计。这个参数指定了最多可以有多少个令牌能够即刻被使用。通常，管理的带宽越大，需要的缓冲器就越大。
+                在Intel体系上，10Mbit/s的速率需要至少10k字节的缓冲区才能达到期望的速率。
+                如果你的缓冲区太小，就会导致到达的令牌没有地方放（桶满了），这会导致潜在的丢包
+                burst means the maximum amount of bytes that tokens can be available for instantaneously.
+                如果数据包的到达速率与令牌的产生速率一致，即200kbit，则数据不会排队，令牌也不会剩余
+                如果数据包的到达速率小于令牌的产生速率，则令牌会有一定的剩余。
+                如果后续某一会数据包的到达速率超过了令牌的产生速率，则可以一次性的消耗一定量的令牌。
+                burst就是用于限制这“一次性”消耗的令牌的数量的，以字节数为单位。
+                
+            MPU
+                一个零长度的包并不是不耗费带宽。比如以太网，数据帧不会小于64字节。
+                MPU(Minimum Packet Unit，最小分组单元)决定了令牌的最低消耗
+                
+            peakrate（峰值速率）
+                如果有可用的令牌，数据包一旦到来就会立刻被发送出去，就像光速一样。那可能并不是你希望的，
+                特别是你有一个比较大的桶的时候。峰值速率可以用来指定令牌以多快的速度被删除。用书面语言来说，就是：
+                释放一个数据包，然后等待足够的时间后再释放下一个。我们通过计算等待时间来控制峰值速率。
+                例如：UNIX定时器的分辨率是10毫秒，如果平均包长10kb，我们的峰值速率被限制在了1Mbps
+                
+            MTU(Maximum Transmission Unit, 最大传输单元)/minburst
+                但是如果你的常规速率比较高，1Mbps的峰值速率就需要调整。要实现更高的峰值速率，可以在一个时钟周期内发送多个数据包。
+                最有效的办法就是：再创建一个令牌桶！这第二个令牌桶缺省情况下为一个单个的数据包，并非一个真正的桶。
+            
+                要计算峰值速率，用MTU乘以100就行了。(应该说是乘以HZ数，Intel体系上是100，Alpha体系上是1024)
     
 ```
