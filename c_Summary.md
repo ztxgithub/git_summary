@@ -564,9 +564,13 @@
             
     实例一
         获得程序自身的运行路劲: int cnt = readlink("/proc/self/exe", current_absolute_path, MAX_SIZE);
-        
-    
-
 ```
-  
-    
+
+- main主函数 argc 参数的含义
+
+```c
+    > ./sample
+    结果:
+        argc = 1
+        argv[0] = "./sample"
+```
