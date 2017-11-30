@@ -632,3 +632,129 @@
         对应的最后匹配的位置,
         没有找到返回NULL
 ```
+
+- 获取运行程序的当前工作目录绝对路劲dir
+
+```c
+    char *getcwd(char *buf, size_t size);
+    描述:
+        将当前工作目录的绝对路劲拷贝到buf处
+        
+    参数:
+        buf:申请内存空间起始地址
+        size: 内存大小,单位是字节
+        
+    返回值:
+        成功:返回的值等与buf
+        失败:放回NULL
+                ERANGE:参数size大于0,但小于绝对路劲的长度
+                EINVAL: 参数size 等于 0
+                EACCES: 该当前路劲不允许访问
+                
+    注意:
+        传入参数 buf 可以为NULL,那么它就调用了malloc函数,需要我们自己显示的调用free函数,同时也要判断一下返回值,当参数buf为NULL时
+        size可以为0,代表系统自动根据当前工作目录申请合适的大小,最好不要用buf 为NULL
+                
+```
+
+- 打印程序中错误的信息error
+
+```c
+     printf("%s\n", strerror(errno));
+```
+
+## 文件处理函数
+
+- 移动文件的读写位置lseek()
+
+```c
+     off_t lseek(int fd, off_t offset, int whence);
+     
+     描述:
+         每一个已打开的文件都有一个读写位置,当打开文件时通常其读写位置是指向文件开头, 若是以附加的方式打开文件(如O_APPEND), 
+         则读写位置会指向文件尾. 当read()或write()时, 读写位置会随之增加,lseek()便是用来控制该文件的读写位置. 
+         
+     参数:
+         fd:为已打开的文件描述词
+         参数 offset 的含义取决于参数 whence
+            1.whence 是 SEEK_SET, offset: 将文件偏移量设置为offset
+            2.whence 是 SEEK_CUR，文件偏移量将被设置为 cfo(当前文件偏移量) 加上 offset，offset 可以为正也可以为负
+            3.whence 是 SEEK_END，文件偏移量将被设置为文件长度加上 offset，offset 可以为正也可以为负
+            
+      返回值:
+            成功时:返回目前的读写位置, 也就是距离文件开头多少个字节.
+            失败:返回-1, errno 会存放错误代码,strerror(errno)查看错误信息
+            
+     应用:
+        1) 将读写位置移到文件开头时:lseek(int fildes, 0, SEEK_SET);
+        2) 将读写位置移到文件尾时:lseek(int fildes, 0, SEEK_END);
+        3) 想要取得目前文件位置时:lseek(int fildes, 0, SEEK_CUR);
+        
+     常用用途:
+        (1) 得到文件的大小
+               file_size = lseek(int fildes, 0, SEEK_END)
+     
+```
+
+- 读文件里面的内容read()函数
+
+```c
+    ssize_t read(int fd, void *buf, size_t count);
+    
+    描述:
+        read()会把参数fd所指的文件传送count个字节到buf指针所指的内存中,若参数count为0，则read()不会有作用并返回0。
+        此外文件读写位置会随读取到的字节移动.
+        
+    参数:
+        fd:打开的文件描述符
+        buf:内容保存的起始地址
+        count:要读的字节数
+        
+    返回值
+        实际读取到的字节数，
+        返回0，表示已到达文件尾或是无可读取的数据
+        返回-1:读取失败
+                EINTR 此调用被信号所中断.
+                EAGAIN 当使用非阻塞I/O 时(O_NONBLOCK), 若无数据读取则返回此值.
+                EBADF 参数fd 非有效的文件描述词, 或该文件已关闭.
+        
+    注意:
+        如果顺利read()会返回实际读到的字节数，最好能将返回值与参数count作比较，若返回的字节数比要求读取的字节数少，
+        则有可能读到了文件尾、从管道(pipe)或终端机读取，或者是read()被信号中断了读取动作。
+        当有错误发生时则返回-1，错误代码存入errno中，而文件读写位置则无法预期.
+        其中count的值不能超过SSIZE_MAX((2147479552)bytes   
+```
+
+##　字符串操作函数
+
+- 字符串的拷贝赋值strdup()函数
+
+```c
+    char* strdup(const char *str)
+    
+    描述:
+        该函数根据传入参数str,动态的请求内存malloc,并将源字符串进行拷贝,返回指向新分配字符串的指针．
+        
+    参数:
+        src:源字符串,不能为空
+        
+    返回值
+        指向新分配字符串的指针
+        NULL：调用失败
+        
+    注意:
+        在调用前要判断一下传入参数str是否为空,调用完后返回值是否为空,使用完后一定要将其释放内存free() 
+```
+
+- 复制内存内容（可以处理重叠的内存块）memmove()函数
+
+```c
+    void* memmove(void *dest, const void *src, size_t num);
+    
+    描述:
+         memmove()与memcpy()类似都是用来复制src所指的内存内容前num个字节到dest所指的地址上。
+         不同的是，memmove() 更为灵活,当src和dest 所指的内存区域重叠时，memmove() 仍然可以正确的处理
+         
+    返回值
+            指向dest字符串的指针
+```
