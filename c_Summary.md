@@ -633,6 +633,56 @@
      printf("%s\n", strerror(errno));
 ```
 
+- qsort()快速排序
+
+```c
+    void qsort(void *base, size_t nitems, size_t size, int(*comp)(const void * , const void *));
+    
+    描述：
+        升序：
+        int cmp(const void *a, const void *b)
+        如果a > b，返回>0
+        如果a == b, 返回0
+        如果a < b，返回<0
+        
+        降序相反,a和b对调一下
+        
+    参数：
+        base：排序的数组起始地址
+        nitems：数组中的元素数目
+        size：每个数组元素占用内存空间，可使用sizeof获得
+```
+
+- 二分查找 
+
+```c
+    void *bsearch(const void *key, const void *base, size_t nitems, size_t size,
+                  int (*compar)(const void *, const void *))
+    
+    描述：
+        升序：
+        int cmp(const void *a, const void *b)
+        如果a > b，返回>0
+        如果a == b, 返回0
+        如果a < b，返回<0
+        
+        降序相反,a和b对调一下
+        
+    参数：
+        key: 指向要查找的元素的指针，类型转换为 void*
+        base：排序的数组起始地址
+        nitems：数组中的元素数目
+        size：每个数组元素占用内存空间，可使用sizeof获得
+        
+    返回值：
+        成功：指向数组中匹配元素的指针
+        失败：NULL
+        
+    注意：
+        二分查找时,base数组元素的排序方向(升降序)和compar的实现的升降序要一致
+```
+
+
 ## 文件处理函数
 
 - 移动文件的读写位置lseek()
@@ -724,6 +774,46 @@
             
     实例一
         获得程序自身的运行路劲: int cnt = readlink("/proc/self/exe", current_absolute_path, MAX_SIZE);
+```
+
+- 获取文件状态 stat()函数
+   
+```c
+
+    struct stat
+    {
+        dev_t st_dev; //device 文件的设备编号
+        ino_t st_ino; //inode 文件的i-node
+        mode_t st_mode; // 文件的类型和存取的权限
+        nlink_t st_nlink; //number of hard links 连到该文件的硬连接数目, 刚建立的文件值为1.
+        uid_t st_uid; //user ID of owner 文件所有者的用户识别码
+        gid_t st_gid; //group ID of owner 文件所有者的组识别码
+        dev_t st_rdev; //device type 若此文件为装置设备文件, 则为其设备编号
+        off_t st_size; //total size, in bytes 文件大小, 以字节计算
+        unsigned long st_blksize; //blocksize for filesystem I/O 文件系统的I/O 缓冲区大小.
+        unsigned long st_blocks; //number of blocks allocated 占用文件区块的个数, 每一区块大小为512 个字节.
+        time_t st_atime; //time of lastaccess 文件最近一次被存取或被执行的时间, 一般只有在用mknod、utime、read、write 与tructate 时改变.
+        time_t st_mtime; //time of last modification 文件最后一次被修改的时间, 一般只有在用mknod、utime 和write 时才会改变
+        time_t st_ctime; //time of last change i-node 最近一次被更改的时间, 此参数会在文件所有者、组、权限被更改时更新
+    };
+    
+    int stat(const char *file_name, struct stat *buf);
+    
+    描述:
+        stat()用来将参数file_name 所指的文件状态, 复制到参数buf 所指的结构中
+    参数:
+        file_name:文件名
+        buf: 文件状态数据结构
+        
+    返回值:
+        成功:0
+        失败则返回-1, 错误代码存于errno
+        错误代码：
+            printf("%s\n", strerror(errno));
+            
+            
+    实例一
+        S_ISDIR (buf.st_mode) 是否为目录,是放回true
 ```
 
 ##　字符串操作函数
