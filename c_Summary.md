@@ -535,36 +535,6 @@
     所以建议使用temp=realloc(ptr,new_size)。
 ```
 
-- readlink
-   
-```c
-    #include <unistd.h>
-    
-    int readlink(const char *path, char *buf, size_t bufsiz);
-    
-    描述:
-        获取参数path指向的符号连接内容,将其保存到buf中
-    参数:
-        path:源
-        buf: 对应的符号连接内容
-        bufsiz : 传入参数,内容存放的大小
-        
-    返回值:
-        成功:字符串有效的字节数
-        失败则返回-1, 错误代码存于errno
-        错误代码：
-            1、EACCESS 取文件时被拒绝, 权限不够。
-            2、EINVAL 参数bufsiz 为负数。
-            3、EIO I/O 存取错误。
-            4、ELOOP 欲打开的文件有过多符号连接问题。
-            5、ENAMETOOLONG 参数path 的路径名称太长。
-            6、ENOENT 参数path 所指定的文件不存在。
-            7、ENOMEM 核心内存不足。
-            8、ENOTDIR 参数path 路径中的目录存在但却非真正的目录
-            
-    实例一
-        获得程序自身的运行路劲: int cnt = readlink("/proc/self/exe", current_absolute_path, MAX_SIZE);
-```
 
 - main主函数 argc 参数的含义
 
@@ -723,6 +693,37 @@
         则有可能读到了文件尾、从管道(pipe)或终端机读取，或者是read()被信号中断了读取动作。
         当有错误发生时则返回-1，错误代码存入errno中，而文件读写位置则无法预期.
         其中count的值不能超过SSIZE_MAX((2147479552)bytes   
+```
+
+- readlink
+   
+```c
+    #include <unistd.h>
+    
+    int readlink(const char *path, char *buf, size_t bufsiz);
+    
+    描述:
+        获取参数path指向的符号连接内容,将其保存到buf中
+    参数:
+        path:源
+        buf: 对应的符号连接内容
+        bufsiz : 传入参数,内容存放的大小
+        
+    返回值:
+        成功:字符串有效的字节数
+        失败则返回-1, 错误代码存于errno
+        错误代码：
+            1、EACCESS 取文件时被拒绝, 权限不够。
+            2、EINVAL 参数bufsiz 为负数。
+            3、EIO I/O 存取错误。
+            4、ELOOP 欲打开的文件有过多符号连接问题。
+            5、ENAMETOOLONG 参数path 的路径名称太长。
+            6、ENOENT 参数path 所指定的文件不存在。
+            7、ENOMEM 核心内存不足。
+            8、ENOTDIR 参数path 路径中的目录存在但却非真正的目录
+            
+    实例一
+        获得程序自身的运行路劲: int cnt = readlink("/proc/self/exe", current_absolute_path, MAX_SIZE);
 ```
 
 ##　字符串操作函数

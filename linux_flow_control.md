@@ -250,3 +250,20 @@
                 要计算峰值速率，用MTU乘以100就行了。(应该说是乘以HZ数，Intel体系上是100，Alpha体系上是1024)
     
 ```
+
+## 线上环境
+
+``` shell
+     1.tc qdisc add dev eno16780032 root tbf rate 2mbps latency 5s burst 6144000
+     2.tc qdisc add dev eno16780032 root tbf rate 2mbps latency 600s peakrate 3mbps mtu 307200 burst 6144000 （最保险）
+     
+    	tc qdisc add dev eno16780032 root tbf rate 3mbps latency 600s peakrate 4mbps mtu 307200 burst 6144000 可以
+     ..tc qdisc add dev eno16780032 root tbf rate 5mbps latency 800s peakrate 7mbps mtu 307200 burst 6144000   有问题
+        
+     tc qdisc del dev eno16780032 root
+     
+     tc -s qdisc ls dev eno16780032
+     
+      sar -n DEV 1     
+    
+```
