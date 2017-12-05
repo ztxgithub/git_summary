@@ -20,15 +20,18 @@
 ``` c
     
     unsigned long int strtoul (const char* str, char** endptr, int base);
+    long int strtol(const char *str, char **endptr, int base)
     
     参数:
         str:字符串的起始地址
         endptr:指向下一个要转化的起始地址,一般是NULL
         base:进制
             0:由str序列的格式决定的,"0x12"-->十六进制的0x12
+            10: 十进制
+            16: 十六进制
             
       char szNumbers[] = "2001 60c0c0 0x6fffff";
-      char * pEnd;
+      char *pEnd;
       long int li1, li2, li3;
       li1 = strtoul (szNumbers,&pEnd,10);
       li2 = strtoul (pEnd,&pEnd,16);
@@ -632,6 +635,41 @@
 ```c
      printf("%s\n", strerror(errno));
 ```
+
+- 文件内容的特殊字符
+
+```c
+
+     ./zdfs_providerd^@provider.conf^@restart^@
+     
+     其中通过 ssize_t read(int fd, void *buf, size_t count);将该文件里的内容读到buff中时,^@会转化为"\0",
+     所以printf该buf时,只能打印出./zdfs_providerd(用strcmp函数也是一样的)
+```
+
+- 给进程发送信号kill()函数
+
+```c
+    #include <signal.h>
+    
+    int kill(pid_t pid, int sig);
+    
+    参数：
+        pid:进程pid
+                1、pid>0 将信号传给　进程识别码为pid 的进程.
+                2、pid=0 将信号传给和目前进程相同进程组的所有进程
+                3、pid=-1 将信号广播传送给系统内所有的进程
+                4、pid<0 将信号传给进程组识别码为pid 绝对值的所有进程参数 
+        sig:
+            0: 通过返回值,可以判断pid进程是否正常运行
+            SIGTERM：向pid进程发送终止操作
+            
+    返回值：
+        成功：０
+        失败:-1
+            printf("%s\n", strerror(errno));  
+```
+
+## 排序查找
 
 - qsort()快速排序
 
