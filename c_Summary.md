@@ -553,18 +553,6 @@
            要取得0～1之间的浮点数，可以使用rand() / double(RAND_MAX)
 ```
 
-- 字符查找
-
-```c
-    char* strrchr(char *str, int character);
-    描述:
-        查找最后一个匹配character的位置,失败返回NULL
-        
-    返回值:
-        对应的最后匹配的位置,
-        没有找到返回NULL
-```
-
 - 获取运行程序的当前工作目录绝对路劲dir
 
 ```c
@@ -937,4 +925,16 @@
          
     返回值
             指向dest字符串的指针
+```
+
+- 字符查找
+
+```c
+    char* strrchr(char *str, int character);
+    描述:
+        查找最后一个匹配character的位置,失败返回NULL
+        
+    返回值:
+        对应的最后匹配的位置,
+        没有找到返回NULL
 ```
