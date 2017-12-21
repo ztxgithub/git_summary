@@ -17,14 +17,42 @@
 
 ``` shell
     
-    解决方法：即在main.cpp中，把与c语言库test.a相关的头文件包含添加一个extern "C"的声明即可
-    
-    在 main.cpp 中
-    
-    extern "C" 
-    {
-        #include"test.h"
-    }
+    解决方法：
+    方法一:
+        即在main.cpp中，把与c语言库test.a相关的头文件包含添加一个extern "C"的声明即可
+        
+        在 main.cpp 中
+        
+        extern "C" 
+        {
+            #include"test.h"
+        }
+        
+     方法二:
+        在test.h,test.c中,test.c中的函数实现是用C语言编写的,
+        那么在test.h
+        
+            #ifdef __cplusplus
+            extern "C" {
+            #endif
+            
+            /** start a socket server (socket, bind and listen)
+             *  parameters:
+             *          bind_ipaddr: the ip address to bind
+             *          port: the port to bind
+             *          err_no: store the error no
+             *  return: >= 0 server socket, < 0 fail
+            */
+            int socketServer(const char *bind_ipaddr, const int port, int *err_no);
+            
+            函数的申明
+            .....
+            
+            #ifdef __cplusplus
+            }
+            #endif
+            
+        这时在main.cpp就可以直接 #include"test.h"了
 
 ```
 [参考资料](http://ticktick.blog.51cto.com/823160/431329)

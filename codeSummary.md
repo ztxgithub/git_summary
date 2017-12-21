@@ -121,3 +121,10 @@ inline uint32_t BDM2currentProbeRange(CurrentProbeRangeBDM currentProbeRange) {
         }
         	
 ```
+
+- 对文件写内容
+
+``` c++
+    比较安全的做法是:　先对filename.tmp进行写文件,并fsync(fd),在rename(filename.tmp,filename)
+        	
+```
