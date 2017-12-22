@@ -1082,3 +1082,129 @@
         4.数据的读出和写入：一个进程向管道中写的内容被管道另一端的进程读出.写入的内容每次都添加在管道缓冲区的末尾，
           并且每次都是从缓冲区的头部读出数据。
 ```
+
+### 进程信号
+
+- signal函数
+ 
+```c
+    typedef void (*sighandler_t)(int)
+    
+    sighandler_t signal(int signum, sighandler_t handler);
+    
+    描述:
+        信号的处理函数注册,要是用于前32种非实时信号的处理,不支持信号的传递信息.
+        在Unix系统使用signal函数时,自定义处理信号函数执行一次后失效,对该信号的处理回到默认处理方式.
+        而Linux则不存在这个问题
+  
+    参数:
+        signum： 要处理的信号编号值
+                    SIGHUP:终端挂起或则控制进程终止
+                    SIGINT:键盘中断(break键)按下,ctrl+c
+                    SIGQUIT：键盘的退出键被按下
+                    SIGTERM:程序接受信号,该信号可以被阻塞和处理,要求程序自己正常退出
+                    SIGKILL:用来立即结束程序的运行,本信号不能用signal函数注册新的信号处理函数(unblockable)
+                    SIGSTOP：将进程暂时停止运行,本信号不能用signal函数注册新的信号处理函数(unblockable)
+                    SIGCHLD:子进程结束时,父进程会收到信号
+                    
+                    
+        handler： 处理信号函数的指针
+                    SIG_IGN：忽略参数signum指定的信号
+                    SIG_DFL: 采用系统默认方式处理信号
+                    自定义信号函数处理指针:其中自定义的函数传入参数是　signum(处理的信号编号值)
+        
+    返回值:
+        成功:返回先前的注册信号处理函数指针
+        失败: -1
+        
+    注意：
+        其他的信号没有用signal函数注册,则采用默认的信号处理函数,对SIGKILL(9)信号无效
+    
+```
+
+- sigaction函数
+
+```c
+    struct sigaction
+    {
+        void (*sa_handler) (int); //此参数和signal()的参数handler相同,
+                                    此参数主要用来对signal()函数处理形式的支持
+        void  (*sa_sigaction)(int, siginfo_t *, void *);  //新的信号处理机制,处理函数被调用的时候，不但可以得到信号编号,
+                                                            而且可以获悉被调用的原因以及产生问题的上下文的相关信息
+        sigset_t sa_mask;   //在处理该信号时 暂时将sa_mask指定的信号搁置
+        int sa_flags;  //用来设置信号处理的其他相关操作,可用OR 运算（|）组合
+                          A_NOCLDSTOP:如果参数signum为SIGCHLD，则当子进程暂停时并不会通知父进程
+                          SA_ONESHOT/SA_RESETHAND:当调用新的信号处理函数前，将此信号处理方式改为系统预设的方式
+                          SA_RESTART:被信号中断的系统调用会自行重启
+                          SA_NOMASK/SA_NODEFER:在处理此信号未结束前不理会此信号的再次到来
+                          SA_SIGINFO：信号处理函数是带有三个参数的sa_sigaction
+        void (*sa_restorer) (void);
+    }
+
+    int sigaction(int signum,const struct sigaction *act ,struct sigaction *oldact)
+    
+    描述:
+        用来查询和设置信号处理方式，它是用来替换早期的signal函数
+  
+    参数:
+        signum： 要处理的信号编号值
+                    SIGHUP:终端挂起或则控制进程终止
+                    SIGINT:键盘中断(break键)按下,ctrl+c
+                    SIGQUIT：键盘的退出键被按下
+                    SIGTERM:程序接受信号,该信号可以被阻塞和处理,要求程序自己正常退出
+                    SIGKILL:用来立即结束程序的运行,本信号不能用signal函数注册新的信号处理函数(unblockable)
+                    SIGSTOP：将进程暂时停止运行,本信号不能用signal函数注册新的信号处理函数(unblockable)
+                    SIGCHLD:子进程结束时,父进程会收到信号
+                    
+        act： 要处理信号函数的动作
+        oldact：如果参数oldact不是NULL指针，则原来的信号处理方式会由此结构sigaction返回
+        
+    返回值:
+        成功:0
+        失败: -1,错误存到errno
+                EINVAL：参数signum不合法，或是企图拦截SIGKILL/SIGSTOP信号
+                EFAULT：参数act,oldact指针地址无法存取
+                EINTR：此调用被中断
+        
+    注意：
+        1.使用旧的处理机制：
+            struct sigaction act;  
+            act.sa_handler=handler_old;
+            
+        2.使用新的处理机制：
+            struct sigaction act; 
+            act.sa_sigaction=handler_new;
+            并设置sa_flags的SA_SIGINFO位
+    
+```
+
+-  信号集操作函数
+ 
+```c
+
+    信号集操作函数最常用的地方就是用于信号屏蔽.比如有时候希望某个进程正常执行,而不想进程受到一些信号的影响,
+    此时就需要用到信号集操作函数完成对这些信号的屏蔽.
+    
+    1.操作信号集函数
+        (1) int sigemptyset(sigset_t *set) :初始化信号集合为空
+                返回值：成功：0 失败：-1
+        (2) int sigfillset(sigset_t *set)  :把所有信号加入到集合中,信号集中将包含Linux支持的64种信号
+                返回值：成功：0 失败：-1
+        (3) int sigaddset(sigset_t *set,int signum)　：将指定信号加入到信号集合中去
+                返回值：成功：0 失败：-1
+        (4) int sigdelset(sigset_t *set,int signum)  :将指定信号从信号集中删去
+                返回值：成功：0 失败：-1
+        (5) int sigismember(sigset_t *set,int signum) :查询指定信号是否在信号集合之中
+                返回值：成功：1　失败：0
+                    
+    2.设置信号屏蔽位函数
+        
+        int sigprocmask(int how,const sigset_t *set,sigset_t *oset)
+        
+            描述：
+                    指定信号集中的信号进行屏蔽
+                    
+            参数：
+                    
+    
+```

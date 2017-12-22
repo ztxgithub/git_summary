@@ -597,6 +597,20 @@
                 yytd      2499  0.0  0.0   4296   360 ?        Ss   Sep20   0:00  cpu_sup
            
          7. 不加任何参数的ps 是 只显示控制终端的进程
+         8. -j :显示跟进程组和会话相关的信息
+                $　ps -xj
+                    结果：
+                          PPID  PID  PGID   SID   TTY     TPGID STAT   UID  TIME  COMMAND
+                         23532 23536 23536 23536 pts/0    25996 Ss      0   0:00  -bash
+                         23536 25996 25996 23536 pts/0    25996 S+      0   0:00  top
+                         
+                         PPID = 父进程ID
+                         PID = 进程ID 
+                         PGID = 进程组ID
+                         SID = 会话ID
+                         TPGID= 控制终端进程组ID
+                         
+                         可以看出 shell(-bash)和top 属于同一个会话
             
 ```
 
@@ -640,6 +654,47 @@
 - tac 命令: 跟cat命令一样只不过是从尾开始显示
 
 - file /proc/pid/exe (找到pid对应的可执行文件的路劲)
+
+- screen 
+
+``` shell
+
+    用户可以通过该软件同时连接多个本地或远程的命令行会话,并在其间自由切换.
+    首先一个screen会话可以有很多个窗口,每个窗口可以独自运行一个程序(要从当前的窗口退出来按ctrl+a+c)
+        1. > screen -S read_file   (创建一个名为read_file的screen 会话)
+        2. > more test.txt (这个时候该窗口已经被more程序占用了,可以ctrl+a+c创建一个新的窗口属于read_file的screen 会话)
+        3. > less test.txt (同一个read_file的screen会话新的窗口在运行less　程序)
+        
+    可以不中断screen窗口中程序的运行而暂时断开（detach）screen会话,(按 ctrl+a+d),
+    并在随后时间重新连接（attach）该会话(> screen -r screen会话名),重新控制各窗口中运行的程序
+    
+    > screen -ls  (查看screen 会话信息)
+    
+    你可能注意到给screen发送命令使用了特殊的键组合C-a(ctrl+a).因为我们在键盘上键入的信息是直接发送给当前screen窗口，
+    必须用其他方式向screen窗口管理器发出命令,默认情况下，screen接收以C-a开始的命令。这种命令形式在screen中叫做键绑定（key binding）,
+    C-a叫做命令字符（command character）
+        C-a ?	显示所有键绑定信息
+        C-a w	显示所有窗口列表
+        C-a C-a	切换到之前显示的窗口
+        C-a c	创建一个新的运行shell的窗口并切换到该窗口
+        C-a n	切换到下一个窗口
+        C-a p	切换到前一个窗口(与C-a n相对)
+        C-a 0..9	切换到窗口0..9
+        C-a a	发送 C-a到当前窗口
+        C-a d	暂时断开screen会话,暂时离开当前session,将目前的 screen session(可能含有多个窗口)丢到后台执行,并会回到还没进 
+                screen时的状态，此时在 screen session 里，每个窗口内运行的 process (无论是前台/后台)都在继续执行，
+                即使 logout 也不影响。 
+        C-a k	杀掉当前窗口
+        
+     在恢复screen时(> screen -r screnn会话名)会出现There is no screen to be resumed matching screnn会话名
+     可以输入命令：
+        1.screen -d　screnn会话名
+        2.screen -r screnn会话名      ---(恢复screen会话,将Detached转化为Attached)
+        
+    > screen -wipe (检查目前所有的screen会话，并删除已经无法使用的screen会话(状态为dead))
+     
+            
+```
 
 ### 用户管理
 
