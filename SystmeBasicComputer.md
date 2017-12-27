@@ -236,11 +236,6 @@
             开启TCP连接中TIME-WAIT sockets的快速回收，默认为0，表示关闭
             (服务器不建议开启 tcp_tw_recycle 快速回收，会导致大局域网用户访问失败)
             
-         net.ipv4.tcp_keepalive_time(单位 秒)
-                这个参数表示当keepalive启用时,TCP发送keepalive消息的频度.默认是7200 seconds,
-                意思是如果某个TCP连接在idle 2小时后,内核才发起probe.若将其设置得小一点,可以更快地清理无效的连接.
-                可以有效的防止空连接攻击.
-            
          net.ipv4.tcp_fin_timeout (单位秒)
                 这个参数表示当服务器主动关闭连接时,socket保持在FIN-WAIT-2状态的最大时间,默认是60秒
                 减少处于FIN-WAIT-2连接状态的时间,使系统可以处理更多的连接
@@ -255,11 +250,6 @@
                 这个参数表示操作系统允许TIME_WAIT套接字数量的最大值,如果超过这个数字,
                 TIME_WAIT套接字将立刻被清除并打印警告信息.默认是 65536,过多TIME_WAIT套接字会使Web服务器变慢.
                 
-         net.ipv4.tcp_max_syn_backlog
-                这个参数表示TCP三次握手建立阶段接受SYN请求队列的最大长度
-                将其设置大一些可以使出现Nginx繁忙来不及accept新连接的情况时,Linux不至于丢失客户端发起的连接请求.
-                加大队列长度为8192
-                
          net.ipv4.tcp_rmem
                 (net.ipv4.tcp_rmem =4096 32768 262142)
                 这个参数定义了用于TCP接收滑动窗口的最小值，默认值，最大值
@@ -273,6 +263,11 @@
          net.core.netdev_max_backlog
                 当网卡接收数据包的速度大于内核处理的速度时,会有一个队列保存这些数据包.这个参数表示该队列的最大值
                 
+         net.ipv4.tcp_max_syn_backlog
+                 这个参数表示TCP三次握手建立阶段接受SYN请求队列的最大长度
+                 将其设置大一些可以使出现Nginx繁忙来不及accept新连接的情况时,Linux不至于丢失客户端发起的连接请求.
+                 加大队列长度为8192       
+                 
          net.ipv4.tcp_syncookies
                 表示是否打开SYN Cookie.tcp_syncookies是一个开关,该参数的功能有助于保护服务器免受SyncFlood攻击.
                 默认值为0,这里设置为1.
@@ -318,12 +313,11 @@
             TCP发送保活探测消息以确定连接是否已断开的次数。默认值为9（次）
             注意：只有设置了SO_KEEPALIVE套接口选项后才会发送保活探测消息
          
-         net.ipv4.tcp_keepalive_time
-            在TCP保活打开的情况下,最后一次数据交换到TCP发送第一个保活探测消息的时间，即允许的持续空闲时间。默认值为7200s（2h）。
-            
-            
-                
-              
+         net.ipv4.tcp_keepalive_time(单位 秒)
+            在TCP保活打开的情况下,最后一次数据交换到TCP发送第一个保活探测消息的时间，即允许的持续空闲时间。默认值为7200s（2h）
+             这个参数表示当keepalive启用时,TCP发送keepalive消息的频度.默认是7200 seconds,
+             意思是如果某个TCP连接在idle 2小时后,内核才发起probe.若将其设置得小一点,可以更快地清理无效的连接.
+             可以有效的防止空连接攻击.   
             
            
     4. 如果希望屏蔽别人 ping 你的主机,则加入以下代码：

@@ -96,6 +96,31 @@
         
 ```
 
+- 不同数据结构头指针的使用
+
+``` c
+    
+    typedef struct zama_delay_task {
+        ZamaTimerEntry timer;  //must be first field
+    
+        bool new_thread;  //run in a new thread
+    
+        bool thread_running; //if new thread running, for internal use
+    
+    	TaskFunc task_func; //callback function
+    	void *func_args;    //arguments pass to callback function
+        struct zama_delay_task *next;
+    } ZamaDelayTask;
+    
+    
+    其中
+     ZamaDelayTask *task = (ZamaDelayTask *)malloc(siezof(ZamaDelayTask));
+     ZamaTimerEntry *time_entry = (ZamaTimerEntry *)task   //这个也是正确的
+     在业务中可以考虑使用这个技巧例如provider中的sched_thread
+        
+        
+```
+
 - sscanf
 
     描述：
@@ -1133,11 +1158,12 @@
                                                             而且可以获悉被调用的原因以及产生问题的上下文的相关信息
         sigset_t sa_mask;   //在处理该信号时 暂时将sa_mask指定的信号搁置
         int sa_flags;  //用来设置信号处理的其他相关操作,可用OR 运算（|）组合
-                          A_NOCLDSTOP:如果参数signum为SIGCHLD，则当子进程暂停时并不会通知父进程
-                          SA_ONESHOT/SA_RESETHAND:当调用新的信号处理函数前，将此信号处理方式改为系统预设的方式
-                          SA_RESTART:被信号中断的系统调用会自行重启
-                          SA_NOMASK/SA_NODEFER:在处理此信号未结束前不理会此信号的再次到来
                           SA_SIGINFO：信号处理函数是带有三个参数的sa_sigaction
+                          A_NOCLDSTOP:如果参数signum为SIGCHLD，则当子进程暂停时并不会通知父进程
+                          SA_ONESHOT/SA_RESETHAND:当调用信号处理函数时，将信号的处理函数重置为缺省值SIG_DFL
+                          SA_RESTART:如果信号中断了进程的某个系统调用，则系统自动启动该系统调用
+                          SA_NOMASK/SA_NODEFER:在处理此信号未结束前不理会此信号的再次到来
+                          
         void (*sa_restorer) (void);
     }
 
@@ -1205,6 +1231,41 @@
                     指定信号集中的信号进行屏蔽
                     
             参数：
+                    how: 决定函数的操作方式
+                            SIG_BLOCK:增加一个信号集合到当前进程的阻塞集合之中
+                            SIG_UNBLOCK:从当前进程阻塞集合之中删除指定信号集合
+                            SIG_SETMASK：将当前的信号集合设置为信号阻塞集合
+                            
                     
+                     set：指定信号集
+                     oset：信号屏蔽字,一般为NULL
+                      
+            返回值：
+                    成功：0 
+                    失败：-1
+                    
+    4.查询被搁置（未决）信号函数
+    
+        int sigpending(sigset_t *set)
+                
+            描述：
+                    	
+                将被搁置的信号集合由参数set指针返回,即调用sigprocmask将某一些信号设置为阻塞(屏蔽),这时有被阻塞信号传到了进程中,
+                则调用sigpending,这些已经发送的屏蔽信号则在参数set中
+                    
+            参数：
+                    set: 被赋值的信号集
+                      
+            返回值：
+                    成功：0 
+                    失败：-1
+                    
+    对信号集操作函数的使用方法
+        1. 使用signal或sigaction函数注册相关信号的处理。
+          对某一些信号进行屏蔽
+        2. 使用sigemptyset等定义信号集函数完成对信号集的定义。
+        3. 使用sigprocmask函数设置信号屏蔽位。
+        4. 使用sigpending函数检测未决信号，非必需步骤。
+            
     
 ```

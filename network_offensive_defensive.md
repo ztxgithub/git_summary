@@ -39,6 +39,31 @@
     限制同时打开的Syn半连接数目、缩短Syn半连接的time out 时间
 			
 ```
+
+#### netwox工具
+
+``` shell
+
+        Ubuntu上安装 netwox
+            > apt-get install netwox
+            
+        
+		netwox工具是集结了许多功能的软件箱.
+			1.netwox 76 号工具  TCP SYN Flood攻击
+```
+
+#### TCP SYN Flood 攻击
+
+``` shell
+    它利用TCP三次握手协议的缺陷，向目标主机发送大量的伪造源地址的SYN连接请求，消耗目标主机的连接队列资源，从而不能正常为用户提供服务.
+    
+
+        
+    使用netwox进行TCP SYN Flood 攻击
+        > netwox 
+			
+```
+
 ## 其他
 
 ``` shell
