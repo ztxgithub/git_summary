@@ -84,6 +84,8 @@
             
 ```
 
+[Qos2流程](http://emqtt.com/docs/v2/mqtt.html)
+
 
 
 # emqttd 实际应用
