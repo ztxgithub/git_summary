@@ -33,7 +33,7 @@
 
 ## 对开放的服务进行攻击
 
-### 服务拒绝攻击（DoS）
+### 服务拒绝攻击（DoS denial-of-service）
 
 ``` shell
     限制同时打开的Syn半连接数目、缩短Syn半连接的time out 时间
@@ -55,12 +55,28 @@
 #### TCP SYN Flood 攻击
 
 ``` shell
-    它利用TCP三次握手协议的缺陷，向目标主机发送大量的伪造源地址的SYN连接请求，消耗目标主机的连接队列资源，从而不能正常为用户提供服务.
+    当服务器收到一个TCP SYN报文后,马上为该连接请求分配缓冲区,然后返回一个SYN＋ACK报文,这时形成一个半连接。
+    SYN Flood正是利用了这一点,发送大量的伪造源地址的SYN连接请求，而不完成连接。这样就大量的消耗的服务器的资源，消耗目标主机的连接队列资源,
+    从而不能正常为用户提供服务
     
-
-        
+    TCP SYN Flood 攻击类型：
+        1． Direct Attack 攻击方使用固定的源地址发起攻击，这种方法对攻击方的消耗最小
+        2． Spoofing Attack 攻击方使用变化的源地址发起攻击，这种方法需要攻击方不停地修改源地址，实际上消耗也不大
+        3． Distributed Direct Attack 这种攻击主要是使用僵尸网络(控制其他电脑)进行固定源地址的攻击
+    
+      
     使用netwox进行TCP SYN Flood 攻击
-        > netwox 
+        > sudo netwox 76 -i "10.0.6.251" -p 22
+        
+    防御措施:
+        (1)修改linux内核参数
+            1.增大tcp_max_syn_backlog
+            2.减小tcp_synack_retries
+            3.启用tcp_syncookies
+                根据这个CentOS SYN包计算出一个cookie值.在收到TCP ACK包时,TCP服务器在根据那个cookie值检查这个TCP ACK包的合法性。
+                如果合法，再分配专门的数据区进行处理未来的TCP连接
+            
+        (2)
 			
 ```
 

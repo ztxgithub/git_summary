@@ -66,6 +66,22 @@
         在Eclipse Paho中MQTTAsync_message结构体中,如果是发送消息时设置retained==1,那么后来的订阅者也会收到该消息.
         在接受消息的时候,可以根据retained的值来判断是实时发送的消息还是保留的消息,如果是retained==1则表明收到的消息
         是保留的消息不是实时的.
+        
+    8.作为发布者,将Qos2消息发布(实际上是发送到emqttd服务器,emqttd服务器成功收到消息）
+        一定要经历4个流程：通过PacketId区分
+            1.PUBLISH
+            2.PUBREC
+            3.PUBREL
+            4.PUBCOMP
+            
+      作为订阅者,收到消息,同样也需要4个流程：通过PacketId区分
+            1.PUBLISH
+            2.PUBREC
+            3.PUBREL
+            4.PUBCOMP
+            
+      
+            
 ```
 
 
