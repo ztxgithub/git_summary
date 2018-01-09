@@ -696,6 +696,29 @@
             
 ```
 
+- tar命令
+
+``` shell
+
+    参数：
+            -t 显示压缩文件的内容
+            -C 切换到指定目录
+            -p 保留文件权限的信息
+            
+    1.如果要查看 tar.gz 里面的分布
+        > tar -tvf file.tar.gz
+            结果：
+                drwxr-xr-x root/root         0 2018-01-05 10:20 emqttd/
+                -rw-r--r-- root/root 104858178 2018-01-05 07:40 emqttd/emqttd_stdout.log.3
+                -rw-r--r-- root/root 104858013 2018-01-05 04:34 emqttd/emqttd_stdout.log.9
+                
+    2.如果在压缩的过程中使用了绝对路劲,想要压缩包中只包含目标文件夹名emqttd/,不要绝对路径名/home/yytd/emqttd/,
+      也不要递归创建文件夹 home -> yytd -> emqttd
+      
+         > tar -cvzf /home/cront_log/emqttd.tar.gz -C /home/cront_log/ emqttd 
+         
+```
+
 ### 用户管理
 
 - 用户
