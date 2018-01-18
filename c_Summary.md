@@ -493,6 +493,23 @@
        
 ```
 
+- #define用法
+
+```c
+
+    1.#define SMON_TOSTR(x) #x 用法
+    
+         主要是宏定义的返回值为 以'/0' 结尾的字符串
+         SMON_TOSTR(/home/opt) == "/home/opt"
+         
+    2.#define makechar(x)  #@x   
+       
+       是加单引号
+       char ch = makechar(b)  //与char ch = 'b';等价
+       
+    3.
+```
+
 - sizeof struct数据结构
 
 ```c
