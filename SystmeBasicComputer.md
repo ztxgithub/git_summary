@@ -8,6 +8,16 @@
 	
 ```
 
+- 时间单位
+
+``` c
+    毫秒: 单位ms 对应的英语millisecond  1秒= 10^3 毫秒
+    微妙: 单位μs 对应的英语microsecond  1秒= 10^6 微秒   1毫秒 = 10^3 微妙
+    
+	
+```
+
+
 - [字符编码笔记：ASCII，Unicode和UTF-8](http://www.ruanyifeng.com/blog/2007/10/ascii_unicode_and_utf-8.html)
 
 

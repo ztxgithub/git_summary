@@ -313,6 +313,10 @@
                         l:参数被解释为长整型或无符号长整型，适用于整数说明符（i、d、o、u、x 和 X）
                         ll: long long int or unsigned long long int
                         L: 参数被解释为长双精度型
+                        
+                %*中 *代替变量:
+                     printf("request uri : %.*s\n", (int)hm->uri.len, hm->uri.p);
+                     那么*的值是hm->uri.len,
      
      返回值：
             实际的字符串的大小(不包括\0)
@@ -406,7 +410,8 @@
         
         int valid_len = sprintf(dig, "%d", i_value);  //正确用法
           
-    6. 用变量指定相应的字段宽度(width)或者精度(.precision)  %*中 *代替变量
+    6. 用变量指定相应的字段宽度(width)或者
+        精度(.precision)  %*中 *代替变量
     
             char dig[8];
             memset(dig, 1, 8);
