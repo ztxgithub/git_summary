@@ -31,6 +31,25 @@
 
 ```
 
+- 按固定的格式输出
+
+```shell
+    
+    各个参数使用 > man date
+    date [OPTION]... [+FORMAT]
+    
+    FORMAT:
+        %F:full date; same as %Y-%m-%d
+        %I: hour (01..12) 
+        %s: seconds since 1970-01-01 00:00:00 UTC
+        %N:
+
+	> date  +%F_%I  
+	结果:
+	    2018-02-15_02
+
+```
+
 ## 系统函数相关
 
 - time_t:数据类型
