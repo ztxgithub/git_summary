@@ -47,6 +47,23 @@
         
 ```
 
+- 结构体struct和union嵌套使用
+
+``` c
+    
+    struct MyStruct
+    {
+        int type;
+        union
+        {
+            int i;
+            float f;
+            char *str;
+        } value;　　　//注意value要放在{}后面
+    };
+        
+```
+
 - 字节对齐
 
 ``` c

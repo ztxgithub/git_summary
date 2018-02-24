@@ -90,6 +90,16 @@
     
 ```
 
+- Kcp 发送模式
+
+``` shell
+
+    1.stream模式　: stream把一个周期内的小包拼到一个切片的大小发送,
+    2.packge模式 :packet把每个小包都直接发送
+
+    
+```
+
 [参考资料](http://blog.csdn.net/dxpqxb/article/details/77253297)
 
 ## 程序使用
