@@ -1114,7 +1114,16 @@
     返回值:
         对应的最后匹配的位置,
         没有找到返回NULL
+        
+    void *memchr(void *str, char ch, unsigned count)
+    描述:
+         从str所指内存区域的前count个字节查找字符ch
+            
+    返回值:
+         对应的匹配的位置,
+         没有找到返回NULL
 ```
+
 
 ## 进程组和会话相关信息
 
