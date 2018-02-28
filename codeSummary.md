@@ -128,3 +128,30 @@ inline uint32_t BDM2currentProbeRange(CurrentProbeRangeBDM currentProbeRange) {
     比较安全的做法是:　先对filename.tmp进行写文件,并fsync(fd),在rename(filename.tmp,filename)
         	
 ```
+
+- 回调函数
+
+``` c++
+    项目的组织结构是A文件调用B文件里的函数,如果B文件中有可能要用到A中的资源变量,则可考虑回调函数
+    
+    A文件
+        static void modbus_connect_accept_handler(struct modbus_connect *connect)
+        {
+            
+        }
+        
+        modbus_set_accept_handler(modbus_connect_accept_handler);
+        
+    B文件
+    
+        static void (*modbus_connect_accept)(struct modbus_connect *); //函数指针
+    
+        void modbus_set_accept_handler(void (*handler)(struct modbus_connect *))
+        {
+            if(handler == NULL) return;
+            modbus_connect_accept = handler;
+        }
+        
+        modbus_connect_accept(modbus_connection);  //在B文件某个地方 调用函数指针modbus_connect_accept
+        	
+```
