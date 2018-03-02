@@ -252,7 +252,9 @@
  - printf输出格式
  
  ``` c
- 	unsinged int,unsigned short,unsigned char --> %u
+    signed char or unsigned char  ---> %hhu
+    short int or unsigned short int  --> %hu
+ 	unsinged int --> %u
  	unsigned long int, unsigned long --> %lu
  	unsigned long long, unsigned long long int --> %llu
  	
@@ -1066,6 +1068,39 @@
     返回值:
         成功: 0
         失败: -1
+
+        
+```
+
+- 改变文件大小(文件中保存的内容)
+
+```c
+    int ftruncate(int fd, off_t  length)
+    
+    描述:
+        ftruncate()会将参数fd指定的文件大小改为参数length指定的大小.参数fd为已打开的文件描述词,
+        而且必须是以写入模式打开的文件.如果原来的文件件大小比参数length大,则超过的部分会被删去
+  
+    参数:
+        fd： 以写入模式的fd
+        length： 文件大小
+        
+    返回值:
+        成功: 0
+        失败: -1
+             errno
+                  EBADF     参数fd文件描述词为无效的或该文件已关闭
+                  EINVAL    参数fd为一socket并非文件，或是该文件并非以写入模式打开
+                  
+    注意事项：此函数并未实质性的向磁盘写入数据,只是分配了一定的空间供当前文件使用.当fd<length时,此时如果使用十六进制编辑工具打开该文件,
+            你会发现文件末尾多了很多00,这就是执行这个函数后的效果.如果发生系统复位或者装置掉电以后,该函数所产生的作用将被文件系统忽略,
+            也就是说它所分配的空间将不能被识别,文件的大小将会是最后一次写入操作的区域大小,而非ftruncate分配的空间大小,也就是说,
+            文件大小有可能会被改变
+            
+    使用场景:
+             用ftruncate可以清空文件，如：ftruncate(fileno(fp), 0) 或则 
+             ftruncate(open(filename, O_RDWR | O_CREAT, 0644)), 0)
+             清空文件后，需要使用rewind或fseek或则lseek将文件指针移到文件头
 
         
 ```

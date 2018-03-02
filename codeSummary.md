@@ -129,6 +129,20 @@ inline uint32_t BDM2currentProbeRange(CurrentProbeRangeBDM currentProbeRange) {
         	
 ```
 
+- 对已经打开文件清空或则 从文件头重新写
+
+``` c++
+    用ftruncate可以清空文件，如：
+                             (1) FILE *fp = fopen("/etc/passwd", "r");
+                                 int fd = fileno(fp);
+                                 ftruncate(fileno(fp), 0);   
+                                     或则 
+                             (2) ftruncate(open(filename, O_RDWR | O_CREAT, 0644)), 0)
+                              
+                             清空文件后，需要使用rewind或fseek或则lseek将文件指针移到文件头
+        	
+```
+
 - 回调函数
 
 ``` c++
