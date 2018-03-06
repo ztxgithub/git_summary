@@ -1105,6 +1105,45 @@
         
 ```
 
+- 修改文件的访问和修改时间
+
+```c
+    int utimes(const char *filename, const struct timeval times[2])
+    
+    描述:
+        该函数可以改变文件的访问时间和修改时间
+  
+    参数:
+        filename： 要更改的文件名
+        times： times[0]:代表访问时间
+                times[1]:代表修改时间
+        
+    返回值:
+        成功: 0
+        失败: -1
+             errno
+                1.EACCESS 存取文件时被拒绝, 权限不足。
+                2.ENOENT 指定的文件不存在。
+                  
+    实例代码:
+        	struct timeval tvs[2];
+        
+        	tvs[0].tv_sec = new_time;
+        	tvs[0].tv_usec = 0;
+        	tvs[1].tv_sec = new_time;
+        	tvs[1].tv_usec = 0;
+        	if (utimes(filename, tvs) != 0)
+        	{
+        		logWarning("file: "__FILE__", line: %d, " \
+        			"call utimes file: %s fail" \
+        			", errno: %d, error info: %s", \
+        			__LINE__, filename, errno, STRERROR(errno));
+        		return errno != 0 ? errno : ENOENT;
+        	}
+
+        
+```
+
 ##　字符串操作函数
 
 - 字符串的拷贝赋值strdup()函数
