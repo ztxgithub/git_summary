@@ -842,7 +842,7 @@
             失败:返回-1
             
      注意:
-         fd=open(full_filename, O_RDONLY)),如果该full_filename不存在,fd返回-1
+         fd=open(full_filename, O_RDONLY)),如果该full_filename不存在,fd返回-1 
      
 ```
 
