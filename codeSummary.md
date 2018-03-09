@@ -143,6 +143,14 @@ inline uint32_t BDM2currentProbeRange(CurrentProbeRangeBDM currentProbeRange) {
         	
 ```
 
+- 获取文件大小
+
+``` c++
+    1.  file_size = lseek(fd, 0, SEEK_END)
+    2.  stat(const char *file_name, struct stat *buf);
+        	
+```
+
 - 回调函数
 
 ``` c++
