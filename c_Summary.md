@@ -806,6 +806,46 @@
 
 ## 文件处理函数
 
+- 打开文件 open()
+
+```c
+     int open(const char *path, int oflags,mode_t mode);
+     
+     描述:
+         在open()函数中，flag参数可通过 “|” 组合构成，但前3个标志常量（O_RDONLY、O_WRONLY及O_RDWR）不能相互组合
+         
+     参数:
+         path:需要打开的文件名
+         oflags:  
+                打开文件所采取的动作:必须指定下面某一种:
+                                                   1.O_RDONLY(只读),
+                                                   2.O_WRONLY（只写）,
+                                                   3.O_RDWR（可读可写）
+                                  可选可不选:
+                                                   1.O_APPEND  每次写操作都写入文件的末尾
+                                                   2.O_CREAT   如果指定文件不存在，则创建这个文件
+                                                   3.O_EXCL    如果要创建的文件已存在，则返回 -1，并且修改errno的值
+                                                   4.O_TRUNC   如果文件存在，并且以只写/读写方式打开，则清空文件全部内容
+                                                   5.O_NOCTTY  如果路径名指向终端设备，不要把这个设备用作控制终端。
+                                                   6.O_NONBLOCK  如果路径名指向 FIFO/块文件/字符文件，
+                                                                 则把文件的打开和后继 I/O 设置为非阻塞模式nonblocking mode）
+                                                                 
+         mode: 默认不填写
+               设置文件访问权限的初始值(与用户掩码umask变量有关，实际的访问权限有mode &~umask确定)
+               S_IRUSR,S_IWUSER,S_IXUSR,S_IRGRP,S_IWGRP,S_IXGRP,S_IROTH,S_IWOTH,S_IXOTH.
+               其中R：读，W：写，X：执行，USR：文件所属的用户，GRP：文件所属的组，OTH：其他用户。
+               
+               第三个参数是在第二个参数中有O_CREAT时才用作用,若没有，则第三个参数可以忽略
+                                          
+      返回值:
+            成功时:返回一个文件描述符
+            失败:返回-1
+            
+     注意:
+         fd=open(full_filename, O_RDONLY)),如果该full_filename不存在,fd返回-1
+     
+```
+
 - 移动文件的读写位置lseek()
 
 ```c
@@ -903,7 +943,8 @@
     int readlink(const char *path, char *buf, size_t bufsiz);
     
     描述:
-        获取参数path指向的符号连接内容,将其保存到buf中
+        获取参数path指向的符号连接内容,将其保存到buf中,readlink函数用于读取符号链接文件本身数据(一个字符串，用来表达要指向的文件的路径)
+        而不是指向的文件的数据,也就是取出调用symlink函数时写入的actualpath。
     参数:
         path:源
         buf: 对应的符号连接内容
@@ -924,6 +965,39 @@
             
     实例一
         获得程序自身的运行路劲: int cnt = readlink("/proc/self/exe", current_absolute_path, MAX_SIZE);
+```
+
+- symlink
+
+```c
+    #include <unistd.h>
+    
+    int symlink(const char*actualpath,const char *sympath);
+    
+    描述:
+        创建一个符号链接文件,symlink的本质是相当于creat一个文件sympath,并把actualpath的值（字符串）写进文件sympath,
+        同时把文件标识为符号连接类型.
+    参数:
+        actualpath:要指向的路径
+        sympath : 被创建的新目录项路径
+        
+    返回值:
+        成功:0
+        失败则返回-1, 
+            
+    注意:
+        在symlink函数调用中actualpath的值对应的文件可以不存在.
+        
+            char     actualpath[] = "/tmp/myfile";  
+            char     sympath[] = "/tmp/mysymlink";  
+          
+            if (symlink(actualpath, sympath) == -1)  
+            
+         > 运行这段代码
+         >  ls -l /tmp/myfile /tmp/mysymlink
+         结果:
+            ls: cannot access /tmp/myfile: No such file or directory
+            lrwxrwxrwx. 1 root root 11 Nov  5 02:37 /tmp/mysymlink -> /tmp/myfile
 ```
 
 - 获取文件状态 stat()函数
