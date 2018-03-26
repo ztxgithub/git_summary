@@ -1218,6 +1218,88 @@
         
 ```
 
+- 文件内容拷贝
+
+```c
+    ssize_t sendfile(int out_fd, int in_fd, off_t *offset, size_t count);
+    
+    描述:
+        用于数据拷贝在两个文件描述符之间的操作函数.这个拷贝操作是内核中操作的,所以称为"零拷贝".
+        sendfile函数比起read和write函数高效得多,因为read和write是要把数据拷贝到用户应用层操作.
+  
+    参数:
+       out_fd : 是已经打开了,用于写操作(write)的文件描述符,(也可以用于建立连接的sock)
+       in_fd  : 是已经打开了,用于读操作(read)的文件描述符;
+       offset : 偏移量 表示sendfile函数从in_fd中的哪一偏移量开始读取数据.如果是零表示从文件的开始读,否则从相应的便宜量读取.
+                    如果是循环读取的时候,下一次offset值应为sendfile函数返回值加上本次的offset的值.
+       count: 是在两个描述符之间拷贝的字节数(bytes)
+        
+    返回值:
+        成功:返回实际写操作到out_fd的字节数,
+        错误: -1,并相应的设置error
+                  
+    实例代码:
+            fd = open(filename, O_RDONLY);
+            send_bytes = sendfile(sock, fd, &offset, FILE_1G_SIZE);
+
+        
+```
+
+- 读取磁盘使用情况(已经使用的容量和总容量)
+
+```c
+
+     struct statvfs {  
+        unsigned long  f_bsize;    /* file system block size */  一个块有多少个字节
+        unsigned long  f_frsize;   /* fragment size */  一个段有多少个字节
+        fsblkcnt_t     f_blocks;   /* size of fs in f_frsize units */  该磁盘挂载文件系统总共有多少个段(fragment)
+        fsblkcnt_t     f_bfree;    /* # free blocks */  
+        fsblkcnt_t     f_bavail;   /* # free blocks for non-root */  非超級用户在该磁盘挂载文件系统空闲有多少个段(fragment)
+        fsfilcnt_t     f_files;    /* # inodes */   文档inode总个数
+        fsfilcnt_t     f_ffree;    /* # free inodes */  
+        fsfilcnt_t     f_favail;   /* # free inodes for non-root */  非超級用户可用的空闲inode数
+        unsigned long  f_fsid;     /* file system id */   
+        unsigned long  f_flag;     /* mount flags */  
+        unsigned long  f_namemax;  /* maximum filename length */  
+      };  
+      
+    int statvfs(const char *path, struct statvfs *buf); 
+    
+    描述:
+        该函数将返回该磁盘挂载文件系统的信息,
+  
+    参数:
+       path: 只要是任何挂载在该文件系统下的文件名
+       buf: 被赋值
+        
+    返回值:
+        成功:返回0
+        错误: -1,并相应的设置error
+                  
+    实例代码:
+            int fd;
+             struct statvfs buf;
+           
+             if (statvfs(".", &buf) == -1)
+               perror("statvfs() error");
+             else {
+               printf("each block is %d bytes big\n",
+                      buf.f_bsize);
+               printf("there are %d blocks available out of a total of %d\n",
+                      buf.f_bavail, buf.f_blocks);
+               printf("in bytes, that's %.0f bytes free out of a total of %.0f\n
+                      ((double)buf.f_bavail * buf.f_bsize),
+                      ((double)buf.f_blocks * buf.f_bsize));
+             }
+             
+             结果:
+                each block is 4096 bytes big
+                there are 2089 blocks available out of a total of 2400
+                in bytes, that's 8556544 bytes free out of a total of 9830400
+
+        
+```
+
 ##　字符串操作函数
 
 - 字符串的拷贝赋值strdup()函数
