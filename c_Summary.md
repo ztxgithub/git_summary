@@ -659,6 +659,45 @@
             printf("%s\n", strerror(errno));  
 ```
 
+- 在程序中调用shell命令而不是直接使用system()
+
+```c
+    
+    FILE *popen(const char *command, const char *type);
+    
+    描述:
+        用创建管道的方式启动一个进程, 并调用 shell. 因为 管道 是被定义成单向的, 
+        所以type参数只能定义成只读或者只写, 不能是两者同时, 结果流也相应的是只读或者只写.
+    
+    参数：
+        command: 一个字符串指针, 指向的是一个以null结束符结尾的字符串, 
+                这个字符串包含一个 shell 命令. 这个命令被送到 /bin/sh 以 -c 参数 执行, 
+                即由 shell 来执行
+                
+        type:指向以null结束符结尾的字符串的指针, 这个字符串必须是 'r' 或者 'w’ 来指明是 读还是写
+        
+    返回值：
+         一个普通的标准I/O流, 它只能用pclose()函数来关闭, 而不是fclose()函数. 
+         向这个流的写入被转化为对command命令的标准输入; 而 command 命令的标准输出则是和调用 popen()函数的进程相同,
+         除非这个被command命令自己改变. 相反的, 读取一个 “被popen了的” 流, 
+         就相当于 读取 command 命令的标准输出, 而 command 的 标准输入 则是和 调用 popen, 函数的 进程 相同.
+         
+    int pclose(FILE *stream);
+    
+    示例
+          if((pp = popen("ls -l", "r")) == NULL)
+         {
+             printf("popen() error!/n");
+             exit(1);
+         }
+        
+         while(fgets(buf, sizeof buf, pp))
+         {
+             printf("%s", buf);
+         }
+         pclose(pp);
+```
+
 ## 排序查找
 
 - qsort()快速排序
@@ -874,6 +913,23 @@
      常用用途:
         (1) 得到文件的大小
                file_size = lseek(int fildes, 0, SEEK_END)
+     
+```
+
+- 文件指针重新指向文件开头
+
+```c
+     void rewind(FILE* stream);
+     
+     描述:
+         用于将文件读写指针重新指向文件的开头，同时清除和文件流相关的错误和eof标记，相当于调用fseek(stream, 0, SEEK_SET). 
+         
+     参数:
+         stream : 已经用fopen打开的 FILE*
+        
+     常用用途:
+        FILE* fp = fopen(filename, "a");
+        rewind(fp);
      
 ```
 
