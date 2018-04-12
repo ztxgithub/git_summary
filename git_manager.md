@@ -55,6 +55,33 @@
     6.这个时候 hotfix 分支就可以删除了
         >  git branch -d hotfix
     7.如果将iss53合并到master分支时,遇到了冲突
+            (1) 通过 > git status 进行查看
+                    任何包含未解决冲突的文件都会以未合并（unmerged）的状态列出,Git会在有冲突的文件里加入标准的冲突解决标记,
+                    可以通过它们来手工定位并解决这些冲突.可以看到此文件包含类似下面这样的部分
+                    
+                        <<<<<<< HEAD
+                        <div id="footer">contact : email.support@github.com</div>
+                        =======
+                        <div id="footer">
+                          please contact us at support@github.com
+                        </div>
+                        >>>>>>> iss53
+                        
+                    可以看到 ======= 隔开的上半部分,是 HEAD（即 master 分支,在运行 merge 命令时所切换到的分支）中的内容,
+                    下半部分是在 iss53 分支中的内容。解决冲突的办法无非是二者选其一或者由你亲自整合到一起。
+                    比如你可以通过把这段内容替换为下面这样来解决：
+                    
+                    <div id="footer">
+                    please contact us at email.support@github.com
+                    </div>
+                    
+                    这个解决方案各采纳了两个分支中的一部分内容，而且我还删除了 <<<<<<<，======= 和 >>>>>>> 这些行。
+                    在解决了所有文件里的所有冲突后,运行 git add 将把它们标记为已解决状态
+                    （译注：实际上就是来一次快照保存到暂存区域。）。因为一旦暂存,就表示冲突已经解决。
+                    如果你想用一个有图形界面的工具来解决这些问题，不妨运行 git mergetool，
+                    它会调用一个可视化的合并工具并引导你解决所有冲突：
+            (2) 解决完冲突后再运行一次 git status 来确认所有冲突都已解决
+            (3) 用 git commit 来完成这次合并
 
 ```
 ## git 相关命令
@@ -100,6 +127,8 @@
             在没有track远程分支的本地分支中默认提交的master分支,因为master分支默认指向了origin master 分支,
             这里要使用git push origin issue5560：master 就可以把issue5560推送到远程的master分支了。
            
+     3.查看git分支的状态
+            > git status;
             
 
             
