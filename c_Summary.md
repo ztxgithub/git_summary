@@ -1102,6 +1102,7 @@
     返回值:
         成功:0
         失败则返回-1, 错误代码存于errno
+          ENOENT         参数file_name指定的文件不存在
         错误代码：
             printf("%s\n", strerror(errno));
             
