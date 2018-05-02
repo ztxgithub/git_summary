@@ -94,7 +94,7 @@
             HTTP/1.1 200 OK						//状态行
             Server: nginx/1.0.8					//服务器使用的WEB软件名及版本
             Date:Date: Tue, 30 Oct 2012 04:14:25 GMT		//发送时间
-            Content-Type: text/html				//服务器发送信息的类型
+            Content-Type: text/html				//服务器发送信息的类型,
             Transfer-Encoding: chunked			//表示发送HTTP包是分段发的
             Connection: keep-alive				//保持连接状态
             Content-Length: 90					//主体内容长度
@@ -104,6 +104,8 @@
             
         Response包中的第一行叫做状态行,由HTTP协议版本号,状态码,状态消息 三部分组成.
         
+        Content-Type: 浏览器就是依靠Content-Type来判断响应的内容是网页还是图片，是视频还是音乐
+        
         状态码用来告诉HTTP客户端,HTTP服务器是否产生了预期的Response.HTTP/1.1协议中定义了5类状态码,
         状态码由三位数字组成,
         第一个数字定义了响应的类别
@@ -112,6 +114,8 @@
             3XX 重定向 - 要完成请求必须进行更进一步的处理
             4XX 客户端错误 - 请求有语法错误或请求无法实现
             5XX 服务器端错误 - 服务器未能实现合法的请求
+            
+         
             
     4.HTTP协议是无状态的和Connection: keep-alive的区别
         无状态是指协议对于事务处理没有记忆能力,服务器不知道客户端是什么状态.从另一方面讲,
