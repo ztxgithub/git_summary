@@ -3,7 +3,9 @@
 ## 基本知识点
 ```c 
 
-regex : regular expression
+1. regex : regular expression
+2. \< 表示词首, 如：\<abc 表示以 abc 为首的詞
+3. \> 表示词尾, 如：abc\> 表示以 abc 結尾的詞。
 
 ```
 ## 基本匹配
