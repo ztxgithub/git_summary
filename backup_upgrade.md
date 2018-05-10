@@ -23,7 +23,7 @@
     #!/bin/sh
     systime=`date +%Y-%m-%d`     #get current time from system
     
-    objectaddress=root@120.55.195.98  #object host's name and ip address
+    objectaddress=root@127.0.0.1  #object host's name and ip address
     accesspassword=aliplat07@YYTD.Ltd       #access to remote host needed a password
     
     #sengine log
