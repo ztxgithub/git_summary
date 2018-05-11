@@ -1013,8 +1013,8 @@
     int readlink(const char *path, char *buf, size_t bufsiz);
     
     描述:
-        获取参数path指向的符号连接内容,将其保存到buf中,readlink函数用于读取符号链接文件本身数据(一个字符串，用来表达要指向的文件的路径)
-        而不是指向的文件的数据,也就是取出调用symlink函数时写入的actualpath。
+        获取参数path指向的符号连接内容,将其保存到buf中,readlink函数用于读取符号链接文件本身数据(一个字符串,
+        用来表达要指向的文件的路径) 而不是指向的文件的数据,也就是取出调用symlink函数时写入的actualpath。
     参数:
         path:源
         buf: 对应的符号连接内容
@@ -1248,6 +1248,15 @@
              清空文件后，需要使用rewind或fseek或则lseek将文件指针移到文件头
 
         
+```
+
+- 用fopen的fp转化为int fd
+
+```shell
+    文件流指针转换成文件描述符
+    int fileno(FILE *stream)
+    
+    int fd = fileno(fp)
 ```
 
 - 修改文件的访问和修改时间
@@ -1659,7 +1668,6 @@
         3. 使用sigprocmask函数设置信号屏蔽位。
         4. 使用sigpending函数检测未决信号，非必需步骤。
             
-    
 ```
 
 ### 多线程下变量-原子操作 __sync_fetch_and_add
@@ -1689,9 +1697,4 @@
         
         count = 4
         count = __sync_add_and_fetch(&count, 1)    返回值是５ ,跟　++i类似
-        
-    
-     
-            
-    
 ```
