@@ -107,6 +107,20 @@ ar[^,\-]   除了  "ar-", "ar," 其他都匹配
 >>> re.match(r'^(\d+?)(0*)$', '102300').groups()
 ('1023', '00')
 
+### 在正则表达式中包含() 有分组的含义
+
+```shell
+    import re
+    line = "booooobb123"
+    regex_str = ".*(b.*b).*"   #这里()就是进行分组匹配
+    match_obj = re.match(regex_str,line)
+    if match_obj:
+        print(match_obj.group(1))
+    结果:
+           bb
+    
+
+```
 [在线练习](https://regex101.com/r/kPpO2x/1)
 
 ## 2.4 `{}` 号, 贪心匹配符合条件尽可能多的
