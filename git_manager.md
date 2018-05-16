@@ -2,6 +2,39 @@
 
 [参考资料](https://git-scm.com/book/zh/v1/Git-%E5%88%86%E6%94%AF-%E5%88%86%E6%94%AF%E7%9A%84%E6%96%B0%E5%BB%BA%E4%B8%8E%E5%90%88%E5%B9%B6)
 
+## 简介
+
+```shell
+    1.origin
+        origin指向的就是你本地的代码库托管在Github上的版本,origin就是一个名字,
+        它是在你clone一个托管在Github上代码库时，git为你默认创建的指向这个 远程代码库 的标签
+        
+        (1) git为你默认创建了一个指向远端代码库的origin（因为你是从这个地址clone下来的）
+        >  git remote -v
+          origin  https://github.com/ztxgithub/git_time.git (fetch)
+          origin  https://github.com/ztxgithub/git_time.git (push)
+                  
+        假设现在有一个用户user2 fork你的repository,那么他的代码库链接就是这个样子https://github.com/user2/repository
+        如果他也照着这个clone，然后在他的终端上里输入git remote -v,他会看的的就是
+        origin https://github.com/user2/repository.git (fetch)
+        origin https://github.com/user2/repository.git (push)
+        可以看到origin指向的位置是user2的的远程代码库,如果user2想加一个远程指向你的代码库，他可以在终端上
+        输入git remote add upstream(可以定义其他名字) https://github.com/user1/repository.git
+        然后再输入一遍 git remote -v,输出结果就会变为
+        origin https://github.com/user2/repository.git (fetch)
+        origin https://github.com/user2/repository.git (push)
+        upstream https://github.com/user1/repository.git (push)
+        upstream https://github.com/user1/repository.git (push)
+        增加了指向user1代码库的upstream，也就是之前对指向位置的命名
+        
+        (2) 在clone完成之后,Git 会自动为你将此 远程仓库 命名为origin(origin只相当于一个别名，
+            运行git remote –v或者查看.git/config可以看到origin的含义）,并下载其中所有的数据，建立一个指向它的master 分支的指针,
+            我们用(远程仓库名)/(分支名) 这样的形式表示远程分支,所以origin/master指向的是一个remote branch
+            (从那个branch我们clone数据到本地),但你无法在本地更改其数据,同时，Git 会建立一个属于你自己的本地master 分支,
+            它指向的是你刚刚从remote server传到你本地的副本。随着你不断的改动文件，
+            git add, git commit，master的指向会自动移动，你也可以通过merge（fast forward）来移动master的指向。
+```
+
 ## 创建 git repository
 
 ```shell
@@ -10,8 +43,26 @@
     3.> git add README.md
     4.> git commit -m "first commit"
     5.> git remote add origin https://github.com/ztxgithub/test_git_manager.git
+    
     6.> git push -u origin master
-
+    
+    注意:
+        master其实是一个“refspec”，正常的“refspec”的形式为”+<src>:<dst>”，冒号前表示local branch的名字,
+        冒号后表示remote repository下 branch的名字.如果你省略了<dst>,git就认为你想push到remote repository下和
+        local branch相同名字的branch. 
+        push是怎么个push法,就是把本地branch指向的 commit 和 push到remote repository下的branch，比如
+        (1) > git push origin master:master 
+                  在local repository中找到名字为master的branch,使用它去更新remote repository下名字为master的branch,
+                  如果remote repository下不存在名字是master的branch，那么新建一个
+                  
+        (2) > git push origin master （省略了<dst>，等价于“git push origin master:master”）
+        (3) > git push origin master:refs/for/mybranch 
+                    在local repository中找到名字为master的branch，用他去更新remote repository下面名字为mybranch的branch)
+        (4) > git push origin HEAD:refs/for/mybranch 
+                HEAD指向当前工作的branch，master不一定指向当前工作的branch，所以我觉得用HEAD还比master好些
+                
+        (5) >　git push origin :mybranch 
+                在origin repository里面查找mybranch，删除它。用一个空的去更新它，就相当于删除了
 ```
 
 ## 建立新的分支
@@ -129,9 +180,4 @@
            
      3.查看git分支的状态
             > git status;
-            
-
-            
-            
-
 ```
