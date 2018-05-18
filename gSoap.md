@@ -14,10 +14,10 @@
 
 ``` shell
 
-    1.从Web服务提供者处获取Web Service的WSDL文件，通常是一个URL，
+    1.从Web服务提供者处获取Web Service的WSDL文件，通常是一个URL,
           如：http://www.cs.fsu.edu/~engelen/calc.wsdl
           
-    2． 使用gSoap工具wsdl2h，根据WSDL生成一个C/C++语法结构的头文件，这一步将会得到一个头文件，如：calc.h，
+    2． 使用gSoap工具wsdl2h,根据WSDL生成一个C/C++语法结构的头文件,这一步将会得到一个头文件,如：calc.h,
         该步的目的：实现WSDL文件到.h文件的数据映射。
         
     　　　如：wsdl2h -s -o calc.h http://www.cs.fsu.edu/~engelen/calc.wsdl

@@ -98,7 +98,7 @@
             # 定义连接后端服务器的失败重连次数,连接失败次数超过此值后将会将对应后端服务器标记为不可用
                 retries 3
 
-            # 启用日志记录HTTP请求，默认haproxy日志记录是不记录HTTP请求的,只记录“时间[Jan 5 13:23:46] 
+            # 启用日志记录HTTP请求,默认haproxy日志记录是不记录HTTP请求的,只记录“时间[Jan 5 13:23:46] 
               日志服务器[127.0.0.1] 实例名已经pid[haproxy[25218]] 信息[Proxy http_80_in stopped.]”
                 option httplog
              
@@ -135,7 +135,7 @@
                该参数向后兼容
                     clitimeout 3000 或则 timeout client 60s
 
-             # 设置服务器端回应客户度数据发送的最长等待时间,默认单位是毫秒,新版本haproxy使用timeout server替代.
+             # 设置服务器端回应客户端数据发送的最长等待时间,默认单位是毫秒,新版本haproxy使用timeout server替代.
                该参数向后兼容   
                     srvtimeout 3000 或则 timeout server 50s
              
