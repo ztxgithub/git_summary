@@ -136,6 +136,27 @@
 
 ```
 
+## tag操作
+
+```shell
+    1.tag就像里程碑标志的一个点，branch是一个新的征程的一条线；
+      tag 是静态的，而branch要往前走；稳定版本备份用tag，新功能开发多人用branch，开发完之后再merge到master上。
+      tag是一个只读的branch。
+      
+    2.打tag git命令
+        (1) > git tag  //列出git中现有的所有标签
+        (2) > git tag -l v1.4.2.*  //按照字母表顺序给出tag
+                v1.4.2.1
+                v1.4.2.2
+
+        (3) > git tag -a v1.4 -m ‘version 1.4′  //创建标签， -a 加标签，-m  加标签注释。
+        (4) > git tag v1.4-lw                         //创建轻量级标签，不用-a，-m等参数
+        (5) > git show v1.4   //git show 命令查看相应标签的版本信息，并连同显示打标签时的提交对象
+        (6) > git tag -a v1.2 9fceb02        //为已提交的信息贴上标签，为校验码为9fceb02*的版本贴上标签。
+        (7) > git push --tags  //如果上传到服务器时不能上传tag，可加上--tags命令
+
+```
+
 ## git 相关命令
 
 ```shell
