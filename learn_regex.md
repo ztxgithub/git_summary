@@ -6,6 +6,8 @@
 1. regex : regular expression
 2. \< 表示词首, 如：\<abc 表示以 abc 为首的詞
 3. \> 表示词尾, 如：abc\> 表示以 abc 結尾的詞。
+4.[]里面的.*不代表任何含义，就是符号"." 和 "*"
+5.[\u4E00-\u9FA5] ：匹配所有的汉字
 
 ```
 ## 基本匹配
@@ -118,8 +120,6 @@ ar[^,\-]   除了  "ar-", "ar," 其他都匹配
         print(match_obj.group(1))
     结果:
            bb
-    
-
 ```
 [在线练习](https://regex101.com/r/kPpO2x/1)
 
