@@ -10,7 +10,7 @@
      实现自动化的故障转移,当Master恢复的时候会重新接管服务.
      
      Keepalived监控A、B上的HAproxy,利用Keepalived的VIP漂移技术,若A、B上的HAprox都工作正常,
-     则VIP与优先级别高的服务器（主服务器）绑定,当主服务器当掉时,则与从服务器绑定,而VIP则是暴露给外部访问的ip.	
+     则VIP与优先级别高的服务器（主服务器）绑定,当主服务器宕掉时,则与从服务器绑定,而VIP则是暴露给外部访问的ip.	
      	
      在两台HAProxy的主机上分别运行着一个Keepalived实例,这两个Keepalived争抢同一个虚IP地址,
      两个HAProxy也尝试去绑定这同一个虚IP地址上的端口.
