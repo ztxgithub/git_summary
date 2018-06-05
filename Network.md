@@ -29,6 +29,7 @@
     $ ifconfig eth0:0 down
 	
 ```
+
 - arp协议
 
 ``` shell
@@ -39,6 +40,25 @@
         
         输入arping 命令的主机必须跟　192.0.0.65　在同一个物理网段,此时就得到 mac地址
 	
+```
+
+- 得到对方的ip所对应的mac地址
+
+```shell
+    方法一:
+        (1) 先ping 通目标ip地址
+                > ping 192.168.0.2
+        (2) > arp 192.168.0.2
+            结果:
+                Address                  HWtype  HWaddress           Flags Mask            Iface
+                192.168.0.2              ether   6c:ae:8b:5c:26:48   C                     enp5s0
+                
+    方法二:
+        > arping -I enp5s0 192.168.0.2
+        结果:
+            ARPING 192.168.0.2 from 192.168.0.9 enp5s0
+            Unicast reply from 192.168.0.2 [6C:AE:8B:5C:26:48]  0.620ms
+            Unicast reply from 192.168.0.2 [6C:AE:8B:5C:26:48]  0.619ms
 ```
 
 - 判断系统有没有eth0等网络接口
@@ -407,6 +427,7 @@
         
         2.将对应的数据包的源地址修改一下,改成FSU的本地ip(192.0.0.65)
         
+        这个是由FSU(192.0.0.65:80)发给摄像头(192.0.0.64:80)
                                        |------------筛选条件------------------|
         iptables -t nat -A POSTROUTING -m tcp -p tcp --dport 80 -d 192.0.0.64 -j SNAT --to-source 192.0.0.65
            
