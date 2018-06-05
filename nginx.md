@@ -46,35 +46,35 @@ mkdir nginx在home目录下创建nginx目录,作为nginx的安装目录.
 
     main模块:
     
-    #定义Nginx运行的用户和用户组
-        #user  nobody; 
-    
-    #nginx进程数，建议设置为等于CPU总核心数。
-        worker_processes  1; 
-    
-    #全局错误日志定义类型，[ debug | info | notice | warn | error | crit ]
-        #error_log  logs/error.log;
-        #error_log  logs/error.log  notice;
-        #error_log  logs/error.log  info;
-    
-    #进程文件
-        #pid        logs/nginx.pid;
-    
-    #一个nginx进程打开的最多文件描述符数目,理论值应该是最多打开文件数(系统的值ulimit -n)与nginx进程数相除,
-    但是nginx分配请求并不均匀,所以建议与ulimit -n的值保持一致.
-        worker_rlimit_nofile 65535;
+            #定义Nginx运行的用户和用户组
+                #user  nobody; 
+            
+            #nginx进程数，建议设置为等于CPU总核心数。
+                worker_processes  1; 
+            
+            #全局错误日志定义类型，[ debug | info | notice | warn | error | crit ]
+                #error_log  logs/error.log;
+                #error_log  logs/error.log  notice;
+                #error_log  logs/error.log  info;
+            
+            #进程文件
+                #pid        logs/nginx.pid;
+            
+            #一个nginx进程打开的最多文件描述符数目,理论值应该是最多打开文件数(系统的值ulimit -n)与nginx进程数相除,
+            但是nginx分配请求并不均匀,所以建议与ulimit -n的值保持一致.
+                worker_rlimit_nofile 65535;
     
     events 模块:
     
-    #工作模式与连接数上限
-        events {
-        
-            #参考事件模型，use [ kqueue | rtsig | epoll | /dev/poll | select | poll ]; 
-             epoll模型是Linux 2.6以上版本内核中的高性能网络I/O模型，如果跑在FreeBSD上面，就用kqueue模型。
-                use epoll;
-            #单个进程最大连接数（最大连接数=连接数*进程数 worker_processes*worker_connections）
-                worker_connections  1024;
-        }
+            #工作模式与连接数上限
+                events {
+                
+                    #参考事件模型，use [ kqueue | rtsig | epoll | /dev/poll | select | poll ]; 
+                     epoll模型是Linux 2.6以上版本内核中的高性能网络I/O模型，如果跑在FreeBSD上面，就用kqueue模型。
+                        use epoll;
+                    #单个进程最大连接数（最大连接数=连接数*进程数 worker_processes*worker_connections）
+                        worker_connections  1024;
+                }
         
         
     server 子模块: 它用来定一个虚拟主机
@@ -143,8 +143,82 @@ mkdir nginx在home目录下创建nginx目录,作为nginx的安装目录.
                     hash $remote_addr; // hash $remote_addr consistent (consistent指定一致性哈希算法)
                     server 192.168.0.3:1883 max_fails=2 fail_timeout=30s max_conns=5000; 在这里添加要代理的mqtt
                     server 10.0.0.250:1883 max_fails=2 fail_timeout=30s;    
-            }
+            }        
+```
 
-           
-           
+## 用途
+
+### 静态HTTP服务器
+
+```shell
+    1.Nginx是一个HTTP服务器，可以将服务器上的静态文件（如HTML、图片）通过HTTP协议展现给客户端
+    2.实例：
+        server {
+        	listen 80;
+        	location {
+        		root /usr/share/ngnix/html;  #静态文件路径
+        	}
+        }
+```
+
+### 反向代理服务器
+
+```shell
+    1.客户端本来可以直接通过HTTP协议访问某网站应用服务器,如果网站管理员在中间加上一个Nginx,
+      客户端请求Nginx,Nginx请求应用服务器,然后将结果返回给客户端,此时Nginx就是反向代理服务器.
+      
+    2.
+        server {
+        	listen 80;
+        	location {
+        		proxy_pass http://192.168.20.1:8080;  #应用服务器http地址
+        	}
+        }
+```
+
+### 负载均衡
+
+```shell
+    upstream deal_porc{
+    	server 192.168.20.1:8080； #应用服务器1
+    	server 192.168.20.2:8080； #应用服务器2
+    }
+    
+    server {
+    	listen 80;
+    	location {
+    		proxy_pass http://deal_porc；
+    	}
+    }
+```
+
+### 虚拟主机
+
+```shell
+    1.有的网站访问量大,需要负载均衡,然而并不是所有网站都如此出色，有的网站，由于访问量太小，需要节省成本，
+      需要将多个网站部署在同一台服务器上。
+      例如将www.aaa.com和www.bbb.com两个网站部署在同一台服务器上，两个域名解析到同一个IP地址，
+      但是用户通过两个域名却可以打开两个完全不同的网站,互相不影响,就像访问两个服务器一样,所以叫两个虚拟主机.
+      
+    2.
+        server {
+        	listen 80 default_servere;
+        	server_name _;
+        	return 444;   # 过滤其他域名的请求，返回444状态码
+        }
+        
+        server {
+        	listen 80;
+        	server_name www.aaa.com; #www.aaa.com 域名
+        	location {
+        		proxy_pass http://localhost:8080；  #对应端口号8080
+        	}
+        }
+        server {
+        	listen 80;
+        	server_name www.bbb.com; #www.bbb.com 域名
+        	location {
+        		proxy_pass http://localhost:8081；  #对应端口号8081
+        	}
+        }
 ```
