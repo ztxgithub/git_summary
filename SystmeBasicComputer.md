@@ -208,6 +208,10 @@
          net.ipv4.ip_forward 地址转发, 值为0禁止数据包转发,值为1允许数据包转发.
            临时修改地址转发功能, echo "1" > /proc/sys/net/ipv4/ip_forward 
            
+          net.ipv4.ip_local_port_range
+                     net.ipv4.ip_local_port_range = 32768 59000   表示应用程序可使用的IPv4端口范围.
+                     改为1024到65000
+           
          kernel.shmmax (单位:字节)
             用于定义单个共享内存段的最大值. 32位linux系统：可取最大值为4294967296 - 1 == 4294967295(bytes)
             64位linux 系统,可取的最大值为 物理内存值-1 byte
@@ -220,11 +224,7 @@
             
          fs.file-max:
             决定了当前内核可以打开的最大的文件句柄数.这个是系统限制,限制所有用户打开文件描述符的总和.
-            
-         net.ipv4.ip_local_port_range
-            net.ipv4.ip_local_port_range = 32768 59000   表示应用程序可使用的IPv4端口范围.
-            改为1024到65000
-            
+                
          net.core.rmem_default：(单位字节)
             表示套接字接收缓冲区大小的缺省值 (net.core.rmem_default = 212992 ->208KB)
             
