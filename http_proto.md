@@ -198,3 +198,23 @@
         session机制本身并不复杂,然而其实现和配置上的灵活性却使得具体情况复杂多变.
         这也要求我们不能把仅仅某一次的经验或者某一个浏览器，服务器的经验当作普遍适用的。
 ```
+
+## HTTP Authorization
+
+```shell
+    (1) Basic Auth 认证
+            基本认证(Basic access authentication)是一种用来允许网页浏览器或其他客户端程序在请求时提供用户名和口令形式的
+            身份凭证的一种登录验证方式
+            
+            报文头headers
+            Authorization: Basic YWRtaW46YWRtaW4= //Authorization: "Basic username:password的base64加密字符串
+            
+            http auth的过程:
+                1.客户端发送http请求
+                2.服务器发现配置了http auth,于是检查request里面有没有"Authorization"的http header
+                2.如果有，则判断Authorization里面的内容是否在用户列表里面,
+                   Authorization header的典型数据为"Authorization: Basic jdhaHY0="，其中Basic表示基础认证,
+                   jdhaHY0=是base64编码的"user:passwd"字符串。如果没有，或者用户密码不对,则返回http code 401页面给客户端.
+                3. 标准的http浏览器在收到401页面之后,应该弹出一个对话框让用户输入帐号密码；
+                   并在用户点确认的时候再次发出请求，这次请求里面将带上Authorization header
+```

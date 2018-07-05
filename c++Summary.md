@@ -188,3 +188,18 @@
                     
                  还会导致线程不安全.
 ```
+
+- 外部访问　类的枚举数据
+
+```shell
+    class Functor
+    {
+    
+        public:
+            enum Type{Plus,Sub};
+
+    };
+    
+    cout << Functor<int>::Sub << endl;
+
+```

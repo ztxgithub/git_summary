@@ -59,6 +59,14 @@
             ARPING 192.168.0.2 from 192.168.0.9 enp5s0
             Unicast reply from 192.168.0.2 [6C:AE:8B:5C:26:48]  0.620ms
             Unicast reply from 192.168.0.2 [6C:AE:8B:5C:26:48]  0.619ms
+            
+    方法三:
+        > arp -a 
+        
+        结果:
+            ? (192.168.142.254) at 00:50:56:e0:82:3b [ether] on eth0
+            ? (192.168.142.2) at 00:50:56:ec:ab:e8 [ether] on eth0
+            ? (192.168.142.1) at 00:50:56:c0:00:08 [ether] on eth0
 ```
 
 - 判断系统有没有eth0等网络接口
