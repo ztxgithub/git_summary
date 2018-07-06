@@ -696,7 +696,7 @@
             
 ```
 
-- tar命令
+- tar 命令
 
 ``` shell
 
@@ -717,6 +717,29 @@
       
          > tar -cvzf /home/cront_log/emqttd.tar.gz -C /home/cront_log/ emqttd 
          
+```
+
+- zip 压缩
+
+```shell
+    参数:
+            -r 递归处理,将待压缩的目录递归压缩
+            
+   　1.将当前目录下的所有文件和文件夹全部压缩成myfile.zip文件
+       > zip -r myfile.zip ./*
+       
+     2.只查看压缩包的文件层级不进行解压
+       >  unzip -v update.zip 
+       
+     3.压缩文件是否下载完全
+        > unzip -t update.zip
+        
+     4.myfile.zip文件解压到 /home/sunny/
+        > unzip -o -d /home/sunny myfile.zip
+        
+        -o:不提示的情况下覆盖文件；
+        -d:-d /home/sunny 指明将文件解压缩到/home/sunny目录下；
+
 ```
 
 ### 特点需求
