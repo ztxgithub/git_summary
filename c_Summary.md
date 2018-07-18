@@ -75,7 +75,8 @@
 - pragma pack(1)
 
 ``` c
-    
+
+    pragma pack(x): 设置对齐字节数目
     在数据传输中数据结构有时候不需要自动补全,默认是自动填充.
     
     #pragma pack(1)
