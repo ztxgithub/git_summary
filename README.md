@@ -42,5 +42,11 @@ ubi2_0 on /yy/log type ubifs (rw,sync,relatime)
 
 - dmesg
 
+## 基础知识
+
+```shell
+    1.MSVC: Microsoft Visual C++ 集成编译工具
+```
+
 
 
