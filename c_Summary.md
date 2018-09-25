@@ -500,6 +500,10 @@
          (and atomically) closed when any of the exec-family functions succeed.This is useful to keep from 
          leaking your file descriptors to random programs run by e.g. system().
          
+         程序 exec()时，进程会自动关闭这个文件描述符，而文件描述默认是被子进程(典型的IPC,通过 pipe() 进行父子进程的通信)
+         fork() 的主要目的不再是创建 work process(工作子线程) 通过共享文件描述符(pipe()) 来与父进程进行通信，
+         而是创建干净的进程(fork()调用后立刻调用 exec()),为了避免与父进程的文件描述符产生竞争，使用　FD_CLOEXEC 标志
+         
     2.  设置文件非阻塞模式
         int flags = fcntl(sock, F_GETFL, 0);
         fcntl(sock, F_SETFL, flags | O_NONBLOCK);

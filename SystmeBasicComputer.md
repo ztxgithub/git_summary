@@ -18,6 +18,14 @@
 	
 ```
 
+- malloc 问题
+
+```shell
+
+    1.如果要申请内存进行测试，只 malloc()　还不够，还要 memset(buf, 1, size) 对该内存区域进行操作，
+    　操作系统才真正把内存给程序
+```
+
 
 - [字符编码笔记：ASCII，Unicode和UTF-8](http://www.ruanyifeng.com/blog/2007/10/ascii_unicode_and_utf-8.html)
 

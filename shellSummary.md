@@ -32,6 +32,30 @@
 	
 ```
 
+- 更改操作系统中内存的上限
+
+```shell
+    1.
+        ~ # fw_printenv
+        结果:
+            bootdelay=2
+            baudrate=115200
+            ethaddr=00:00:00:11:66:88
+            serverip=192.168.1.100
+            ipaddr=192.168.1.101
+            watchdog=off
+            uimage=uImage
+            Current_system=system_A
+            bootcmd=sf probe 0 18000000; sf read 0x7fc0 0x200000 0x700000; bootm 0x7fc0
+            serialno=PMUZ111180700015
+            bootargs=root=/dev/ram0 console=ttyS0,115200n8 rdinit=/sbin/init mem=64M 
+                          watchdog=on ethaddr0=7C:47:7C:B3:7C:1E
+                          
+    2.
+        ~ # fw_setenv bootargs root=/dev/ram0 console=ttyS0,115200n8 rdinit=/sbin/init m
+        em=128M watchdog=on ethaddr0=7C:47:7C:B3:7C:1E
+```
+
 
 # BBDS,FSU 命令专用
 

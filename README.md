@@ -30,6 +30,13 @@ ubi1_0 on /opt type ubifs (rw,sync,relatime)
 ubi0_0 on /etc type ubifs (rw,sync,relatime)
 ubi2_0 on /yy/log type ubifs (rw,sync,relatime)
 
+    1.mount sd卡将其格式化为 fat 文件系统
+        > mkdir -p /media/sd
+        > mount -t vfat /dev/mmcblk0p1 /media/sd
+        
+    2.mount 其他存储设备
+        > mount -t vfat /dev/sda1 /yy/
+
 ```
 
 - ls /dev/
