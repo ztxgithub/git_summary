@@ -1010,6 +1010,34 @@
          如果count为0,,而fd指的是非常规文件的文件，则结果不会被指定。
 ```
 
+- pread()/pwrite() (不改变 fd 文件偏移量)
+
+```shell
+
+    原型:   
+        ssize_t pread(int fd, void *buf, size_t count, off_t offset);
+        ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset);
+        
+    函数参数：
+        fd：要操作的文件描述符
+        buf：在pread函数中表示存储读出数据的内存首地址，在pwrite函数中表示写入数据的内存首地址
+        count：在pread函数中表示希望读出的字节数，在pwrite函数中表示希望写入的字节数
+        offset：表示从哪个位置开始读取或者写入数据。偏移量是从文件开头开始计算
+        
+    返回值：
+        调用成功时pread函数返回实际读到的字节数，遇到文件结尾则返回0；pwrite返回写入的字节数
+        调用失败时pread函数返回 -1 ；pwrite函数返回 -1 .
+    
+    注意:
+        pread() and pwrite() 比较适合多线程编程，多线程间通过 pread() and pwrite() 操作同一个
+        文件描述符不会改变文件的偏移量，如果 file 使用 O_APPEND 打开，最好不用 pwrite()
+        
+        pread函数相当于先后调用了lseek和read函数，但是还是有区别的，有以下两点区别：
+            pread函数是原子操作，而先后调用两个函数不是原子操作
+            pread函数是不会改变当前文件偏移量的，而read和write函数会改变当前文件偏移量
+
+```
+
 - readlink
    
 ```c
