@@ -18,12 +18,15 @@
 	
 ```
 
+## 内存问题
+
 - malloc 问题
 
 ```shell
 
     1.如果要申请内存进行测试，只 malloc()　还不够，还要 memset(buf, 1, size) 对该内存区域进行操作，
     　操作系统才真正把内存给程序
+    2. 调用 malloc_trim(0) 可以将进程中 free 的内存归还给系统(前提是系统使用 glibc 而不是 uclibc)
 ```
 
 
