@@ -741,3 +741,99 @@
             重启远程主机ssh服务
                 > /etc/init.d/ssh restart        
 ```
+
+## Protobuf 简介
+
+```shell
+    1.protobuf 是可扩展的序列化结构数据格式,很适合用做数据存储和作为不同应用，不同语言之间相互通信的数据交换格式
+      只要实现相同的协议格式即同一proto文件被编译成不同的语言版本，加入到各自的工程中去。
+      这样不同语言就可以解析其他语言通过protobuf序列化的数据。
+      
+    2. protobuf 语法定义
+            (1) 用 protobuf 语法 定义 proto 文件，内容如下:
+            
+                    message Article {
+                        required int32 article_id=1;
+                        optional string article_excerpt=2;
+                        repeated string article_picture=3;
+                    }
+                    
+                    message:	    是消息定义的关键字
+                    required:	    表示这个字段必须的，必须在序列化的时候被赋值
+                    optional:	    代表这个字段是可选的，可以为0个或1个但不能大于1个。
+                    repeated:	    代表此字段可以被重复任意多次包括0次
+                    int32/string	字段的类型
+                    
+                    最后的1，2，3则是代表每个字段的一个唯一的编号标签，在同一个消息里不可以重复。
+                    这些编号标签用与在消息二进制格式中标识你的字段，并且消息一旦定义就不能更改。
+                    需要说明的是标签在1到15范围的采用一个字节进行编码。所以通常将标签1到15用于频繁发生的消息字段。
+                    编号标签大小的范围是1到229。此外不能使用protobuf系统预留的编号标签（19000 －19999）
+                    
+            (2) 当一个proto文件需要另一个proto文件的时候，我们可以通过import导入
+                    import "article.proto";
+                    message Book {
+                    //定义消息体
+                    }
+                    
+            (3) 更新 proto 文件要求
+                    1. 不能改变已有的任何编号标签。
+                    2. 只能添加 optional 和 repeated 的字段。这样旧代码能够解析新的消息，只是那些新添加的字段会被忽略。
+                        但是序列化的时候还是会包含哪些新字段。而新代码无论是旧消息还是新消息都可以解析。
+                    3. 非 required 的字段可以被删除，但是编号标签不可以再次被使用，应该把它标记到reserved中去
+                    4. 非 required 可以被转换为扩展字段，只要字段类型和编号标签保持一致
+                    5. 相互兼容的类型，可以从一个类型修改为另一个类型，譬如 int32 的字段可以修改为 int64
+                    
+                    
+    3. 实际例子
+    
+            syntax = "proto2";
+            message Article {
+              required int32 article_id = 1;　// 消息的字段编号标签为 1 
+              optional string article_excerpt = 2;
+              repeated string article_picture = 3;
+              optional int32  article_pagecount = 4 [default = 0];　// 给字段设置默认值
+              // 可以定义了enum枚举类型
+              enum ArticleType {
+                NOVEL = 0;
+                PROSE = 1;
+                PAPER = 2;
+                POETRY = 3;
+              }
+              optional ArticleType article_type = 5 [default = NOVEL];
+              // 还可以嵌套消息
+              message Author {
+                required string name = 1; //作者的名字
+                optional string phone = 2;
+              }
+              optional Author author = 6;
+              
+              // packed=true可以更加有效率的encode
+              // packed只能用于 repeated && 数值类型 的字段。不能用于string类型的字段。
+              repeated int32 article_numberofwords = 7 [packed=true];
+              
+              //reserved关键字主要用于保留相关编号标签,用reserved标记这些编号标签以保证不会被使用
+              reserved  9, 10, 12 to 15;
+              
+              // 用extensions关键字来定义一些编号标签供第三方扩展。这样的好处是不需要修改原来的消息格式。
+              // 
+              extensions 100 to 1000;
+            }
+            
+            //extend关键字来扩展。只要扩展的字段编号标签在extensions定义的范围里
+            extend Article {
+              optional int32 followers_count = 101;
+              optional int32 likes_count= 102;
+            }
+            message Other {
+              optional string other_info = 1;
+              
+              // oneof 关键字相当于 union, 当你设置了oneof里某个成员值时，
+              // 它会自动清除掉oneof里的其他成员，也就是说同一时刻oneof里只有一个成员有效
+              // oneof里的字段不能用 required，optional，repeted关键字
+              oneof test_oneof {
+                string code1 = 2;
+                string code2 = 3;
+              }
+            }
+                    
+```
