@@ -1038,6 +1038,57 @@
 
 ```
 
+- readv 和 writev
+
+```shell
+    1.原型
+        struct iovec
+        {
+            void *iov_base;     /* starting address of buffer 对应数据的起始地址*/
+            size_t iov_len;     /* size of buffer */
+        };
+        
+        ssize_t readv(int filedes, const struct iovec *iov, int iovcnt);
+        ssize_t writev(int filedes, const struct iovec *iov, int iovcnt);
+        
+    2. 简要
+          readv 和 writev 函数用于在一次函数调用中读、写多个非连续缓冲区。有时也将这两个函数称为散布读和聚集写。
+          因为 readv 是从文件描述符中读取数据，顺序散布到缓冲区中，readv 总是先填满一个缓冲区(struct iovec)，
+          然后再填写下一个。readv 返回读到的总字节数。如果遇到文件结尾，已无数据可读，则返回0。
+
+           writev以顺序iovec[0]、iovec[1]至iovec[iovcnt-1]从缓冲区中聚集输出数据。writev返回输出的字节总数。
+           通常它应等于全部缓冲区长度之和。
+           
+    3. 例子
+            struct iovec iov[2];    
+            char *buf1 = (char *)malloc(5);    
+            char *buf2 = (char *)malloc(1024);    
+            memset(buf1, 0, 5);    
+            memset(buf2, 0, 1024);
+                
+            iov[0].iov_base = buf1;  
+            iov[0].iov_len = 5;   
+              
+            iov[1].iov_base = buf2;     
+            iov[1].iov_len = 1024;  
+               
+            ssize_t nread, nwrite;    
+            nread = readv(read_fd, iov, 2)　// 从 read_fd 文件描述符中读取数据，依次存放在 iov[] 中
+            
+            nwrite = writev(write_fd, iov, 2);
+            
+            free(buf1);
+            free(buf2);
+            
+    4. 注意
+            (1) iovcnt 不应超过IOV_MAX(IOV_MAX=1024)
+            (2) 对于非阻塞 socket IO, 最好不要使用 writev
+                    对于非阻塞socket而言，writev会在 TCP 发送缓冲区不可写时返回的 EAGAIN, 这样不能再传相同的 iovec,
+                    需要重新调整　const struct iovec *iov　的值，　writev 这个返回值“实用性”并不高，
+                    因为参数传入的是iovec数组，计量单位是iovcnt，而不是字节数，用户依旧需要通过遍历iovec来计算新的基址，
+                    另外写入数据的“结束点”可能位于一个iovec的中间某个位置，因此需要调整临界iovec的io_base和io_len。
+```
+
 - readlink
    
 ```c
