@@ -754,7 +754,39 @@
         　　protocol buffer 编译器可以创建一个类，用于实现对高效的二进制格式的 protocol buffer 数据的自动化编码和解码
         
         (3) 网络编程中使用 Protobuf 需要解决问题
-                A. 长度, Protobuf 打包的数据没有自带长度信息或终结符，
+                A. 长度, Protobuf 打包的数据没有自带长度信息或终结符，需要应用程序自己在发送和接受的时候自己切分
+                    解决方案:
+                        可以在每一个消息内容的头部加个固定的 length header 
+                B. 类型，Protobuf 打包的数据没有自带类型信息，需要由发送方把类型信息传给接收方，接收方创建具体的
+                   Protobuf Message 对象，再做反序列化
+                   解决方案:
+                        根据 type name 反射自动创建 Message 对象．
+                            (A) 用 DescriptorPool::generated_pool() 创建一个 DescriptorPool 对象，它包含程序编译时
+                            　　链接的全部 Protobuf Message types
+                            (B) 根据 type name 用　DescriptorPool::FindMessageTypeByName() 找到指定的 Descriptor 对象
+                            (C) 再用 MessageFactory::generated_factory() 创建一个 MessageFactory 对象，它能创建
+                            　　程序编译时链接的所有 Protobuf Message types
+                            (D) 根据 Descriptor 对象用 MessageFactory::GetPrototype() 找到具体 Message type 的
+                            　　 default instance( google::protobuf::Message* prototype)
+                            (E) 最后用 prototype->new() 创建对象
+                            
+        (4) Protobuf 传输格式
+                struct protobuf_message{
+                   int32_t len;  // 包含 4(name_len) + type_name_len + proto_data + 4(check_sum)
+                   int32_t name_len;  // 包含 '\0' 
+                   char typename[name_len]; // 以 '\0' 结束
+                   char proto_data[len - name_len - 8];
+                   int32_t check_sum;  // 采用 adler32 算法进行数据校验
+                };
+                
+                A. 采用 int32_t 而不是 uint_32, 考虑到跨语言的移植性，java 语言没有 unsigned int 类型
+                B. check_sum 　adler32 算法计算量小，速度快， zlib 和 java.unit.zip 支持该算法，不需要自己实现
+                C. type_name 以 '\0' 结尾方便进行调试，根据 tcpdump 抓取下来的包很容易看出 type_name,
+                
+         (5) 只有在使用 TCP 长连接，且在一个连接上使用多种类型的消息时(时间同步和心跳等不同业务)，才使用
+         　　 protobuf_message(加上消息类型和长度)，这个时候需要一个分发器 dispatcher,把不同的消息类型分发到各自的消息处理函数
+             否则使用默认的(Protobuf 打包的数据不带长度和消息类型),使用默认的
+         　　Protobuf 传输格式(不带长度和类型)的情况很多，有在某一个 port 上只接受一个消息类型．
       
     2. protobuf 语法定义
             (1) 用 protobuf 语法 定义 proto 文件，内容如下:

@@ -218,7 +218,7 @@
        
 ```
 
-- iptables规则
+- iptables 规则
 
 ``` shell
     
