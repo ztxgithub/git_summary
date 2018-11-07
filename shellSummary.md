@@ -167,16 +167,6 @@
 	
 ```
 
-- 查看文件夹下的大小 du(disk usage)
-
-``` shell
-
-	$ du -h folder     :以人类可读的方式递归显示该folder及子目录的大小
-	
-	$ du -sh folder    :只显示folder文件夹包含的大小
-	
-```
-
 - 查看linux系统是64还是32位
 
 ``` shell
@@ -355,71 +345,6 @@
             
     2. 给每一个文件前面加序号
         $ ll | cat -n
-         
-```
-
-- 给文件增加别名 (ln)
-
-``` shell
-
-    1.创建一个软连接,删除源文件，另一个无法使用
-    
-               源文件    软连接名字
-    $ ln -s src_file  dst_symlink
-    
-    2.创建一个硬链接,删除一个,另一个继续能用
-    $ ln src_file dst_hardlink
-    
-         
-```
-
-- Linux 输入输出重定向
-
-``` shell
-
-    在shell中,文件描述符 0:标准输入stdin 
-             文件描述符 1:标准输出stdout 
-             文件描述符 2:标准错误stderr
-          
-    test.sh 内容:
-        t
-        date
-    
-    1. $./test.sh > test1.log
-         date的执行结果被重定向到log文件中了，而t无法执行的错误则只打印在屏幕上
-         
-    2. $ ./test.sh > test2.log 2>&1  == $ ./test.sh 1> test2.log 2>&1 
-        stderr和stdout的内容都被重定向到log文件中
-    
-    > 就相当于 1> 也就是重定向标准输出,不包括标准错误.通过2>&1,就将标准错误重定向到标准输出了，
-    那么再使用>重定向就会将标准输出和标准错误信息一同重定向.如果只想重定向标准错误到文件中，则可以使用2> file。
-    
-    
-    cmd >a 2>a 和 cmd >a 2>&1 为什么不同？
-    cmd >a 2>a ：stdout和stderr都直接送往文件 a ，a文件会被打开两遍，由此导致stdout和stderr互相覆盖。
-    cmd >a 2>&1 ：stdout直接送往文件a ，stderr是继承了FD1的管道之后，再被送往文件a 。a文件只被打开一遍，就是FD1将其打开.
-    
-    > : 直接覆盖原来的内容
-    >> : 追加到原来的尾部
-         
-```
-
-- bash 快捷键
-
-``` shell
-
-    Ctl-w   删除当前光标到前边的最近一个空格之间的字符
-    Ctl-r   查找历史shell命令
-         
-```
-
-- find 查找
-
-``` shell
-
-    1.只查找文件夹名为 "mqtt*"
-        find / -name "mqtt*" -type d
-        
          
 ```
 
@@ -638,43 +563,6 @@
             
 ```
 
-- cmp filename1 filename2 :二进制文件的比较
-
-- 将一个守护进程改为前台进程
-
-``` shell
-
-    > ./nginx -g "daemon off;"
-         
-```
-    
-- cat命令
-
-``` shell
-
-    功能：
-        1.连接文件
-        2.标准输入并打印显示屏(标准输出)
-            $ cat
-                结果：
-                    test cat  键盘输入(标准输入)
-                    test cat  显示器输出(标准输出)
-        3.显示文件内容
-        4.将几个文件连接起来显示
-            $ cat test_cat  test_inser  
-            
-        5.从键盘创建一个文件
-            $  cat > filename 只能创建新文件,不能编辑已有文件(ctrl+d 退出结束编辑)
-        6.先读file1再标准输入内容,最后连接重定向到filename文件中
-            $ cat file1 - > filename
-            
-    参数:
-        -A :显示所有的字符
-        -b(number-nonblank)：只对有数据行(非空)显示行数
-        -n : 显示每一行的行数
-            
-```
-
 - tac 命令: 跟cat命令一样只不过是从尾开始显示
 
 - file /proc/pid/exe (找到pid对应的可执行文件的路劲)
@@ -718,61 +606,6 @@
     > screen -wipe (检查目前所有的screen会话，并删除已经无法使用的screen会话(状态为dead))
      
             
-```
-
-- tar 命令
-
-``` shell
-
-    参数：
-            -t 显示压缩文件的内容
-            -C 切换到指定目录
-            -p 保留文件权限的信息
-            
-    1.如果要查看 tar.gz 里面的分布
-        > tar -tvf file.tar.gz
-            结果：
-                drwxr-xr-x root/root         0 2018-01-05 10:20 emqttd/
-                -rw-r--r-- root/root 104858178 2018-01-05 07:40 emqttd/emqttd_stdout.log.3
-                -rw-r--r-- root/root 104858013 2018-01-05 04:34 emqttd/emqttd_stdout.log.9
-                
-    2.如果在压缩的过程中使用了绝对路劲,想要压缩包中只包含目标文件夹名emqttd/,不要绝对路径名/home/yytd/emqttd/,
-      也不要递归创建文件夹 home -> yytd -> emqttd
-      
-         > tar -cvzf /home/cront_log/emqttd.tar.gz -C /home/cront_log/ emqttd 
-         
-```
-
-- zip 压缩
-
-```shell
-    参数:
-            -r 递归处理,将待压缩的目录递归压缩
-            
-   　1.将当前目录下的所有文件和文件夹全部压缩成myfile.zip文件
-       > zip -r myfile.zip ./*
-       
-     2.只查看压缩包的文件层级不进行解压
-       >  unzip -v update.zip 
-       
-     3.压缩文件是否下载完全
-        > unzip -t update.zip
-        
-     4.myfile.zip文件解压到 /home/sunny/
-        > unzip -o -d /home/sunny myfile.zip
-        
-        -o:不提示的情况下覆盖文件；
-        -d:-d /home/sunny 指明将文件解压缩到/home/sunny目录下；
-
-```
-
-### 特点需求
-
-- 删除 除Readme.md以外的文件
- 
-``` shell
-    > rm `ls | grep -v "README.md"`
-         
 ```
 
 ### 用户管理
@@ -829,6 +662,9 @@
     1.ctrl+a: 移到行首（a是首字母）
     2.ctrl+e: 移到行尾（end）
     3.ctrl+x: 行首位置和当前位置光标相互切换
+    4.Ctl-w   删除当前光标到前边的最近一个空格之间的字符
+    5.Ctl-r   查找历史shell命令
+
          
 ```
 
@@ -849,4 +685,183 @@
 
     检查说明：攻击者或者恶意软件往往会往系统中注入隐藏的系统账户实施提权或其他破坏性的攻击
     解决方法：检查发现有可疑用户时，可使用命令“usermod -L 用户名”禁用用户或者使用命令“userdel -r 用户名”删除用户。
+```
+
+## 文件操作
+
+- tar 命令
+
+``` shell
+
+    参数：
+            -t 显示压缩文件的内容
+            -C 切换到指定目录
+            -p 保留文件权限的信息
+            
+    1.如果要查看 tar.gz 里面的分布
+        > tar -tvf file.tar.gz
+            结果：
+                drwxr-xr-x root/root         0 2018-01-05 10:20 emqttd/
+                -rw-r--r-- root/root 104858178 2018-01-05 07:40 emqttd/emqttd_stdout.log.3
+                -rw-r--r-- root/root 104858013 2018-01-05 04:34 emqttd/emqttd_stdout.log.9
+                
+    2.如果在压缩的过程中使用了绝对路劲,想要压缩包中只包含目标文件夹名emqttd/,不要绝对路径名/home/yytd/emqttd/,
+      也不要递归创建文件夹 home -> yytd -> emqttd
+      
+         > tar -cvzf /home/cront_log/emqttd.tar.gz -C /home/cront_log/ emqttd 
+         
+```
+
+- zip 压缩
+
+```shell
+    参数:
+            -r 递归处理,将待压缩的目录递归压缩
+            
+   　1.将当前目录下的所有文件和文件夹全部压缩成myfile.zip文件
+       > zip -r myfile.zip ./*
+       
+     2.只查看压缩包的文件层级不进行解压
+       >  unzip -v update.zip 
+       
+     3.压缩文件是否下载完全
+        > unzip -t update.zip
+        
+     4.myfile.zip文件解压到 /home/sunny/
+        > unzip -o -d /home/sunny myfile.zip
+        
+        -o:不提示的情况下覆盖文件；
+        -d:-d /home/sunny 指明将文件解压缩到/home/sunny目录下；
+
+```
+
+- 删除 除Readme.md以外的文件
+ 
+``` shell
+    > rm `ls | grep -v "README.md"`
+         
+```
+
+- cmp filename1 filename2 :二进制文件的比较
+
+- 将一个守护进程改为前台进程
+
+``` shell
+
+    > ./nginx -g "daemon off;"
+         
+```
+    
+- cat命令
+
+``` shell
+
+    功能：
+        1.连接文件
+        2.标准输入并打印显示屏(标准输出)
+            $ cat
+                结果：
+                    test cat  键盘输入(标准输入)
+                    test cat  显示器输出(标准输出)
+        3.显示文件内容
+        4.将几个文件连接起来显示
+            $ cat test_cat  test_inser  
+            
+        5.从键盘创建一个文件
+            $  cat > filename 只能创建新文件,不能编辑已有文件(ctrl+d 退出结束编辑)
+        6.先读file1再标准输入内容,最后连接重定向到filename文件中
+            $ cat file1 - > filename
+            
+    参数:
+        -A :显示所有的字符
+        -b(number-nonblank)：只对有数据行(非空)显示行数
+        -n : 显示每一行的行数
+            
+```
+
+- 给文件增加别名 (ln)
+
+``` shell
+
+    1.创建一个软连接,删除源文件，另一个无法使用
+    
+               源文件    软连接名字
+    $ ln -s src_file  dst_symlink
+    
+    2.创建一个硬链接,删除一个,另一个继续能用
+    $ ln src_file dst_hardlink
+    
+         
+```
+
+- Linux 输入输出重定向
+
+``` shell
+
+    在shell中,文件描述符 0:标准输入stdin 
+             文件描述符 1:标准输出stdout 
+             文件描述符 2:标准错误stderr
+          
+    test.sh 内容:
+        t
+        date
+    
+    1. $./test.sh > test1.log
+         date的执行结果被重定向到log文件中了，而t无法执行的错误则只打印在屏幕上
+         
+    2. $ ./test.sh > test2.log 2>&1  == $ ./test.sh 1> test2.log 2>&1 
+        stderr和stdout的内容都被重定向到log文件中
+    
+    > 就相当于 1> 也就是重定向标准输出,不包括标准错误.通过2>&1,就将标准错误重定向到标准输出了，
+    那么再使用>重定向就会将标准输出和标准错误信息一同重定向.如果只想重定向标准错误到文件中，则可以使用2> file。
+    
+    
+    cmd >a 2>a 和 cmd >a 2>&1 为什么不同？
+    cmd >a 2>a ：stdout和stderr都直接送往文件 a ，a文件会被打开两遍，由此导致stdout和stderr互相覆盖。
+    cmd >a 2>&1 ：stdout直接送往文件a ，stderr是继承了FD1的管道之后，再被送往文件a 。a文件只被打开一遍，就是FD1将其打开.
+    
+    > : 直接覆盖原来的内容
+    >> : 追加到原来的尾部
+         
+```
+
+- find 查找
+
+``` shell
+
+    1.只查找文件夹名为 "mqtt*"
+        find / -name "mqtt*" -type d
+               
+```
+
+- 查看文件夹下的大小 du(disk usage)
+
+``` shell
+
+	$ du -h folder     :以人类可读的方式递归显示该folder及子目录的大小
+	
+	$ du -sh folder    :只显示folder文件夹包含的大小
+	
+```
+
+- rsync 同步文件
+
+```shell
+    1. rsync 主要同步的文件只想传不同的部分
+    　　第一次同步时 rsync 会复制全部内容，但在下一次只传输修改过的文件。　rsync 在传输数据的过程中可以实行压缩及解压缩操作，
+      　因此可以使用更少的带宽。
+      
+    2. 参数
+            -a: 递归，保持所有文件属性
+            -v: 详细模式输出
+            -z: 对备份的文件在传输时进行压缩处理
+    3. 使用
+           (A) 拷贝本地文件
+                > rsync -a  ./test.c  /backup
+           (B) 使用一个远程shell程序(如rsh、ssh)来实现将本地机器的内容拷贝到远程机器
+                > rsync -avz  test.c  user@172.16.0.11:/home/user/src
+           (C) 使用一个远程shell程序(如rsh、ssh)来实现将远程机器的内容拷贝到本地机器
+                > rsync -avz user@172.16.0.11:/home/user/src  ./src
+           (D) ssh端口更改后rsync的用法
+                >  rsync  -e  'ssh -p 3333'  test.c  ustc@172.16.0.172:/home/ustc
 ```
