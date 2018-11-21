@@ -331,7 +331,7 @@
                             　　　程序到本地目录
                             进程监控和管理: Sudoku Solver 是由 Slave 节点 fork() 产生的，同时父子进程可以通过 pipe()
                                           进行消息的通信，　Slave 节点得知 Sudoku Solver 异常 crash 后会令其重启．
-                                          Master 提供一个 Web 页面来We看本机群中各个服务程序是否正常．
+                                          Master 提供一个 Web 页面来看本机群中各个服务程序是否正常．
                                           
                             升级: 如果要主动重启 Sudoku Solver ,可以向 Master 发送指令，不需要 ssh & kill,
                                  同时会保存每台 host 的服务进程启动时间．动态的获知配置情况，当一个系统新增
@@ -339,9 +339,10 @@
                                  还有一种方法就是通过数据库，每个 Sudoku Solver 服务启动时往数据库表中 insert 
                                  自身的 ip:port, Web Server 配置里写了 select 语句,获取可利用的服务的 ip:port
                                  Web Server 通过数据库触发器及时的感知 Sudoku Solver ip address list 的变化.
-                            
-                            
-                          
-                    
+```
 
+## 分布式系统架构本质
+
+```shell
+    1.
 ```

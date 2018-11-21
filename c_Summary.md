@@ -262,6 +262,15 @@
  	int  --> %d
  	long int --> %ld
  	
+ 	1. 如果程序想要打印 int64_t 变量, 需要包含<intypes.h>, 并且使用 PRId64 宏
+ 	        #include<stdio.h>
+ 	        #define __STDC_FORMAT_MACROS
+ 	        #include<intypes.h>
+ 	         
+ 	        int64_t x = 100;
+ 	        printf("%" PRId64 "\n", x);
+ 	        
+ 	
  ```
  
  - scanf或者sscanf读取值转化为枚举的值要用 %u
