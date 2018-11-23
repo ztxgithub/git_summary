@@ -115,6 +115,28 @@
     
 ```
 
+## 交叉编译 tcmalloc.so
+
+```shell
+    在　gperftools-2.7　中
+    1. ./configure --host arm-none-linux-gnueabi CXX=arm-none-linux-gnueabi-g++ CC=arm-none-linux-gnueabi-gcc
+    2. make V=1 CXX=arm-none-linux-gnueabi-g++ CC=arm-none-linux-gnueabi-gcc 
+    3. 在　gperftools-2.7/.libs 进行查看
+    
+    4. 重新编译 make clean
+    
+    动态库有没有使用成功可使用这个命令：lsof -n | grep tcmalloc
+    
+    (1) 注意：这里为了进行内存泄漏分析，一定要将 libtcmalloc.so 放在最后
+            CXXLFLAGS =  -g -Wall -L../bin -lBaseCode -lpthread  -lprotobuf -rdynamic -ltcmalloc(链接放在最后)
+            
+    (2) 进行 gdb 调试查找内存问题
+            > env TCMALLOC_PAGE_FENCE=1 gdb CASSFSUService
+            
+    (3) 内存泄露
+        env HEAPCHECK=normal ./server
+```
+
 
 
 
