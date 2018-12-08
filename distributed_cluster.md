@@ -8,6 +8,35 @@
               SOA 架构是构造分布式计算应用程序的方法。它将 应用程序功能作为服务 发送给最终用户或者其他服务
     3. CDN(Content delivery network):内容分发网络,内容分发网络会指派较近、较顺畅的服务器节点将数据传输给用户,
        提高用户访问的响应速度和成功率
+       
+    4.
+        弹力设计篇
+            认识故障和弹力设计
+            隔离设计 Bulkheads
+            异步通讯设计 Asynchronous
+            幂等性设计 Idempotency
+            服务的状态 State
+            补偿事务 Compensating Transaction
+            重试设计 Retry
+            熔断设计 Circuit Breaker
+            限流设计 Throttle
+            降级设计 degradation
+            弹力设计总结
+        管理设计篇
+            分布式锁 Distributed Lock
+            配置中心 Configuration Management
+            边车模式 Sidecar
+            服务网格 Service Mesh
+            网关模式 Gateway
+            部署升级策略
+        性能设计篇
+            缓存 Cache
+            异步处理 Asynchronous
+            数据库扩展
+            秒杀 Flash Sales
+            边缘计算 Edge Computing
+            
+    5. 
 ```
 
 ## 集群
