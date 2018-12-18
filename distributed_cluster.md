@@ -864,7 +864,7 @@
        弹力（Resiliency）的概念: 一方面，在好的情况下，这个事对于我们的用户和内部运维来说是完全透明的，系统自动修复不需要人的干预
                          　　　另一方面，如果修复不了，系统能够做自我保护，而不让事态变糟糕。
     2. 系统可用性测量
-            Availability=MTTFMTTF+MTTR
+            Availability=MTTF+MTTR
             a. MTTF 是 Mean Time To Failure，平均故障前的时间，即系统平均能够正常运行多长时间才发生一次故障。
                系统的可靠性越高，MTTF 越长
             b. MTTR 是 Mean Time To Recovery，平均修复时间，即从故障出现到故障修复的这段时间，这段时间越短越好。

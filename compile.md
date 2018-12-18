@@ -118,7 +118,7 @@
 ## 交叉编译 tcmalloc.so
 
 ```shell
-    在　gperftools-2.7　中
+    在　gperftools-2.7　中(https://github.com/gperftools/gperftools/releases)
     1. ./configure --host arm-none-linux-gnueabi CXX=arm-none-linux-gnueabi-g++ CC=arm-none-linux-gnueabi-gcc
     2. make V=1 CXX=arm-none-linux-gnueabi-g++ CC=arm-none-linux-gnueabi-gcc 
     3. 在　gperftools-2.7/.libs 进行查看
