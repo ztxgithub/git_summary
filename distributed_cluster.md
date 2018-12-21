@@ -39,6 +39,9 @@
     5.  SaaS: Software as a Service，软件即服务，这层的作用是将应用作为服务提供给客户。
         PaaS：Platform as a Service，平台即服务，这层的作用是将开发平台作为服务提供给用户
         IaaS：Infrastructure as a Service，基础设施即服务，这层的作用是提供虚拟机或者其他资源作为服务提供给用户
+        
+    6. UUID(Universally Unique Identifie): 通用唯一识别码，使得在分布式系统中具备唯一的 ID, 不需要通过中央控制端来生成
+    　　　　　　　　　　　　　　　　　　　　　　　全局 ID, 由一定的算法机器生成所以可读性差
 ```
 
 ## 集群
