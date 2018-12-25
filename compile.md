@@ -137,6 +137,61 @@
         env HEAPCHECK=normal ./server
 ```
 
+## 编译安装 gcc-7
+
+```shell
+	1. 下载 gcc-7.1.0 的源码包
+	2. > tar zxvf gcc-7.1.0.tar.gz
+	3. 建立构建文件夹
+	        > mkdir gcc-7.1.0-build
+	4. 下载　gmp-6.1.0.tar.gz，mpfr-3.1.4.tar.gz，mpc-1.0.3.tar.gz 到 gcc-7.1.0目录下
+	     > cd gcc-7.1.0
+         > tar zxvf gmp-6.1.0.tar.gz
+         > tar zxvf mpfr-3.1.4.tar.gz
+         > tar zxvf mpc-1.0.3.tar.gz
+         > ln -s  gmp-6.1.0 gmp
+         > ln -s  mpfr-3.1.4 mpfr
+         > ln -s  mpc-1.0.3 mpc
+    5. > cd gcc-7.1.0-build
+       > sudo ../gcc-7.1.0/configure --enable-checking=release --enable-languages=c,c++ --disable-multilib
+       > sudo make -j2
+       > sudo make install (默认位置 /usr/local,头文件在/usr/local/include目录，可执行文件在/usr/local/bin目录，
+                                   库文件在/usr/local/lib目录)
+    6. 使用update-alternatives命令配置增加最新版本编译器
+       update-alternatives --install <链接> <名称> <路径> <优先级>
+    
+        > sudo update-alternatives \
+            --install /usr/bin/gcc gcc /usr/local/bin/gcc 70 \
+            --slave /usr/bin/gcc-ar gcc-ar /usr/local/bin/gcc-ar \
+            --slave /usr/bin/gcc-nm gcc-nm /usr/local/bin/gcc-nm \
+            --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/local/bin/gcc-ranlib
+            
+        > sudo update-alternatives --install /usr/bin/g++ g++ /usr/local/bin/g++ 70
+        
+        (1) # 查询本机已有GCC编译器情况
+            > sudo update-alternatives --query gcc
+            # 查询本机已有G++编译器情况
+            > sudo update-alternatives --query g++
+            
+        (2) 选择默认使用的GCC编译器版本：
+            
+            # 交互配置GCC编译器
+            > sudo update-alternatives --config gcc
+            # 交互配置G++编译器
+            > sudo update-alternatives --config g++
+            
+    7. 使用G++7.3.0构建多线程程序，运行程序时出现类似“./main: /usr/lib/x86_64-linux-gnu/libstdc++.so.6: 
+    　　version `GLIBCXX_3.4.22’ not found (required by ./main)”
+    
+        解决方法：　在 /usr/lib/x86_64-linux-gnu 中将
+        > cd /usr/lib/x86_64-linux-gnu
+        > sudo rm -f libstdc++.so.6
+        > sudo ln -s /usr/local/lib64/libstdc++.so.6
+        
+    参考资料: https://blog.csdn.net/davidhopper/article/details/79681695
+
+```
+
 
 
 
