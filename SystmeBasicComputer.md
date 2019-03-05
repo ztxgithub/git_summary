@@ -70,7 +70,9 @@
 
 ## 系统资源参数
 
-### 系统最多的文件描述符
+### /proc/sys/fs (内核参数与文件系统有关)
+
+#### 系统最多的文件描述符(这个很重要)
 
 ``` c
 
@@ -104,8 +106,14 @@
             (已经分配且在使用)   (已经分配但未使用)    (总数max,支持最大的文件描述符数)
                   2496                0                     1048576
 
-
 ```
+
+#### /proc/sys/fs/epoll/max_user_watches
+
+```shell
+    1. 该用户打开的所有 epoll 实例总共能监控的事件的数目，而不是单个 epoll 实例监控的数量    
+```
+
 [相关资料](http://www.chengweiyang.cn/2015/11/14/how-to-enlarge-linux-open-files-upper-cell/)
 
 ### /etc/security/limits.conf
@@ -214,16 +222,44 @@
        
     /etc/sysctl.conf 内容参数含义(sysctl -a):
     
+        常用参数:
+         fs.file-max:
+              决定了当前内核可以打开的最大的文件句柄数.这个是系统限制,限制所有用户打开文件描述符的总和.
+              
+         net.core.somaxconn:
+              用来限制监听( LISTEN )队列最大数据包的数量,超过这个数量就会导致链接超时或者触发重传机制
+              web 应用中 listen 函数的 backlog 默认会给我们内核参数的 net.core.somaxconn 限制到 128,
+              而 nginx 定义的 NGX_LISTEN_BACKLOG 默认为 511，所以有必要调整这个值。对繁忙的服务器,
+              增加该值有助于网络性能
+              
+         net.ipv4.tcp_max_syn_backlog
+              这个参数表示 TCP 三次握手第一阶段(建立阶段)接受 SYN 请求队列的最大长度
+              将其设置大一些可以使出现 Nginx 繁忙来不及 accept 新连接的情况时,Linux不至于丢失客户端发起的连接请求.
+              加大队列长度为8192    
+              
+         net.ipv4.tcp_rmem
+             (net.ipv4.tcp_rmem =4096 32768 262142)
+             这个参数定义了用于TCP接收滑动窗口的最小值，默认值，最大值
+             推荐使用 net.ipv4.tcp_rmem=4096 87380 16777216
+                 
+         net.ipv4.tcp_wmem
+             (net.ipv4.tcp_wmem =4096 32768 262142)
+             这个参数定义了用于TCP发送滑动窗口的最小值，默认值，最大值
+             推荐使用 net.ipv4.tcp_wmem=4096 65536 16777216
+             
+         net.ipv4.tcp_syncookies
+             表示是否打开 SYN Cookie.tcp_syncookies 是一个开关,该参数的功能有助于保护服务器免受 SyncFlood 攻击.
+             默认值为0,这里设置为1.防止监听 socket 不断收到同一个 ip 的连接请求(SYNC)
+              
+         不常用参数:
+    
          net.ipv4.ip_forward 地址转发, 值为0禁止数据包转发,值为1允许数据包转发.
            临时修改地址转发功能, echo "1" > /proc/sys/net/ipv4/ip_forward 
            
          net.ipv4.ip_local_port_range
                      net.ipv4.ip_local_port_range = 32768 59000   表示应用程序可使用的IPv4端口范围.
                      改为1024到65000
-                     
-         fs.file-max:
-                     决定了当前内核可以打开的最大的文件句柄数.这个是系统限制,限制所有用户打开文件描述符的总和.
-           
+                      
          kernel.shmmax (单位:字节)
             用于定义单个共享内存段的最大值. 32位linux系统：可取最大值为4294967296 - 1 == 4294967295(bytes)
             64位linux 系统,可取的最大值为 物理内存值-1 byte
@@ -269,29 +305,10 @@
          net.ipv4.tcp_max_tw_buckets
                 这个参数表示操作系统允许TIME_WAIT套接字数量的最大值,如果超过这个数字,
                 TIME_WAIT套接字将立刻被清除并打印警告信息.默认是 65536,过多TIME_WAIT套接字会使Web服务器变慢.
-                
-         net.ipv4.tcp_rmem
-                (net.ipv4.tcp_rmem =4096 32768 262142)
-                这个参数定义了用于TCP接收滑动窗口的最小值，默认值，最大值
-                推荐使用 net.ipv4.tcp_rmem=4096 87380 16777216
-                
-         net.ipv4.tcp_wmem
-                (net.ipv4.tcp_wmem =4096 32768 262142)
-                这个参数定义了用于TCP发送滑动窗口的最小值，默认值，最大值
-                推荐使用 net.ipv4.tcp_wmem=4096 65536 16777216
-                
+                               
          net.core.netdev_max_backlog
                 当网卡接收数据包的速度大于内核处理的速度时,会有一个队列保存这些数据包.这个参数表示该队列的最大值
-                
-         net.ipv4.tcp_max_syn_backlog
-                 这个参数表示TCP三次握手第一阶段(建立阶段)接受SYN请求队列的最大长度
-                 将其设置大一些可以使出现Nginx繁忙来不及accept新连接的情况时,Linux不至于丢失客户端发起的连接请求.
-                 加大队列长度为8192       
-                 
-         net.ipv4.tcp_syncookies
-                表示是否打开SYN Cookie.tcp_syncookies是一个开关,该参数的功能有助于保护服务器免受SyncFlood攻击.
-                默认值为0,这里设置为1.
-                
+                      
          net.ipv4.tcp_max_orphans
                 系统所能处理不属于任何进程的TCP sockets最大数量.假如超过这个数量﹐那么不属于任何进程的连接会被立即reset,
                 并同时显示警告信息
@@ -310,10 +327,7 @@
                 多少个SYN包)
                 对于一个新建连接,内核要发送多少个 SYN 连接请求才决定放弃.不应该大于255,默认值是5,对应于180秒左右时间.
                 
-         net.core.somaxconn:
-                用来限制监听(LISTEN)队列最大数据包的数量,超过这个数量就会导致链接超时或者触发重传机制
-                web应用中listen函数的backlog默认会给我们内核参数的net.core.somaxconn限制到128,
-                而nginx定义的NGX_LISTEN_BACKLOG默认为511，所以有必要调整这个值。对繁忙的服务器,增加该值有助于网络性能
+
   
          vm.swappiness
             swap分区的使用,减少对swap使用可以提高系统的性能,内存为512M对应vm.swappiness = 10,
