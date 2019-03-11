@@ -64,6 +64,18 @@
         (5) >　git push origin :mybranch 
                 在origin repository里面查找mybranch，删除它。用一个空的去更新它，就相当于删除了
 ```
+## 新建分支流程
+
+```shell
+    1. > git checkout -b dev
+    2. 将新创建的分支信息推送到 git 上
+       > git push origin HEAD -u
+    3. 修改本地文件
+    4. > git add ./*
+    5. > git commmit -m "message"
+    6. > git push
+
+```
 
 ## 建立新的分支
 
