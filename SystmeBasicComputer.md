@@ -68,6 +68,24 @@
 
 ```
 
+## linux 32 位和 64 位
+
+```shell
+    1. 32 位和 64 位系统在 Linux下基本数据类型的大小都是一样的。只有指针的大小 和 long 不一样 
+        sizeof(char):1
+        sizeof(short):2
+        sizeof(int):4
+        
+        32 位:
+            sizeof(long):4
+            sizeof(pointer):4
+            
+        64 位:
+            sizeof(long):8
+            sizeof(pointer):8
+
+```
+
 ## 系统资源参数
 
 ### /proc/sys/fs (内核参数与文件系统有关)
