@@ -192,6 +192,45 @@
 
 ```
 
+## 编译安装 libevent
 
+```shell
+    1. 下载安装包并解压 libevent-2.1.8-stable
+    2. > ./configure --prefix=/usr
+    3. make
+    4. sudo make install    (/usr/local/lib)
+```
+
+## 编译安装 glog
+
+```shell
+    1. sudo apt-get install autoconf automake libtool
+    2. 下载安装包并解压 glog-master.zip
+    3. > ./autogen.sh
+    4. > ./configure
+    5. > make
+    6. > sudo make install   (/usr/local/lib)
+```
+
+## 编译安装 gflags
+
+```shell
+    1. sudo apt-get install autoconf automake libtool
+    2. 下载安装包并解压 gflags-master.zip
+    3. > cmake .
+    4. > make
+    5. > sudo make install   (/usr/local/lib/libgflags.a)
+```
+
+## 编译安装 evpp
+
+```shell
+    1. 下载安装包并解压 evpp-master.zip, 需要注意的是 evpp-master/3rdparty/concurrentqueue 为空,　
+       需要重新去下载 concurrentqueue.zip
+    2. > mkdir -p build && cd build
+    3. > cmake -DCMAKE_BUILD_TYPE=Debug ..
+    4. > make -j
+    5. > cd evpp/build/lib
+```
 
 
