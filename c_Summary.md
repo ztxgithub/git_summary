@@ -1763,31 +1763,4 @@
             
 ```
 
-### 多线程下变量-原子操作 __sync_fetch_and_add
 
-```c
-
-    type __sync_fetch_and_add (type *ptr, type value);
-    type __sync_fetch_and_sub (type *ptr, type value);
-    
-    参数：
-            ptr：type只能是int long  ，long long（及对应unsigned类型）
-    
-    在多线程中,要对临界资源进行互斥(原子操作)
-    
-    type __sync_fetch_and_add (type *ptr, type value) 
-    等于
-         　pthread_mutex_lock(&count_lock);
-          global_int++;
-          pthread_mutex_unlock(&count_lock);
-          
-    但是　type __sync_fetch_and_add (type *ptr, type value) 效率比互斥锁要高
-    
-     __sync_fetch_and_add()函数与　 __sync_add_and_fetch()函数的区别：
-     
-        count = 4
-        count = __sync_fetch_and_add(&count, 1)    返回值是4 ,跟　i++类似
-        
-        count = 4
-        count = __sync_add_and_fetch(&count, 1)    返回值是５ ,跟　++i类似
-```
