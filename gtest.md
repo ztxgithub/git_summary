@@ -456,7 +456,8 @@
             #4表示调用 CSubscriber::readBuf 同时传递参数为 1000时 ，返回值是 blen 。
             
     3. 自定义方法/成员函数的期望行为
-            在单元测试/主程序中使用 Mock 类中的方法的时候最关键的就是对期望行为的定义
+            在单元测试/主程序中使用 Mock 类中的方法的时候最关键的就是对期望行为的定义, 期望 method 具备说明行为, 以便在
+            调用完 EXPECT_CALL() 后, method 会按照这个期望去执行.
             EXPECT_CALL(mock_object, method(matcher1, matcher2, ...))  // mock_object 是 Mock 类的对象, matcher(匹配器)定义方法参数的类型
                 .With(multi_argument_matcher)
                 .Times(cardinality)
@@ -468,35 +469,35 @@
                 
             (1) Matcher（匹配器）: Matcher 用于定义 Mock 类中的方法的形参的值(你的方法不需要形参时，可以保持 match 为空)
                     a. 通配符
-                            _	可以代表任意类型
-                            A() or An()	可以是 type 类型的任意值
+                            _ 可以代表任意类型
+                            A() or An() 可以是 type 类型的任意值
                     b. 一般比较
                             Eq(value) 或者 value:  argument == value，method 中的形参必须是 value
-                            Ge(value)	          argument >= value，method 中的形参必须大于等于 value
-                            Gt(value)	          argument > value
-                            Le(value)	          argument <= value
-                            Lt(value)	          argument < value
-                            Ne(value)	          argument != value
-                            IsNull()	          method 的形参必须是 NULL 指针
-                            NotNull()	          argument is a non-null pointer
-                            Ref(variable)	      形参是 variable 的引用
-                            TypedEq(value)	      形参的类型必须是 type 类型，而且值必须是value
+                            Ge(value)           argument >= value，method 中的形参必须大于等于 value
+                            Gt(value)           argument > value
+                            Le(value)           argument <= value
+                            Lt(value)           argument < value
+                            Ne(value)           argument != value
+                            IsNull()           method 的形参必须是 NULL 指针
+                            NotNull()           argument is a non-null pointer
+                            Ref(variable)       形参是 variable 的引用
+                            TypedEq(value)       形参的类型必须是 type 类型，而且值必须是value
                     c. 字符串匹配
-                            ContainsRegex(string)	形参匹配给定的正则表达式
-                            EndsWith(suffix)	    形参以 suffix 截尾
-                            HasSubstr(string)	    形参有 string 这个子串
-                            MatchesRegex(string)	从第一个字符到最后一个字符都完全匹配给定的正则表达式.
-                            StartsWith(prefix)	    形参以 prefix 开始
-                            StrCaseEq(string)	    参数等于 string，并且忽略大小写
-                            StrCaseNe(string)	    参数不是 string，并且忽略大小写
-                            StrEq(string)	        参数等于 string
-                            StrNe(string)	        参数不等于 string
+                            ContainsRegex(string) 形参匹配给定的正则表达式
+                            EndsWith(suffix)     形参以 suffix 截尾
+                            HasSubstr(string)     形参有 string 这个子串
+                            MatchesRegex(string) 从第一个字符到最后一个字符都完全匹配给定的正则表达式.
+                            StartsWith(prefix)     形参以 prefix 开始
+                            StrCaseEq(string)     参数等于 string，并且忽略大小写
+                            StrCaseNe(string)     参数不是 string，并且忽略大小写
+                            StrEq(string)         参数等于 string
+                            StrNe(string)         参数不等于 string
                     d. 容器的匹配(很多 STL 的容器的比较都支持 == 这样的操作，对于这样的容器可以使用上述的 Eq(container) 来比较)
-                            Contains(e)	    : 在 method 的 形参中，只要有其中一个元素等于 e
-                            Each(e)	        : 参数各个元素都等于 e
-                            ElementsAre(e0, e1, …, en)	: 形参有 n + 1 的元素，并且挨个匹配
-                            ElementsAreArray(array) 或者 ElementsAreArray(array, count)	: 和 ElementsAre()类似, 除了预期值/匹配器来源于一个C风格数组
-                            ContainerEq(container)	   : 类型 Eq(container), 就是输出结果有点不一样，这里输出结果会带上哪些个元素不被包含在另一个容器中
+                            Contains(e)     : 在 method 的 形参中，只要有其中一个元素等于 e
+                            Each(e)         : 参数各个元素都等于 e
+                            ElementsAre(e0, e1, …, en) : 形参有 n + 1 的元素，并且挨个匹配
+                            ElementsAreArray(array) 或者 ElementsAreArray(array, count) : 和 ElementsAre()类似, 除了预期值/匹配器来源于一个C风格数组
+                            ContainerEq(container)    : 类型 Eq(container), 就是输出结果有点不一样，这里输出结果会带上哪些个元素不被包含在另一个容器中
                      
                     示例:        
                             string value = "Hello World!";
@@ -506,16 +507,16 @@
                             mockFoo.setValue(value);  // MockFoo 中的方法
                             
                     e. 成员匹配器
-                            (1) Field(&class::field, m)	
+                            (1) Field(&class::field, m) 
                                     argument.field (或 argument->field, 当argument是一个指针时)与匹配器 m 匹配(例如匹配器Ge(0)),
                                     这里的 argument 是一个 class 类的实例.
-                            (2) Key(e)	
+                            (2) Key(e) 
                                     形参(argument) 比较 是一个类似 map 这样的容器，然后 argument.first 的值等于 e
-                            (3) Pair(m1, m2)	
+                            (3) Pair(m1, m2) 
                                     形参(argument) 必须是一个 pair，并且 argument.first 等于 m1, argument.second等于m2.
                             (4) Property(&class::property, m)
-                            	    argument.property()(或argument->property(),当argument是一个指针时)与匹配器 m 匹配, 
-                            	    这里的 argument 是一个 class 类的实例.
+                                 argument.property()(或argument->property(),当argument是一个指针时)与匹配器 m 匹配, 
+                                 这里的 argument 是一个 class 类的实例.
                             示例:
                                    TEST(TestField, Simple) {
                                            MockFoo mockFoo;
@@ -533,15 +534,15 @@
                             (1) ResultOf(f, m)
                                     f(argument) 与匹配器 m 匹配, 这里的 f 是一个函数或函数对象, argument 代表调用时传入参数.
                     g. 指针匹配器
-                            (1) Pointee(m)	
+                            (1) Pointee(m) 
                                     argument (不论是智能指针还是原始指针) 指向的值与匹配器 m 匹配.
                     h. 复合匹配器
-                            (1) AllOf(m1, m2, …, mn)	
+                            (1) AllOf(m1, m2, …, mn) 
                                     argument 匹配所有的匹配器 m1 到 mn
-                            (2) AnyOf(m1, m2, …, mn)	
+                            (2) AnyOf(m1, m2, …, mn) 
                                     argument 至少匹配 m1 到 mn 中的一个
                             (3) Not(m)
-                            	    argument 不与匹配器 m 匹配
+                                 argument 不与匹配器 m 匹配
                             示例:
                                 // 传入的参数必须 >5 并且 <= 10
                                 EXPECT_CALL(foo, DoThis(AllOf(Gt(5), Ne(10))));
@@ -549,30 +550,49 @@
                                 EXPECT_CALL(foo, DoThat(Not(HasSubstr("blah")), NULL));
                                 
             (2) 基数(Cardinalities): 用于 Times() 中来指定模拟函数将被调用多少次
-                    AnyNumber()	 : 函数可以被调用任意次.
-                    AtLeast(n)	 : 预计至少调用 n 次.
-                    AtMost(n)	 : 预计至多调用 n 次.
-                    Between(m, n)	: 预计调用次数在 m 和 n (包括n) 之间.
-                    Exactly(n) 或 n	: 预计精确调用 n 次. 当 n 为 0 时,函数应该永远不被调用.
+                    AnyNumber()  : 函数可以被调用任意次.
+                    AtLeast(n)  : 预计至少调用 n 次.
+                    AtMost(n)  : 预计至多调用 n 次.
+                    Between(m, n) : 预计调用次数在 m 和 n (包括n) 之间.
+                    Exactly(n) 或 n : 预计精确调用 n 次. 当 n 为 0 时,函数应该永远不被调用.
                     
             (3) 行为(Actions) : 用于指定 Mock 类的方法所期望模拟的行为：比如返回什么样的值、对引用、指针赋上怎么样个值，等等
                     a. 定义值的返回
-                            Return()	　　　: 让 Mock 方法返回一个 void 结果
-                            Return(value)	 : 返回值 value
-                            ReturnNull()	 : 返回一个 NULL 指针
-                            ReturnRef(variable)	 : 返回 variable 的引用.
-                            ReturnPointee(ptr)	 : 返回一个指向 ptr 的指针
+                            Return() 　　　: 让 Mock 方法返回一个 void 结果
+                            Return(value)  : 返回值 value
+                            ReturnNull()  : 返回一个 NULL 指针
+                            ReturnRef(variable)  : 返回 variable 的引用.
+                            ReturnPointee(ptr)  : 返回一个指向 ptr 的指针
                             
-                    b. Assign(&variable, value)	将 value 分配给 variable
+                    b. Side Effects
+                            (1) Assign(&variable, value) 将 value 分配给 variable
+                            (2) DeleteArg<N>()
+                                    Delete the N-th (0-based) argument, which must be a pointer.
+                            (3) SaveArg<N>(pointer)
+                                    Save the N-th (0-based) argument to *pointer.
+                            (4) SaveArgPointee<N>(*pointer)
+                                    Save the value pointed to by the N-th (0-based) argument to *pointer.
+                            (5) SetArgReferee<N>(value)
+                                    Assign value to the variable referenced by the N-th (0-based) argument.
+                                    这个是传出参数(通过引用的形式)设置相应的值
+                            (6) SetArgPointee<N>(value)
+                                    Assign value to the variable pointed by the N-th (0-based) argument.
+                                     这个是传出参数(通过指针的形式)设置相应的值
+                            (7) SetArrayArgument<N>(first, last)
+                                    Copies the elements in source range [first, last) to the array pointed 
+                                    to by the N-th (0-based) argument, which can be either a pointer or an iterator. 
+                                    The action does not take ownership of the elements in the source range.
+                                    
+                                    
                     c. 使用函数或者函数对象（Functor）作为行为
-                            (1) Invoke(f)	
+                            (1) Invoke(f) 
                                     使用模拟函数的参数调用 f, 这里的 f 可以是全局/静态函数或函数对象.
-                            (2) Invoke(object_pointer, &class::method)	
+                            (2) Invoke(object_pointer, &class::method) 
                                     使用模拟函数的参数调用 object_pointer 对象的 mothod 方法.
                     d. 复合动作
                             (1) DoAll(a1, a2, …, an)
-                            	    每次发动时执行 a1 到 an 的所有动作.
-                            (2) IgnoreResult(a)	
+                                 每次发动时执行 a1 到 an 的所有动作.
+                            (2) IgnoreResult(a) 
                                     执行动作 a 并忽略它的返回值. a 不能返回 void.
                                     
                     示例
@@ -635,6 +655,35 @@
             WillOnce(Return(value))的意思是第一次运行时把 value 作为 getArbitraryString() 方法的返回值
       
 
+```
+
+## 实践技巧
+```shell
+    1. Google Mock 也可以模拟类的 protected 和 private 方法, 只不过在 Mock 类中要将这些方法设置成 public
+        Foo.h
+            class Foo {
+            private:
+                    virtual void setValue(int value) {};
+            
+            public:
+                    int value;
+            };
+        
+        MockFoo.h
+            class MockFoo: public Foo {
+            public:
+                    MOCK_METHOD1(setValue, void(int value));
+            };
+            
+    2. 在调用 Mock 类的方法时，如果之前没有使用 EXPECT_CALL 来定义该方法的期望行为时，Google Mock 在运行时会给你一些警告信息
+       可以采用
+            方法一:
+                    对于这种情况，可以使用 NiceMock 来避免:
+                        // MockFoo mockFoo;
+                        NiceMock<MockFoo> mockFoo;
+            方法二:
+                    使用 StrictMock 来将这些调用都标为失败
+                        StrictMock<MockFoo> mockFoo;
 ```
 
 # 参考资料

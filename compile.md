@@ -233,4 +233,50 @@
     5. > cd evpp/build/lib
 ```
 
+# linux 编译
+
+``` shell
+    1. 　出现 : /usr/lib64/libuuid.so.1: error adding symbols: DSO missing from command line
+        原因是: ld 版本 > 2.22 不能递归连接 libuuid.so
+        解决方案: 需要显示链接 libuuid.so (编译选项中 -luuid), 同时连接顺序很重要，先链接上层A(依赖与 libB)，再链接 B
+        参考资料 : https://segmentfault.com/a/1190000002462705
+        
+    2. 问题: libstdc++.so.6: version `GLIBCXX3.4.22' not found
+       查看当前版本 libstdc++.so.6, > strings /usr/lib/x86_64-linux-gnu/libstdc++.so.6 | grep GLIBCXX
+           GLIBCXX_3.4
+           GLIBCXX_3.4.1
+           GLIBCXX_3.4.2
+           GLIBCXX_3.4.3
+           GLIBCXX_3.4.4
+           GLIBCXX_3.4.5
+           GLIBCXX_3.4.6
+           GLIBCXX_3.4.7
+           GLIBCXX_3.4.8
+           GLIBCXX_3.4.9
+           GLIBCXX_3.4.10
+           GLIBCXX_3.4.11
+           GLIBCXX_3.4.12
+           GLIBCXX_3.4.13
+           GLIBCXX_3.4.14
+           GLIBCXX_3.4.15
+           GLIBCXX_3.4.16
+           GLIBCXX_3.4.17
+           GLIBCXX_3.4.18
+           GLIBCXX_3.4.19
+           GLIBC_2.3
+           GLIBC_2.2.5
+           GLIBC_2.14
+           GLIBC_2.4
+           GLIBC_2.3.2
+           GLIBCXX_DEBUG_MESSAGE_LENGTH
+           
+       解决方法:
+            方法一: sudo apt-get install libstdc++6
+            方法二: 
+                    sudo add-apt-repository ppa:ubuntu-toolchain-r/test 
+                    sudo apt-get update
+                    sudo apt-get upgrade
+                    sudo apt-get dist-upgrade
+            方法三: 只要能拿到 libstdc++.so.6.0.23 的可执行文件, 再把 libstdc++.so.6 软连接到 libstdc++.so.6.0.23 就行
+```
 
