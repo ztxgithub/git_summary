@@ -47,11 +47,33 @@
                      变为 kafka 内部的位移主题.
                 0.10: 引入 kafka stream, 可以进行分布式流处理. 升级到 0.10.2.2 然后使用新版本 Consumer API(已经稳定), 修复了
                 　　　　可能导致 Producer 性能减低的 bug
-                0.11: 提供了幂等性 Producer API 以及事务 API, 对 Kafka 消息格式做了重构, 目前最主流的版本之一, 可以更新到
-                　　　　0.11.0.3
+                0.11: 目前最主流的版本之一, 可以更新到 0.11.0.3 
+                        (1) 提供了幂等性 Producer API 以及事务 API
+                        (2) 对 Kafka 消息格式做了重构
+                        (3) 消费者程序将心跳单独拉一个线程
+                        (4) 重构了控制器底层设计, 将多线程的方案改成单线程加事件队列的方案
+                        (5) zookeeper 与控制器之间有同步调用改为异步调用. 
+                        (6) 引入 Leader Epoch, 来规避因高水位更新错配导致的各种不一致问题
+                        (8) 严格遵守了 offsets.topic.replication.factor 的设置, 如果当前运行的 Broker 数量小于
+                            offsets.topic.replication.factor 值, Kafka 会创建主题失败, 并显式抛出异常. 而 0.11 之前是
+                            根据运行 broker 数量和 offsets.topic.replication.factor 值取最小值.
+                        (9) 实现通过命令行形式重设位移.
                 1.0 和 2.0 : 主要还是针对 Kafka Streams 进行改进.
+                1.1
+                        (1) 引入了动态参数配置, 无需重启 broker
+                        
+                2.2 : 在 broker 中将控制器请求命令和普通数据请求分优先级, 删除某个主题, 控制器给该主题所有副本所在的 Broker 发送
+                      StopReplica的请求会被优先处理.
                 
             (3) 建议尽量保持服务器端版本和客户端版本一致
+            
+    8. kafka 与传统的消息中间件(ActiveMQ, RabbitMQ) 区别是, 传统消息中间件处理消息是破坏性的, 一旦处理成功, 消息就会从 broker 删除.
+       而 kafka 记录消息的底层是日记文件形式, 通过位移偏移访问, 可以重复读数据.
+       适用场景:
+                传统消息中间件: 不关心消息的顺序
+                kafka: 需要较高的吞吐量, 但每条消息的处理时间很短, 并且需要关注消息的顺序.
+                
+    9. 可视化 kafka 管理工具 : kafka manager
 ```
 
 ### 技巧
@@ -145,7 +167,7 @@
                 auto.create.topics.enable
                     是否运行自动创建 topic, 最好设置为 false, 要事先规定好 topic
                     
-                unclean.leader.election.enable
+                unclean.leader.election.enable(建议设置为 false)
                     是否允许 Unclean Leader 选举, 分区内有多个副本, 只有一个副本对外服务, 这个副本一般是数据保存多的, 如果有些副本
                    数据保存太少称为 Unclean 副本, 不能参加领导副本竞选. 
                    设置为 false(建议), 代表其他保存多的副本都故障了,也不能让 Unclean 副本参与竞选, 会使得 kafka 不可用.
@@ -178,8 +200,8 @@
                       > bin/kafka-topics.sh  --create 
                         --topic transaction(topic 名字) 
                         --bootstrap-server localhost:9092
-                      　--partitions1 
-                        --replication-factor1
+                      　--partitions 1 
+                        --replication-factor 1
                         --config retention.ms=15552000000 --config max.message.bytes=5242880
                         
             第二种: 修改 Topic 时设置(推荐使用)
@@ -237,6 +259,12 @@
 ```shell
     1. offsets.topic.num.partitions, 位移主题分区数据, 默认是 50
     2. offsets.topic.replication.factor, 位移分区的副本数.
+    3. offsets.retention.minutes : 其保留位移信息时间, 组状态在 empty 的时候, 删除位移信息
+    4. num.network.threads, 网络线程池的数量, 默认是 3 , 表示每台 Broker 启动时会创建 3 个网络线程, 
+    　　　　　　　　　　　　　　专门处理客户端发送的请求, 发送到共享队列中
+    　　　　　　　　　　　　　　
+    5. num.io.threads , IO 线程池的线程数据, 默认 8, 表示每台 Broker 启动后自动创建 8 个 IO 线程处理请求, 专门处理实际的请求逻辑,
+                        从共享队列中取出请求.
 ```
 
 ## 生产者
@@ -244,7 +272,7 @@
 ### 生产者参数
 ```shell
     1. compression.type, 指定压缩类型, GZIP, Snappy 和 LZ4, zstd
-    2. acks = all, 已提交的定义
+    2. acks = all(-1), 已提交的定义, 默认值是 1, 代表只要 leader 副本数据被写入, 则生产者认定已提交.
     3. retries, 其他除 callback 外的故障重试的次数.
     4. bootstrap.servers, 指定 producer 启动时要向　bootstrap.servers　中所有的 broker 发起 tcp 连接.
     5. connections.max.idle.ms 指连接到 broker 在　connections.max.idle.ms　时间内没有数据通信, 则 kafka 主动断开连接. 值为 -1 
@@ -495,7 +523,10 @@
                           
     2. session.timeout.ms :  Coordinator 在 session.timeout.ms 秒之内没有收到 Group 下某 Consumer 实例的心跳, 就会认为这个 
                              Consumer 实例已经挂了, 推荐使用 6 秒, 这个值如果在 consumer group 不一致, 则取 consumer 最大的
-    3. heartbeat.interval.ms : consumer 发送心跳的间隔, 推荐使用 2 秒
+                             每次 consumer 发送心跳时会顺带发送 session timeout 时间, 这样 Coordinator 收到后
+                             会根据这个 session timeout 时间计算下次 deadline 时间, 如果过了 deadline 还没有收到直接 fail
+                             掉该 consumer
+    3. heartbeat.interval.ms : consumer 发送心跳的间隔, 推荐使用 2 秒, 这个时间间隔也体现重平衡的时效性
     4. max.poll.interval.ms : 默认是 5 分钟, 表示 Consumer 程序如果在 5 分钟之内无法消费完 poll 方法返回的消息, 那么 Consumer 
                              会主动发起“离开组”的请求, Coordinator 也会开启新一轮 Rebalance
     5. max.poll.records : poll 返回的数据量的值
@@ -527,7 +558,8 @@
             (6) 消费者组调用 KafkaConsumer.subscribe(), 独立消费者则调用的是 KafkaConsumer.assign() 
     2. Rebalance 
             (1) 概念
-                    Rebalance 规定了消费者组(Consumer Group) 下所有消费者(Consumer)都能较公平得均分所有的分区数.
+                    a. Rebalance 规定了消费者组(Consumer Group) 下所有消费者(Consumer)都能较公平得均分所有的分区数.
+                       每次消费者组启动时或则组内消费者实例增加, 必然会触发重平衡过程
                     
             (2) 触发时机
                     a. 消费者组(Consumer Group)的消费者数量发生变化, 例如有新的消费者加入, 有消费者异常退出等.
@@ -548,10 +580,68 @@
                           heartbeat.interval.ms = 2s 的值, 最好超时时间是心跳的 3 倍.
                           
                     第二类避免 Consumer 消费时间过长导致的, 设置 max.poll.interval.ms 参数.
-                        
                     
-    3. Coordinator
-            (1) 确定某个 Consumer Group 对应的 Coordinator 所在的 Broker
+    3. Rebalance 底层实现
+            (1) 重平衡的通知机制
+                    如果需要消费者租的所有消费者进行重平衡, 协调者需要通过心跳响应报文中加上 "REBALANCE_IN_PROGRESS" 给各个消费者组内
+                 的所有消费者. 
+                 
+                 kafka 0.11.1.0 之前 消费者心跳定期发送是在消费者主线程中完成的, 这会导致如果主业务逻辑过重, 
+                 心跳没法定时准确发送, 导致协调者误判, 认为该消费者下线了. 
+                 
+                 kafka 0.10.1.0 后, 心跳单独拉一个线程, 按 heartbeat.interval.ms 间隔发送.如果有重平衡通知,会从心跳响应报文中获知.
+                 
+            (2) 消费者组状态机
+                    a. 含义
+                           Empty: 消费者组内没有任何成员, 但消费者组可能存在已提交的位移数据, 并且这些位移还没有过期.
+                           Dead: 消费者组内没有任何成员, 组的原数据信息(类似于注册信息)已经在协调者中被移除
+                           PreparingRebalance(JoinGroup 请求 过程) : 消费者组准备开始重平衡, 此时所有成员都要重新请求加入消费者组.
+                           CompletingRebalance(SyncGroup 请求过程): 消费者组下所有成员已经加入, 各个成员正在等待分配方案,
+                                                                   老版本叫 AwaitingSync
+                           Stable : 消费者组的稳定状态, 表明重平衡已经完成, 组内成员能够正常消费数据.
+                           
+                    b. 流转
+                            一个消费者组最开始是 Empty 状态, 当重平衡过程开启后, 它会被置于 PreparingRebalance 状态等待成员加入, 
+                            有成员入组变更到 CompletingRebalance 状态等待分配方案, 最后流转到 Stable 状态完成重平衡.
+                            
+                            当在 CompletingRebalance/ Stable 状态时, 有成员离开或则有新成员加入, 就会被切换到 
+                            PreparingRebalance 状态, 这时所有现存成员必须重新申请加入组.
+                            
+                    c. 只有 Empty 状态下的组, kafka 才会定期执行过期位移删除的操作
+                    
+            (3) 消费者端重平衡流程
+                    第一步: JoinGroup 请求, 作用是将组成员订阅信息发送给 leader 消费者, 每个加入消费者组的消费者会将自己的订阅主题
+                           上报给协调者, 协调者收集所有消费者的主题信息后, 选出 leader 消费者(第一个发送 JoinGroup 的消费者),
+                           并将所有成员订阅主题信息作为响应报文给 leader 消费者. 同时剩余消费者响应报文中是带 leader 消费者信息,
+                           让它们保存.
+                           
+                    第二步: SyncGroup 请求, 所有消费者都向协调者发送 SyncGroup 请求, 只不过 leader 消费者 SyncGroup 请求中
+                           带有分配方案. 其他消费者 SyncGroup 请求内容为空, 协调者根据分配方案, 分别向对应的消费者发送各自的消费分配.
+                           当所有成员都成功接收到分配方案后, 消费者组进入到 Stable 状态, 即开始正常的消费工作
+                           
+            (4) broker 端重平衡流程
+                    场景一: 新成员入组
+                                当所有消费者组处于 stable 状态后, 有新的成员加入了消费者组(该消费者发送了 JoinGroup 请求), 
+                           协调者检测到, 则通过心跳请求响应的方式通知组内现有的所有成员, 强制它们开启新一轮的重平衡(所有消费者组
+                           重新发送 JoinGroup 请求, 之后 SyncGroup )
+                            
+                    场景二: 组成员主动离组
+                                当消费者组某个消费实例主动调用 consumer.close() 时, 会向协调者发送 LeaveGroup 请求, 协调者收到后,
+                            则通过心跳请求响应的方式通知组内现有的所有成员, 强制它们开启新一轮的重平衡(所有消费者组重新发送
+                            JoinGroup 请求, 之后 SyncGroup )
+                            
+                    场景三: 组成员崩溃离组
+                                当消费者组某个消费实例由于某个原因崩溃了, 则协调者无法立即感知到, 需要等待消费者端的 
+                           session.timeout.ms 后才能感知到, 之后进行重平衡流程
+                           
+                    场景四: 
+                        
+                            
+                    
+    4. Coordinator
+            (1) 概念
+                    a. 协调者组件中保存当前向它注册过的所有组的信息.
+            (2) 确定某个 Consumer Group 对应的 Coordinator 所在的 Broker
                     第一步: 根据 consume.id 计算出其哈希值, 再取模位移分区数(__consumer_offsets, consumer group 的配置信息保存在
                     　　　　位移主题中.), 得到对应的位移分区序号
                     第二步: 再找出位移主题分区需要的 Leader 副本在哪个 Broker 上就可以
@@ -796,4 +886,1247 @@
             (3) 方法三: Kafka JMX 监控指标
                         kafka.consumer:type= consumer-fetch-managermetrics, partition=“{partition}”,
                                              topic=“{topic}”, client-id=“{client-id}”                    
+```
+
+### 测试
+```shell
+    1. 模拟一个重分区 hang 住的,  在 reassign 的过程中删除 topic
+```
+
+## kafka 内核
+
+### kafka 副本机制
+```shell
+    1. 概念
+        (1) 分区下副本是不能对外提供服务(包括读写), 只能从 leader 副本中异步拉取消息, 写入到自己的提交日志, 保持与 leader 副本的同步.
+        (2) 当 leader 副本宕机时, zookeeper 会实时监控到, 并进行 leader 选举, 将 follower 副本选出 leader 副本, 老 Leader 副本
+            重启后, 只能作为 follower 副本加入到集群中
+            
+        (3) ISR: In-sync Replicas, 同步副本, 看是否属于同步条件, 是根据 broker 的参数 replica.lag.time.max.ms(默认是 10s), 
+                 代表如果 follower 副本与 leader 副本同步的时间不超过 replica.lag.time.max.ms, 则代表 ISR.
+                 ISR 副本集合中肯定包含 leader 副本
+                 
+        (4) 非同步副本: 所有不在 ISR 中的存活副本
+                 
+            
+    2. 副本不提供任何服务(包括读写)
+            好处:
+                    (1) 方便实现 “Read-your-writes", 可以读取最新的写入消息, 没有延迟.
+                    (2) 容易实现单调读一致性, 由于各个副本同步存在延迟, 如果副本提供读服务, 则 副本 1 读到了老数据, 副本 2 又读到了
+                    　　新数据, 多次读不一致.
+                    
+    3. Unclean 领导者选举
+            代表 ISC 集合中没有可用的副本, 只能在非同步副本选举出 leader 副本, 但非同步副本落后 Leader 太多, 这导致选出来的 leader
+            落后太多.
+            
+            Broker 端参数 unclean.leader.election.enable 控制是否允许 Unclean 领导者选举
+```
+
+### kafka 请求流程
+```shell
+    1. 概念
+            (1) 请求协议
+                    数据类请求
+                        produce 请求是用于生产消息
+                        fetch 请求是消费消息
+                        metadata 请求是用于请求 kafka 集群元数据信息
+                        
+                    控制类请求
+                        LeaderAndIsr : 更新 Leader 副本, Follower 副本以及 ISR 集合
+                        StopReplica: 停止副本
+                    
+                    
+    2. kafka broker 请求处理
+            (1) 处理模型是 Reactor 模型, 有一个 acceptor 线程进行请求接受, 并将其分发到网络线程池中. 这个线程池的线程个数由
+                broker 的 num.network.threads 决定的. Acceptor 线程采用轮询的方式将请求发到所有网络线程中.
+                
+            (2) 请求被转发到网络线程中, 不是自己处理, 而是将请求放到共享请求队列中. Broker 端还有个 IO 线程池, 负责从该队列中取出请求,
+                执行真正的处理. 如果是 PRODUCE 生产请求, 则将消息写入到底层的磁盘日志中；如果是 FETCH 请求, 则从磁盘或页缓存中读取消息
+                IO 线程池才是真正处理请求逻辑的线程, 线程池个数由 broker 的 num.io.threads 参数(默认是 8 个)
+                
+            (3) 当 IO 线程处理完请求后, 会将响应报文发送到网络线程对应的响应队列中, 然后由对应的网络线程负责将 Response 返还给客户端
+                注意: 保存请求队列是网络线程池共享的,　而请求响应报文则是放到对应网络线程各自的响应队列中.
+                
+            (4) 其中还有个 Purgatory(炼狱)组件, 用来缓存延迟请求, 即不能立刻处理该请求, 需要满足一定条件.如设置 acks=all 的 
+                PRODUCE 请求, 该请求必须等待 ISR 中所有副本都接收消息后才能返回, 此时处理该请求的 IO 线程就必须等待其他 Broker 的
+                写入结果. 当请求不能立刻处理时, 它会暂存在 Purgatory 中, 之后一旦满足完成条件，　IO 线程会继续处理该请求,并将 Response
+                放入对应网络线程的响应队列中
+                
+    3. 问题
+            (1) 在 kafka 2.3 版本以前, 数据类请求和控制类请求都是统一的对待处理, 这样 控制类请求没法及时得进行处理, 会导致数据无用, 
+                例如如果 broker 0 中是 leader 副本, 现在堆积大量的数据类请求, 例如 produce 请求, 并且 acks=all, 虽然 broker 0
+                成功写入了数据, 但来了一个控制类请求 LeaderAndIsr , 要变更 leaders 副本, 让 broker 1 称为 leader 副本, 则
+                执行显式的日志截断(Log Truncation, 即原 Leader 副本成为 Follower 后, 会将之前写入但未提交的消息全部删除）
+                
+            (2) kafka 2.4 会分开处理, 数据类请求 和 控制类请求都有各自一套 (网络线程池 + 共享队列 + IO 线程池)
+```
+
+
+### kafka 控制器(Controller)
+```shell
+    1. 概念
+            (1) Controller 组件在 zookeeper 帮助下管理和协调 kafka 集群. 同时 kafka 集群中只有一个 broker 称为 controller.
+            (2) zookeeper
+                    a. 使用的数据模型类似于文件系统的树形结构, 根目录也是以“/”开始. 该结构上的每个节点被称为 znode, 用来保存一些
+                       元数据协调信息
+                    b. znode 可分为持久性 znode 和临时 znode. 持久性 znode 不会因为 ZooKeeper 集群重启而消失, 而临时 znode 则与
+                       创建该 znode 的 ZooKeeper 会话绑定, 一旦会话结束, 该节点会被自动删除.
+                       
+                    c. zookeeper 的客户端可以感知到监控 znode 节点的变更(包括删除, 子节点的数据变化, znode 保存的内容)
+                    d. ZooKeeper 常被用来实现集群成员管理, 分布式锁, 领导者选举等功能
+                    
+    2. 控制器的创建
+            (1) broker 启动时都会向 zookeeper 创建 /controller 节点, 第一个成功创建 /controller 节点的 broker 是 controller.
+            
+    3. 控制器的作用
+            (1) 主题管理
+                    对 Kafka 主题的创建, 删除以及分区增加的操作, kafka-topics 脚本的执行就是控制器在做的.
+                    
+            (2) 分区重分配
+                    对已存在的主题分区进行细粒度的分配功能, 对应与 kafka-reassign-partitions 脚本.
+                    
+            (3) Preferred 领导者选举
+                    避免部分 Broker 负载过重而提供的一种换 Leader 的方案
+                    
+            (4) 集群成员管理
+                    自动检测 broker 的新增, broker 主动关闭, broker 的宕机. 这种自动检测是依赖于 Watch 功能和 ZooKeeper 临时节点
+                组合实现的
+                    broker 的新增是控制器组件利用 Watch 机制检查 ZooKeeper 的 /brokers/ids 节点下的子节点数量变更.当有新 Broker 
+                启动后, 会在 /brokers 下创建专属的 znode 节点. 一旦创建完毕, ZooKeeper 会通过 Watch 机制将消息通知推送给控制器,  
+                控制器就能自动地感知到这个变化, 进行新增 Broker 处理.
+                    检测 broker 是否存活, 是通过临时节点, 每个 Broker 启动后, 会在 /brokers/ids 下创建一个临时 znode, 如果
+                Broker 异常了, 则与 zookeeper 会话断开连接, 临时 node 也会被删除, 则 watch 机制也会通知到控制器.
+                
+            (5) 数据服务
+                    向其他 Broker 提供数据服务. 控制器上保存了最全的集群元数据信息, 定期向其他的 Broker 会发送最新元数据. 
+                    
+                    控制器组件保存的内容有 
+                            所有主题信息, 包括具体的分区信息, 如 leader 副本信息, ISR 集合中有哪些副本等.
+                            所有 Broker 信息, 包括当前都有哪些运行中的 Broker, 哪些正在关闭中的 Broker 等
+                            所有涉及运维任务的分区, 包括当前正在进行 Preferred 领导者选举以及分区重分配的分区列表
+                            
+                    这些数据在 ZooKeeper 中也保存一份, 每当控制器初始化时, 会从 ZooKeeper 上读取对应的元数据并填充到自己的缓存中.
+                    有了这些数据, 控制器就能对外提供数据服务. 对外主要是指对其他 Broker 而言, 控制器通过向这些 Broker 发送请求的方式
+                    将这些数据同步到其他 Broker 上
+                    
+    4. 控制器故障转移(Failover)
+            (1) 当运行中的控制器突然宕机或意外终止时, ZooKeeper 通过 Watch 机制感知到并删除了 /controller 临时节点.
+                所有存活的 Broker 开始竞选新的控制器身份, 最终某一个 broker 成功在 zookeeper 创建了 /controller 临时节点,
+                在初始化时从 ZooKeeper 中读取集群元数据信息, 并初始化到自己的缓存中, 之后对外提供服务.
+                
+    5. 实践
+            (1) 当主题无法删除, 或者重分区 hang 住, 可能是控制器出问题了, 可以先在 zookeeper 中手动删除该 /controller 临时节点.
+                 rmr /controller, 使其进行重新选出控制器.
+```
+
+### 高水位
+```shell
+    1. 概念
+            (1) 高水位(HW high Watermark), 用位移表示, 分区高水位以下的消息( 0 <= 位移 < HW)被认为是已提交消息, 反之就是未提交消息.
+                                          位移值等于高水位的消息也属于未提交消息, 消费者只能消费已提交的消息.
+            (2) 高水位作用
+                    a. 定义消息可见性, 用来标识分区下的哪些消息是可以被消费者消费的
+                    b. 帮助 Kafka 完成副本同步
+                    
+            (3) 日志末端位移(Log End Offset, LEO), 表示未来下一条消息要写入的位移值. 介于高水位和 LEO 之间的消息就属于未提交消息
+            (4) 每个副本的各个分区都有高水位, 一般分区的高水位就泛指 leader 副本的分区的高水位.
+            (5) kafka 利用 LEO, 高水位来进行 leader 副本和　follower 副本同步.
+            (6) 副本重启时, 会执行日志截断操作, 会将 LEO 初始化为 HW 的值.
+            
+    2. 高水位更新机制
+            (1) 在 Leader 副本所在的 Broker_leader 上, 还保存了其他 Follower 副本的 LEO 值, 这些保存在 Broker_leader 的
+                follower 副本被称为远程副本.
+            (2) 更新时机
+                     前提: Broker_leader 为保存 leader 副本的 broker, 既保存了 leader 副本的高水位和 LEO, 又保存其他 follower
+                           副本的 LEO
+                           
+                          Broker_follower 只保存了自己的 follower 副本的高水位和 LEO
+                          
+                          
+                     a. Broker_follower 上的 follower 副本 LEO 被更新, 时机在 follower 副本从 leader 副本拉取消息, 写到本地磁盘
+                        时, 会更新 follower 副本的 LEO
+                        
+                     b. Broker_leader 上的 leader 副本 LEO 被更新, 时机在 leader 副本接收到生产者发送的消息, 写入到本地磁盘后,
+                        更新 leader 副本的 LEO
+                        
+                     c. Broker_leader 上的远程副本 LEO 被更新, 时机在 follower 副本从 leader 副本拉取消息时, 会告诉 leader 副本
+                        从哪个位移处开始拉取. 那么 leader 副本会使用这个位移值更新对应远程副本的 LEO
+                         
+                     b. Broker_follower 上的 follower 副本高水位被更新, 时机在 follower 副本成功更新完 LEO 后, 会比较 LEO 和
+                        leader 副本发来的高水位值(当 leader 副本的高水位被更新时, leader 副本会发送各个 follower 副本),
+                        并用两个的较小值更新自己的高水位.
+                        
+                     d. Broker_leader 上的 leader 副本高水位被更新, 有 2 个更新时机, 第一个是 leader 副本更新其 LEO 后. 第二个是
+                        更新完远程副本 LEO 后. 高水位的取值是 leader 副本和所有与 leader 同步的远程副本 LEO 的最小值.
+                        
+                        
+            (3) 
+                    a. 从 Leader 副本纬度
+                            
+                            处理生产者请求的逻辑如下：
+                                1. 将消息写入到本地磁盘
+                                2. 更新分区高水位值
+                                    i. 获取 Leader 副本所在 Broker 端保存的所有远程副本 LEO 值{LEO-1, LEO-2, ……, LEO-n}
+                                    ii. 获取 Leader 副本 LEO
+                                    iii. 更新 currentHW = min(LEO, LEO-1, LEO-2, ……, LEO-n)
+                                    
+                            
+                            处理 Follower 副本拉取消息的逻辑如下：
+                                1. 读取磁盘(或页缓存)中的消息数据
+                                2. 使用 Follower 副本发送请求中的位移值更新远程副本 LEO 值
+                                3. 更新分区高水位值
+                                
+                                
+                    b. 从 follower 副本纬度
+                    
+                            从 Leader 拉取消息的处理逻辑如下：
+                                1. 将消息写到本地磁盘
+                                2. 更新 LEO 值
+                                3. 更新高水位值
+                                    i. 获取 Leader 发送的高水位值：currentHW。
+                                    ii. 获取 follower 副本更新过的 LEO 值：currentLEO
+                                    iii. 更新高水位为 min(currentHW, currentLEO)
+                                    
+            (4)  副本同步机制
+                    第一步:初始化
+                            leader 副本, HW = 0, LEO = 0, remote LEO = 0
+                            follower 副本, HW = 0, LEO = 0
+                            
+                    第二步:生产者发送一条消息
+                            leader 副本, HW = 0, LEO = 1, remote LEO = 0
+                            follower 副本, HW = 0, LEO = 0
+                                    
+                    第三步: follower 副本拉取消息(向 leader 副本请求位移为 0)
+                                leader 副本, HW = 0, LEO = 1, remote LEO = 0
+                                follower 副本, HW = 0, LEO = 1
+                                
+                    第四步: follower 副本拉取消息(向 leader 副本请求位移为 1)
+                                leader 副本, HW = 1, LEO = 1, remote LEO = 1(此时　remote LEO　被更新为 1, HW 也被更新为 1)
+                                follower 副本, HW = 0, LEO = 1
+                                
+                    第五步: leader 副本将分区高水位同步给 follower 副本
+                            leader 副本, HW = 1, LEO = 1, remote LEO = 1
+                            follower 副本, HW = 1, LEO = 1
+                            
+                           
+    3. Leader Epoch
+            (1) 背景
+                    follower 副本的高水位更新需要一轮额外的拉取请求才能实现, 如果有多个 Follower 副本, 需要拉取多次请求, 这样
+                 导致 leader 副本的高水位和 follower 副本的高水位存在不一致的情况, 使得数据不一致, 在这中间如果 broker 宕机, 
+                 就会导致数据丢失.
+                 
+                 数据丢失情况:(条件是 min.insync.replicas 为 1)
+                      步骤一:
+                        生产者向 leader 写入 2 条消息, leader 副本和 follower 副本都写入 2 条消息(2 个 LEO 都为 2), 在
+                 Leader 副本的高水位也已经更新(leader_HW = 2, leader_LEO = 2, leader_remote LEO = 2), 但 Follower 
+                 副本高水位还未更新(follower_HW = 1, follower_LEO = 2), 这时 follower 副本宕机了, 重启 follower 副本时, 
+                 执行日志截断操作, 将 follower_LEO 调整为 follower_HW 的值, 即　follower_LEO = 1. 此时原来位移为 1 的消息就会
+                 被丢弃.
+                      步骤二:
+                         当 follwer 副本刚要向 leader 副本拉取消息时, leader 副本也宕机了, 此时只能将 follower 上升为 leader 副本,
+                 这时原 leader 重启了, 要向现在 leader 副本拉取消息, 会告知现在 leader 副本 HW 为 1, 原来 leader 副本的 HW 也会被
+                 更新 1, 数据丢失.
+                 
+                 
+            (2) Leader Epoch 由 2 部分组成 <版本号, 起始位移>
+                    第一部分: Epoch. 单调增加的版本号. 每当副本领导权发生变更时, 都会增加该版本号. 小版本号的 Leader 被认为是过期
+                             Leader, 不能再行使 Leader 权力
+                    第二部分: 起始位移(Start Offset). 切换成 Leader 副本后首条消息的位移.
+                    
+                    例如, 两个 Leader Epoch<0, 0> 和 <1, 120>, 第一个 Leader Epoch 表示版本号是 0, 这个版本的 Leader 从
+                    位移 0 开始保存消息, 一共保存了 120 条消息. 之后 Leader 发生了变更, 版本号增加到 1, 新版本的起始位移是 120
+                    
+                    Kafka Broker 会在内存中为每个分区都缓存 Leader Epoch 数据, 同时会定期地持久化到一个 checkpoint 文件中.
+                    当 Leader 副本写入消息到磁盘时,如果该 Leader 副本是首次写入消息, 那么 Broker 会向缓存中增加一个
+                    Leader Epoch 条目, 否则就不做更新. 每次有 Leader 变更时, 新的 Leader 副本会查询这部分缓存, 
+                    取出对应的 Leader Epoch 的起始位移, 以避免数据丢失和不一致的情况
+                    
+            (3) Leader Epoch 解决方案：
+                    场景和之前大致是类似的, 在 Follower 副本 B 重启回来后, 需要向 A 发送一个特殊的请求去获取 Leader 的 LEO 值.
+                    当获知到 Leader LEO = 2 后, B 发现该 LEO 值不比它自己的 LEO 值小, 而且缓存中也没有保存任何起始位移值 > 2 的 
+                    Epoch 条目, 因此 B 无需执行任何日志截断操作. 之后副本 A 宕机, B 成为 Leader. 当 A 重启回来后, 
+                    执行与 B 相同的逻辑判断, 发现也不用执行日志截断, 至此位移值为 1 的那条消息在两个副本中均得到保留
+                    后面当生产者程序向 B 写入新消息时, 副本 B 所在的 Broker 缓存中, 会生成新的 Leader Epoch 条目：
+                    [Epoch=1, Offset=2]. 副本 B 会使用这个条目帮助判断后续是否执行日志截断操作
+                            
+```
+
+## kafka 管理与监控
+### 主题管理
+```shell
+    1. 概念
+            (1) 内部主题 __consumer_offsets 用于位移提交, __transaction_state 主题用于事务. 这 2 个主题默认是 50 分区.
+    2. 主题日常管理
+            (1) 创建主题
+                    > bin/kafka-topics.sh --bootstrap-server broker_host:port --create --topic my_topic_name  
+                      --partitions 1 --replication-factor 1
+                      
+                    --bootstrap-server: kafka 2.2 版本后推荐使用, 不推荐使用 --zookeeper, 因为这个参数绕过了
+                                        安全认证(安全认证可以限制主题的创建),  
+                    --partitions : 代表分区数
+                    --replication-factor : 分区下的副本数, 包含 leader 副本和 follower 副本
+                    
+            (2) 查询主题列表
+                    >  bin/kafka-topics.sh --bootstrap-server broker_host:port --list
+                    
+            (3) 查询某个主题详细内容
+                    > bin/kafka-topics.sh --bootstrap-server broker_host:port --describe --topic <topic_name>
+                    
+            (4) 修改主题分区
+                    目前 kafka 不支持减少某个主题的分区, 支持分区增加.
+                    > bin/kafka-topics.sh --bootstrap-server broker_host:port --alter --topic <topic_name> 
+                                          --partitions < 新分区数 >
+                                          
+            (5) 修改主题级别层级的参数
+                    bin/kafka-configs.sh --zookeeper zookeeper_host:port 
+                    　　　　　　　　　　　　--entity-type topics --entity-name <topic_name> 
+                    　　　　　　　　　　　　--alter --add-config max.message.bytes=10485760
+                    
+            (6) 变更副本数
+                     例如创建 __consumer_offsets 主题(默认是 50 分区) 增加为 3 个副本
+                        第一步: 创建一个 json 文件, 显式提供 50 个分区对应的副本数. replicas 中的 3 台 Broker 排列顺序不同,
+                               目的是将 Leader 副本均匀地分散在 Broker 上. 该文件具体格式如下
+                                    {
+                                        "version":1, 
+                                        "partitions":
+                                        [
+                                            {"topic":"__consumer_offsets","partition":0,"replicas":[0,1,2]}, 
+                                            {"topic":"__consumer_offsets","partition":1,"replicas":[0,2,1]},
+                                            {"topic":"__consumer_offsets","partition":2,"replicas":[1,0,2]},
+                                            {"topic":"__consumer_offsets","partition":3,"replicas":[1,2,0]},
+                                             ...
+                                            {"topic":"__consumer_offsets","partition":49,"replicas":[0,1,2]}
+                                        ]
+                                    }
+                                    
+                        第二步: 是执行 kafka-reassign-partitions 脚本
+                                > bin/kafka-reassign-partitions.sh --zookeeper zookeeper_host:port 
+                                                                   --reassignment-json-file reassign.json --execute
+
+                    
+            (7) 设置某个主题的副本同步速度
+                    目的是为了限制某个主题的 leader 副本和 follower 副本同步的速度.
+                    第一步: 先设置 Broker 端参数 leader.replication.throttled.rate 和 follower.replication.throttled.rate
+                            每秒不能超过 100MB
+                            > bin/kafka-configs.sh --zookeeper zookeeper_host:port --alter --add-config 
+                                                   'leader.replication.throttled.rate=104857600, 
+                                                   follower.replication.throttled.rate=104857600' 
+                                                   --entity-type brokers 
+                                                   --entity-name 0
+                            参数:
+                                --entity-name : Broker ID. 如果该主题的副本分别在 0, 1, 2, 3 多个 Broker 上, 还要依次为
+                                                           Broker 1, 2, 3 执行这条命令
+                                                           
+                    第二步: 为该主题设置要限速的副本
+                               为 topic 为 test, 所有副本设置同步速度.
+                            > bin/kafka-configs.sh --zookeeper zookeeper_host:port --alter --add-config
+                                                   'leader.replication.throttled.replicas=*,
+                                                    follower.replication.throttled.replicas=*' 
+                                                    --entity-type topics
+                                                    --entity-name test
+                                                    
+            (8) 主题分区迁移
+            (9) 删除主题
+                    > bin/kafka-topics.sh --bootstrap-server broker_host:port --delete --topic <topic_name>
+                    这是 kafka 的后台异步删除.
+                    
+            (10) 查看主题中的消息
+                    
+                    查看位移主题的位移值
+                    > bin/kafka-console-consumer.sh --bootstrap-server kafka_host:port 
+                                                    --topic __consumer_offsets --formatter 
+                                                    "kafka.coordinator.group.GroupMetadataManager\$OffsetsMessageFormatter"
+                                                     --from-beginning
+                                                     
+                    查看消费者组的状态信息                                
+                    > bin/kafka-console-consumer.sh --bootstrap-server kafka_host:port 
+                                                   --topic __consumer_offsets  --formatter 
+                                                   "kafka.coordinator.group.GroupMetadataManager\$GroupMetadataMessageFormatter" 
+                                                   --from-beginning
+                                                   
+    3. 错误排查
+            (1) 主题删除失败
+                    a. 失败原因
+                            第一: 副本所在的 Broker 宕机
+                            第二: 待删除主题的部分分区依然在执行迁移过程
+                            
+                    b. 解决方案
+                            第一步: 手动删除 Zookeeper 节点 /admin/delete_topics 下以待删除主题为名的 znode
+                            第二步: 手动删除该主题在磁盘上的分区目录
+                            
+                            
+            (2) __consumer_offsets 主题占用太多的磁盘
+                    a. 检测方法
+                            用 jstack 命令查看一下 kafka-log-cleaner-thread 前缀的线程状态, 看看 Log Cleaner 线程是否挂掉了
+                            
+                    b. 解决方案
+                            重启对应的 broker
+```
+
+## 动态配置
+```shell
+    1. 概念
+            (1) confg/server.properties 配置文件里有配置参数, broker 启动时会加载这个文件, server.properties 中配置的参数则
+                称为静态参数(Static Configs).
+            (2) 动态参数是在 broker 运行过程中, 动态调整参数值而无需重启服务
+            (3) Broker Configs 表中增加 Dynamic Update Mode 列
+                    read-only: 只有重启 Broker, 才能令修改生效
+                    per-broker:  属于动态参数, 修改后, 只会在对应的 Broker 上生效
+                    cluster-wide: 也属于动态参数, 修改后, 会在整个集群范围内生效, 即对所有 Broker 都生效
+            (4) 参数生效的优先级
+                    per-broker 参数 > cluster-wide 参数 > static 参数 > Kafka 默认值
+            (5) 动态参数配置后,重启也不会失效,会持久化.
+                    
+    2. 使用场景
+            (1) 动态调整 Broker 端各种线程池大小, 实时应对突发流量.
+            (2) 动态调整 Broker 端连接信息或安全配置信息
+            (3) 动态更新 SSL Keystore 有效期
+            (4) 动态调整 Broker 端 Compact 操作性能
+            (5) 实时变更 JMX 指标收集器 (JMX Metrics Reporter)
+            
+    3. 保存的位置
+            (1) 动态参数保存在 zookeeper 中, 
+                    a. /config/brokers/<default> 保存设置的 cluster-wide 级别动态参数, 里面的内容是 json 文件, 
+                            {
+                                "version":1,
+                                "config" :
+                                {
+                                    "num.io.threads" : "12",
+                                    .....
+                                }
+                            }
+                    b. /config/brokers/xx 保存 broker xx 的 per-broker 动态参数, 
+                            例如: /config/brokers/0 保存 broker 0 的 per-broker 动态参数
+                            
+    4. 配置命令
+            (1) 在集群层面设置全局值( cluster-wide)
+                    $ bin/kafka-configs.sh --bootstrap-server kafka-host:port 
+                                           --entity-type brokers --entity-default --alter
+                                           --add-config unclean.leader.election.enable=true
+                                           
+                      其中 --entity-default 代表设置集群层面的参数
+                      
+            (2) 查看集群参数是否配置成功
+                    $ bin/kafka-configs.sh --bootstrap-server kafka-host:port 
+                                           --entity-type brokers --entity-default --describe
+                                           
+                    结果:
+                        Default config for brokers in the cluster are:
+                        
+                        unclean.leader.election.enable=true sensitive=false 
+                        synonyms={DYNAMIC_DEFAULT_BROKER_CONFIG:unclean.leader.election.enable=true}
+                        unclean.leader.election.enable=true 设置成功为 true
+                        sensitive=false , 调整的参数不是敏感数据
+                        
+                删除集群参数
+                    $ bin/kafka-configs.sh --bootstrap-server kafka-host:port --entity-type brokers 
+                                           --entity-default --alter --delete-config unclean.leader.election.enable
+                        
+            (3) 设置 per-broker 的参数
+                    对 broker 序号为 1 进行设置
+                    > bin/kafka-configs.sh --bootstrap-server kafka-host:port 
+                                           --entity-type brokers --entity-name 1 
+                                           --alter --add-config unclean.leader.election.enable=false
+                                           
+                      -entity-name 1  配置 broker.id=1 的 broker 参数, 如果有多个 broker 要配置, 那就分别执行对于
+                                      broker.id 的命令
+                                      
+                删除 per-broker 的参数
+                    > bin/kafka-configs.sh --bootstrap-server kafka-host:port --entity-type brokers 
+                                           --entity-name 1 --alter --delete-config unclean.leader.election.enable
+                                           
+            (4) 查看 per-broker 的参数
+                    > bin/kafka-configs.sh --bootstrap-server kafka-host:port --entity-type brokers 
+                                           --entity-name 1 --describe
+                    
+                    结果:
+                        Configs for broker 1 are:
+                        
+                        unclean.leader.election.enable=false sensitive=false 
+                        synonyms={
+                                    DYNAMIC_BROKER_CONFIG:unclean.leader.election.enable=false, 
+                                    DYNAMIC_DEFAULT_BROKER_CONFIG:unclean.leader.election.enable=true,
+                                    DEFAULT_CONFIG:unclean.leader.election.enable=false
+                                 }
+                                 
+    5. 需要调整参数
+            (1) log.retention.ms : 日志留存时间
+            (2) num.io.threads 和 num.network.threads: 在实际生产环境中, Broker 端请求处理能力经常要按需扩容
+            (3) 与 SSL 相关的参数
+                    主要是 4 个参数(ssl.keystore.type、ssl.keystore.location、ssl.keystore.password 和
+                    ssl.key.password). 允许动态实时调整后, 可以创建那些过期时间很短的 SSL 证书. 每当调整时, Kafka 底层会重新
+                    配置 Socket 连接通道并更新 Keystore. 新的连接会使用新的 Keystore, 阶段性地调整这组参数, 有利于增加安全性
+            (4) num.replica.fetchers
+                    动态解决 Follower 副本拉取速度慢, 增加值相当于增加多个线程进行 follower 副本的拉取.                            
+```
+
+## 重设消费者组位移
+```shell
+    1. 概念
+            (1) 
+            
+    2. 重设位移策略
+            (1) 位移纬度
+                    位移纬度是直接把消费者的位移重设为给定的位移值.对应的策略有以下 5 种
+                    
+                    第一种: Earliest 策略
+                                将位移调整到主题当前最早位移处, 最早位移不一定就是 0, 可能很久远的消息会被 Kafka 自动删除.
+                           如果想要重新消费主题的所有消息, 可以使用 Earliest 策略
+                           
+                    第二种: Latest 策略
+                                把位移重设成最新末端位移, 如果想跳过所有历史消息, 打算从最新的消息处开始消费可以使用 Latest 策略.
+                                
+                    第三种: Current 策略
+                                将位移调整成消费者当前提交的最新位移. 遇到场景:修改消费者程序代码, 并重启消费者, 发现代码有问题,
+                           需要回滚之前的代码变更, 同时也要把位移重设到消费者重启时的位置, Current 策略就可以实现这个功能
+                           
+                    第四种: Specified-Offset 策略
+                                把位移值调整到指定的位移处.使用场景是消费者程序在处理某条错误消息时, 可以手动地“跳过”此消息的处理,
+                            在实际使用过程中, 可能会出现 corrupted 消息无法被消费, 这时消费者程序会抛出异常, 无法继续工作.
+                            可以尝试使用 Specified-Offset 策略来规避
+                            
+                    第五种: Shift-By-N 策略
+                                把位移调整到当前位移 +N 处(N 可以是负值), 把位移重设成当前位移的前 100 条位移处, 你需要指定 N 为
+                           -100
+                           
+            (2) 时间纬度
+                    可以给定一个时间, 让消费者把位移调整成这个时间的的位移或则是大于这个时间的最小位移.
+                    
+                    第一种: DateTime 策略
+                                允许指定一个时间, 然后将位移重置到该时间之后的最早位移处. 常见的使用场景是, 想重新消费昨天的数据,
+                          可以使用该策略重设位移到昨天 0 点
+                     
+                    第二种: Duration 策略
+                                指给定相对的时间间隔, 然后将位移调整到距离当前给定时间间隔的位移处, 具体格式是 PnDTnHnMnS. 例如
+                           如果想将位移调回到 15 分钟前, 那么就可以指定 PT0H15M0S
+                           
+    3. 重设位移的方式
+            (1) 消费者 API 方式
+                    void seek(TopicPartition partition, long offset);
+                    void seek(TopicPartition partition, OffsetAndMetadata offsetAndMetadata);
+                    每次调用 seek 方法只能重设一个分区的位移
+                    
+                    void seekToBeginning(Collection<TopicPartition> partitions);
+                    void seekToEnd(Collection<TopicPartition> partitions);
+                    seekToBeginning 和 seekToEnd 则拥有一次重设多个分区的能力
+                    
+                    Earliest 策略实现
+                        Properties consumerProperties = new Properties();
+                        consumerProperties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+                        consumerProperties.put(ConsumerConfig.GROUP_ID_CONFIG, groupID);
+                        consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+                        consumerProperties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer)
+                        consumerProperties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserialize)
+                        consumerProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
+                        
+                        String topic = "test"; // 要重设位移的 Kafka 主题
+                        
+                        try (final KafkaConsumer<String, String> consumer = new KafkaConsumer<>(consumerProperties)) 
+                        {
+                            consumer.subscribe(Collections.singleton(topic));
+                            
+                            // 一定要调用带长整型的 poll 方法, 而不要调用 consumer.poll(Duration.ofSecond(0))
+                            // poll(0), 是阻塞等待成功获取了所需的元数据信息后, 在非阻塞发起 fetch 请求去获取数据
+                            // 而 poll(Duration) 是连获取了所需的元数据信息后也是非阻塞的, 
+                            // consumer 根本无法在这么短的时间内连接上 coordinator, 就会返回空集合.
+                            consumer.poll(0);
+                            // 调用 seekToBeginning 方法时, 需要一次性构造主题的所有分区对象
+                            consumer.seekToBeginning(
+                                    consumer.partitionsFor(topic).stream().map( 
+                                                                                partitionInfo -> new TopicPartition(topic, partitionInfo.partition())
+                                                                                
+                                                                              ) .collect(Collectors.toList())
+                                                     );
+                        }
+                        
+                    Latest 策略
+                            consumer.seekToEnd(
+                                   consumer.partitionsFor(topic).stream().map(
+                                                                               partitionInfo -> new TopicPartition(topic, partitionInfo.partition())
+                                                                              ) .collect(Collectors.toList())
+                                              );
+                                              
+                    Current 策略
+                            consumer.partitionsFor(topic).stream().map(
+                                                                        info -> new TopicPartition(topic, info.partition())
+                                                                      ) .forEach(
+                                                                                  tp -> {
+                                                                                            long committedOffset = consumer.committed(tp).offset();
+                                                                                            consumer.seek(tp, committedOffset);
+                                                                                        }
+                                                                                );
+                            调用 partitionsFor 方法获取给定主题的所有分区, 然后依次获取对应分区上的已提交位移, 最后通过 seek 方法
+                            重设位移到已提交位移处
+                            
+                    Specified-Offset 策略
+                            long targetOffset = 1234L;
+                            for (PartitionInfo info : consumer.partitionsFor(topic)) 
+                                {
+                                    TopicPartition tp = new TopicPartition(topic, info.partition());
+                                    consumer.seek(tp, targetOffset);
+                                }
+                                
+                    Shift-By-N 策略
+                            for (PartitionInfo info : consumer.partitionsFor(topic)) 
+                            {
+                                TopicPartition tp = new TopicPartition(topic, info.partition());
+                                // 假设向前跳 123 条消息
+                                long targetOffset = consumer.committed(tp).offset() + 123L;
+                                consumer.seek(tp, targetOffset);
+                            }
+                            
+                    DateTime 策略
+                            重设位移到 2019 年 6 月 20 日晚上 8 点
+                            long ts = LocalDateTime.of(2019, 6, 20, 20, 0).toInstant(ZoneOffset.ofHours(8)).toEpochMilli();
+                            
+                             Map<TopicPartition, Long> timeToSearch = consumer.partitionsFor(topic).
+                                                                      stream().map(
+                              info ->new TopicPartition(topic, info.partition())
+                               ).collect(
+                                           Collectors.toMap(Function.identity(), tp -> ts)
+                                        );
+                            
+                            for (Map.Entry<TopicPartition, OffsetAndTimestamp> entry : consumer.offsetsForTimes(timeToSearch).entrySet()) 
+                            {
+                                consumer.seek(entry.getKey(), entry.getValue().offset());
+                            }
+                            
+                            构造了 LocalDateTime 实例, 然后利用它去查找对应的位移值, 最后调用 seek, 实现了重设位移
+                            
+                    Duration 策略
+                            Map<TopicPartition, Long> timeToSearch = consumer.partitionsFor(topic).stream()
+                                                   .map(info -> new TopicPartition(topic, info.partition()))
+                                                   .collect(
+                                                                Collectors.toMap(Function.identity(), tp -> System.currentTimeMillis())
+                                                           );
+                            
+                            for (Map.Entry<TopicPartition, OffsetAndTimestamp> entry : consumer.offsetsForTimes(timeToSearch).entrySet()) 
+                            {
+                                consumer.seek(entry.getKey(), entry.getValue().offset());
+                            }
+                            
+            (2) 命令字形式
+                    Earliest 策略
+                        直接指定 –to-earliest
+                        > bin/kafka-consumer-groups.sh --bootstrap-server kafka-host:port --group test-group 
+                                                       --reset-offsets --all-topics --to-earliest –execute
+                                                       
+                    Latest 策略
+                        直接指定 –to-latest
+                        > bin/kafka-consumer-groups.sh --bootstrap-server kafka-host:port --group test-group 
+                                                       --reset-offsets --all-topics --to-latest --execute
+                            
+                    Current 策略
+                        直接指定 –to-current
+                        > bin/kafka-consumer-groups.sh --bootstrap-server kafka-host:port --group test-group 
+                                                       --reset-offsets --all-topics --to-current --execute
+                                                       
+                    Specified-Offset 策略
+                        直接指定 –to-offset
+                        > bin/kafka-consumer-groups.sh --bootstrap-server kafka-host:port --group test-group
+                                                       --reset-offsets --all-topics --to-offset <offset> --execute
+                                                       
+                    Shift-By-N 策略
+                        直接指定 –shift-by N
+                        > bin/kafka-consumer-groups.sh --bootstrap-server kafka-host:port --group test-group 
+                                                       --reset-offsets --shift-by <offset_N> --execute
+                                                       
+                    DateTime 策略
+                        直接指定 –to-datetime
+                        > bin/kafka-consumer-groups.sh --bootstrap-server kafka-host:port --group test-group 
+                                                       --reset-offsets --to-datetime 2019-06-20T20:00:00.000 --execute
+                                                       
+                    Duration 策略
+                        直接指定 –by-duratio
+                        bin/kafka-consumer-groups.sh --bootstrap-server kafka-host:port --group test-group 
+                                                     --reset-offsets --by-duration PT0H30M0S --execute
+                            
+```
+
+### 常见工具脚本
+```shell
+    1. 概念
+    2. 其他脚本
+        1. kafka-server-start 和 kafka-server-stop 脚本
+                        启动/停止 kafka 服务
+                        
+        2. Kafka Connect 组件
+                用于实现 Kafka 与外部世界系统之间的数据传输
+                 connect-standalone 脚本: 支持单节点的 Standalone 模式
+                 connect-distributed 脚本: 支持多节点的 Distributed 模式
+                 
+        3. kafka-acls 脚本
+                设置 Kafka 权限, 比如设置哪些用户可以访问 Kafka 的哪些主题之类的权限
+                
+        4. kafka-broker-api-versions 脚本
+                验证不同 Kafka 版本之间服务器和客户端的适配性
+                > bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092
+                结果:
+                localhost:9092( id:0 rack: null -> (
+                        Produce(0): 0 to 7 [usable: 7],
+                        ....
+                        )
+                        
+                        (0) : 代表消息的序号
+                        0 to 7 : 代表该 kafka 2.2 支持 produce 请求版本 0 ~ 7, 而这个客户端执行,支持最新的 7 版本
+                        
+                在 0.10.2.0 之前, Kafka 是单向兼容的, 即高版本的 Broker 能够处理低版本 Client 发送的请求, 
+                但是低版本的 Broker 不能处理高版本的 Client 发送的请求
+                自 0.10.2.0 版本开始, Kafka 正式支持双向兼容, 即低版本的 Broker 也能处理高版本 Client 的请求
+                
+        5. kafka-dump-log 脚本
+                查看 Kafka 消息文件的内容, 包括消息的各种元数据信息, 甚至是消息体本身
+                
+        6. kafka-log-dirs 脚本
+                查询各个 Broker 上的各个日志路径的磁盘占用情况
+                
+        7. kafka-preferred-replica-election 脚本
+                执行 Preferred Leader 选举, 可以为指定的主题执行 “换 Leader” 的操作
+                
+        8. kafka-reassign-partitions 脚本
+                执行分区副本迁移以及副本文件路径迁移
+                
+    3. kafka-console-producer 脚本    
+            生成消息, 使用控制台来向 Kafka 的指定主题发送消息
+            > bin/kafka-console-producer.sh --broker-list kafka-host:port --topic test-topic 
+                                            --request-required-acks -1 
+                                            --producer-property compression.type=lz4
+    4. kafka-console-consumer 脚本
+            > bin/kafka-console-consumer.sh --bootstrap-server kafka-host:port --topic test-topic
+                                           --group test-group --from-beginning
+                                           --consumer-property enable.auto.commit=false
+                                           
+              需要指定 group 信息, 如果没有指定, 每次运行 Console Consumer, 它都会自动生成一个新的消费者组来消费. 会导致集群中有
+              大量的以 console-consumer 开头的消费者组
+              
+              from-beginning :  Consumer 端参数 auto.offset.reset 设置成 earliest, 从头开始消费主题. 如果不指定, 会默认从
+              最新位移读取消息.如果此时没有任何新消息, 该命令的输出为空
+              
+              在命令中禁掉自动提交位移, 让 Console Consumer 脚本提交位移是没有意义的, 因为只是用它做一些简单的测试
+              
+    5. kafka-producer-perf-test 脚本
+            生产者性能脚本
+            
+            向指定主题发送了 1 千万条消息, 每条消息大小是 1KB
+            > bin/kafka-producer-perf-test.sh --topic test-topic --num-records 10000000 --throughput -1 
+                                              --record-size 1024 
+                                              --producer-props bootstrap.servers=kafka-host:port acks=-1 
+                                                               linger.ms=2000 compression.type=lz4
+                                                               
+            结果:
+                    2175479 records sent, 435095.8 records/sec (424.90 MB/sec), 131.1 ms avg latency, 681.0 ms max latency.
+                    4190124 records sent, 838024.8 records/sec (818.38 MB/sec), 4.4 ms avg latency, 73.0 ms max latency.
+                    10000000 records sent, 737463.126844 records/sec (720.18 MB/sec), 31.81 ms avg latency, 
+                                                                                      681.00 ms max latency, 
+                                                                                      4 ms 50th, 126 ms 95th, 
+                                                                                      604 ms 99th, 672 ms 99.9th.
+                    99th 值是 604ms, 这表明测试生产者生产的消息中, 有 99% 消息的延时都在 604ms 以内
+                    
+    6. kafka-consumer-perf-test脚本
+    
+            > bin/kafka-consumer-perf-test.sh --broker-list kafka-host:port --messages 10000000 --topic test-topic
+            
+            结果:
+                start.time,                      end.time,          data.consumed.in.MB,       MB.sec,   
+                2019-06-26 15:24:18:138, 2019-06-26 15:24:23:805,       9765.6202,            1723.2434,
+                                                       
+                data.consumed.in.nMsg,   nMsg.sec,    rebalance.time.ms,    fetch.time.ms, fetch.MB.sec,   fetch.nMsg.sec
+                       10000000,       1764602.0822,          16,                 5651,      1728.1225,     1769598.3012    
+                          
+    7. 查看某个主题消息总数
+            > bin/kafka-run-class.sh kafka.tools.GetOffsetShell --broker-list kafka-host:port --time -2 --topic test-topic
+            结果:
+                test-topic:0:0
+                test-topic:1:0
+                
+            > bin/kafka-run-class.sh kafka.tools.GetOffsetShell --broker-list kafka-host:port --time -1 --topic test-topic
+            结果:
+                test-topic:0:5500000
+                test-topic:1:5500000
+                
+            使用 Kafka 提供的工具类 GetOffsetShell 来计算给定主题特定分区当前的最早位移和最新位移, 将两者的差值累加起来, 就能得到
+            该主题当前总的消息数. 对于本例来说, test-topic 总的消息数为 5500000 + 5500000, 等于 1100 万条
+            
+    8.  kafka-dump-log 脚本(查看消息日志文件数据)
+            > bin/kafka-dump-log.sh --files ../data_dir/kafka_1/test-topic-1/00000000000000000000.log 
+            结果:
+                Dumping ../data_dir/kafka_1/test-topic-1/00000000000000000000.log
+                Starting offset: 0
+                baseOffset: 0 lastOffset: 14 count: 15 baseSequence: -1 lastSequence: -1 producerId: -1 
+                producerEpoch: -1 partitionLeaderEpoch: 0 isTransactional: false isControl: false position: 0 
+                CreateTime: 1561597044933 size: 1237 magic: 2 compresscodec: LZ4 crc: 646766737 isvalid: true
+                
+                
+                baseOffset: 15 lastOffset: 29 count: 15 baseSequence: -1 lastSequence: -1 producerId: -1 
+                producerEpoch: -1 partitionLeaderEpoch: 0 isTransactional: false isControl: false position: 1237 
+                CreateTime: 1561597044934 size: 1237 magic: 2 compresscodec: LZ4 crc: 3751986433 isvalid: true
+                
+            查看每一条具体消息  显示指定 --deep-iteration参数
+            > bin/kafka-dump-log.sh --files ../data_dir/kafka_1/test-topic-1/00000000000000000000.log 
+                                    --deep-iteration --print-data-log
+                                    
+    9. kafka-consumer-groups 脚本(查看消费者组位移)
+            > bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --group test-group
+            
+            
+```
+
+### AdminClient
+```shell
+    1. 概念
+    2. 功能
+            (1). 主题管理：包括主题的创建、删除和查询
+            (2). 权限管理：包括具体权限的配置与删除
+            (3). 配置参数管理：包括 Kafka 各种资源的参数设置, 详情查询. Kafka 资源, 主要有 Broker, 主题, 用户, Client-id 等
+            (4). 副本日志管理：包括副本底层日志路径的变更和详情查询
+            (5). 分区管理：即创建额外的主题分区
+            (6). 消息删除：即删除指定位移之前的分区消息。
+            (7). Delegation Token 管理：包括 Delegation Token 的创建、更新、过期和详情查询
+            (8). 消费者组管理：包括消费者组的查询、位移查询和删除。
+            (9). Preferred 领导者选举：推选指定主题分区的 Preferred Broker 为领导者
+            
+    3. AdminClient 工作原理
+            AdminClient 是一个双线程的设计：前端主线程和后端 I/O 线程. 前端线程负责将用户要执行的操作转换成对应的请求,其中包括
+       第一个任务 构建对应的请求对象, 如果要创建主题, 就创建 CreateTopicsRequest 对象, 如果是查询消费者组位移, 
+       就创建 OffsetFetchReques 对象. 第二个任务 指定响应的回调逻辑, 如从 Broker 端接收到 CreateTopicsResponse 之后要执行的
+       动作,  然后再将请求发送到后端 I/O 线程的队列中；而后端 I/O 线程从队列中读取相应的请求, 然后发送到对应的 Broker 节点上, 之
+       后把执行结果保存起来, 以便等待前端线程的获取
+       
+       问题排查:
+                出现执行结果没有返回, 或则是 hang 住了, 可能的原因是后端 I/O 线程出现问题, 可以通过 jstack 查看 AdminClient 程序
+                
+    4. AdminClient 实例
+            (1) 创建主题
+                    String newTopicName = "test-topic";
+                    try (AdminClient client = AdminClient.create(props)) {
+                             NewTopic newTopic = new NewTopic(newTopicName, 10, (short) 3);
+                             CreateTopicsResult result = client.createTopics(Arrays.asList(newTopic));
+                             result.all().get(10, TimeUnit.SECONDS);
+                    }
+                    
+            (2) 查询消费者组位移
+                    String groupID = "test-group";
+                    try (AdminClient client = AdminClient.create(props)) {
+                             ListConsumerGroupOffsetsResult result = client.listConsumerGroupOffsets(groupID);
+                             Map<TopicPartition, OffsetAndMetadata> offsets = 
+                                      result.partitionsToOffsetAndMetadata().get(10, TimeUnit.SECONDS);
+                             System.out.println(offsets);
+                    }
+                    
+            (3) 获取 Broker 磁盘占用
+                    try (AdminClient client = AdminClient.create(props)) {
+                             DescribeLogDirsResult ret = client.describeLogDirs(Collections.singletonList(targetBrokerId)); // 指定 Broker id
+                             long size = 0L;
+                             for (Map<String, DescribeLogDirsResponse.LogDirInfo> logDirInfoMap : ret.all().get().values()) {
+                                      size += logDirInfoMap.values().stream().map(logDirInfo -> logDirInfo.replicaInfos).flatMap(
+                                               topicPartitionReplicaInfoMap ->
+                                               topicPartitionReplicaInfoMap.values().stream().map(replicaInfo -> replicaInfo.size))
+                                               .mapToLong(Long::longValue).sum();
+                             }
+                             System.out.println(size);
+                    }
+```
+
+### 认证机制
+```shell
+    1. 概念
+        (1) 认证也是鉴权(authentication), 认证的主要目的是确认当前声称为某种身份的用户确实是所声称的用户
+        (2) 认证要解决的是证明你是谁的问题, 授权要解决的则是能做什么的问题
+        (3) ssl 做信道加密比较多, 使用 SSL 来做通信加密, 使用 SASL 来做 Kafka 的认证实现
+        (4) PLAIN 在这里是一种认证机制, 而 PLAINTEXT 说的是未使用 SSL 时的明文传输
+    2. 认证机制
+            (1) SSL 
+                    概念: 
+                    引入版本: 0.9
+                    适用场景: 一般测试场景
+                    
+            (2) SASL/GSSAPI
+                    引入版本: 0.9
+                    适用场景: 本身已经实现的 Kerberos 认证(使用 Active Directory)的场景
+                    
+            (3) SASL/PLAIN
+                    引入版本: 0.10.2
+                    适用场景: 中小型公司的 kafka 集群
+                    概念: 是一个简单的用户名 / 密码认证机制, 通常与 SSL 加密搭配使用, 它不能动态地增减认证用户, 必须重启 Kafka 集
+                          群才能令变更生效. 因为所有认证用户信息全部保存在静态文件中, 只能重启 Broker, 
+                          才能重新加载变更后的静态文件
+                    
+            (4) SASL/SCRAM
+                    引入版本: 0.10.2
+                    适用场景: 中小型公司的 kafka 集群, 支持认证用户的动态增减
+                    概念: 解决动态增减认证用户, 需要重启集群, 通过将认证用户信息保存在 ZooKeeper 的方式
+                    
+            (5) SASL/OAUTHBEARER
+                    引入版本: 2.0
+                    适用场景: OAuth 2.0 框架的场景
+                    概念: OAuth 是一个开发标准, 允许用户授权第三方应用访问该用户在某网站上的资源, 而无需将用户名和密码提供给第三方应用.
+                          Kafka 不提倡单纯使用 OAUTHBEARER,  因为它生成的不安全的 JSON Web Token, 必须配以 SSL 加密才能用在生产环境
+                    
+            (6) Delegation Token
+                    引入版本: 1.1
+                    适用场景: 适用与 Kerberos 认证出现 TGT 分发性能瓶颈的场景
+                    概念: 它是一种轻量级的认证机制, 目的是补充现有的 SASL 或 SSL 认证. 如果要使用 Delegation Token, 需要先配置好
+                         SASL 认证, 然后再利用 Kafka 提供的 API 去获取对应的 Delegation Token. Broker 和客户端在
+                         做认证的时候, 可以直接使用这个 token, 不用每次都去 KDC 获取对应的 ticket(Kerberos 认证)或
+                         传输 Keystore 文件(SSL 认证)
+                         
+    3. SASL/SCRAM-SHA-256 配置实例
+            第一步: 创建用户
+                    创建 3 个用户, admin 用户用于实现 Broker 间通信, writer 用户用于生产消息, reader 用户用于消费消息
+                    
+                    创建 admin
+                    >  bin/kafka-configs.sh --zookeeper localhost:2181 --alter 
+                                            --add-config 'SCRAM-SHA-256=[password=admin],SCRAM-SHA-512=[password=admin]' 
+                                            --entity-type users --entity-name admin
+                                            
+                    创建 writer
+                    > bin/kafka-configs.sh --zookeeper localhost:2181 --alter 
+                                           --add-config 'SCRAM-SHA-256=[password=writer],SCRAM-SHA-512=[password=writer]'
+                                           --entity-type users --entity-name writer
+                                           
+                    创建 reader
+                    > bin/kafka-configs.sh --zookeeper localhost:2181 --alter 
+                                           --add-config 'SCRAM-SHA-256=[password=reader],SCRAM-SHA-512=[password=reader]' 
+                                           --entity-type users --entity-name reader
+                                           
+                    查看创建的用户信息
+                    > bin/kafka-configs.sh --zookeeper localhost:2181 --describe --entity-type users  --entity-name writer
+                    
+            第二步: 创建 JAAS 文件
+                        (1) 为每台单独的物理 Broker 机器都创建一份 JAAS 文件
+                        
+                            使用 admin 用户实现 Broker 之间的通信
+                            内容如下:
+                                KafkaServer {
+                                org.apache.kafka.common.security.scram.ScramLoginModule required
+                                username="admin"
+                                password="admin";
+                                };
+                                
+                                注意: 不能有空格键
+                                
+                        (2) 配置 Broker 的 server.properties 文件
+                        
+                                 // 开启 SCRAM 认证机制, 并启用 SHA-256 算法
+                                sasl.enabled.mechanisms=SCRAM-SHA-256
+                                // 为 Broker 间通信也开启 SCRAM 认证, 同样使用 SHA-256 算法
+                                sasl.mechanism.inter.broker.protocol=SCRAM-SHA-256
+                                // Broker 间通信不配置 SSL
+                                security.inter.broker.protocol=SASL_PLAINTEXT
+                                // Broker 间通信不配置 SSL
+                                listeners=SASL_PLAINTEXT://localhost:9092
+                                
+            第三步: 启动 Broker
+                    > KAFKA_OPTS=-Djava.security.auth.login.config=<your_path>/kafka-broker.jaas bin/kafka-server-start.sh config/server1.properties
+                    
+            第四步: 发消息
+                        (1) 编写 producer.conf 的配置文件
+                                security.protocol=SASL_PLAINTEXT
+                                sasl.mechanism=SCRAM-SHA-256
+                                sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="writer" password="writer";
+                                
+                        (2) 运行 Console Producer 程序
+                                > bin/kafka-console-producer.sh --broker-list localhost:9092,localhost:9093 
+                                                                --topic test
+                                                                --producer.config <your_path>/producer.conf
+                                                                
+            第五步: 消费消息
+                        (1)  编写 consumer.conf 的配置文件
+                                security.protocol=SASL_PLAINTEXT
+                                sasl.mechanism=SCRAM-SHA-256
+                                sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="reader" password="reader";
+                                
+                        (2) 运行 Console Consumer 程序
+                                > bin/kafka-console-consumer.sh --bootstrap-server localhost:9092,localhost:9093 
+                                                                --topic test --from-beginning 
+                                                                --consumer.config <your_path>/consumer.conf 
+                                                                
+            第六步: 动态增减用户
+                        (1) 删除 writer 用户, 新增 new_writer 用户
+                            > bin/kafka-configs.sh --zookeeper localhost:2181 --alter 
+                                                   --delete-config 'SCRAM-SHA-256' --entity-type users --entity-name writer
+                            
+                            > bin/kafka-configs.sh --zookeeper localhost:2181 --alter
+                                                   --delete-config 'SCRAM-SHA-512' --entity-type users --entity-name writer 
+                                                   
+                            >  bin/kafka-configs.sh --zookeeper localhost:2181 --alter 
+                                                    --add-config 'SCRAM-SHA-256=[iterations=8192,password=new_writer]'
+                                                    --entity-type users --entity-name new_writer
+                                                    
+                        (2) 这时候需要修改原先的 producer.conf 配置文件, 将 username 修改为 new_writer
+                            
+```
+
+### 授权机制
+```shell
+    1. 概念
+            (1)
+             
+    2. 权限模型
+            第一种 : ACL(常用, kafka 使用的)
+                        Access-Control List, 访问控制列表, 表示用户与权限的直接映射关系. 规定了什么用户对什么资源有什么样的访问权限.
+                    
+                        
+            第二种: RBAC(常用)
+                        Role-Based Access Control, 基于角色的权限控制, 支持对用户进行分组
+                        
+            第三种: ABAC
+                        Attribute-Based Access Control, 基于属性的权限控制
+                        
+            第四种: PBAC
+                        Policy-Based Access Control, 基于策略的权限控制
+                        
+    3. 开启 ACL
+            在 server.properties 配置文件中
+                authorizer.class.name=kafka.security.auth.SimpleAclAuthorizer
+                
+            其中 authorizer.class.name 参数指定了 ACL 授权机制的实现类
+            
+    4. 配置超级用户
+            在 server.properties 配置文件中
+                super.users=User:superuser1;User:superuser2
+                
+                 allow.everyone.if.no.acl.found=true  // 所有用户都可以访问任何 ACL 的资源, 不常用
+                  
+    5. kafka-acls 脚本
+            进行授权配置,为用户 Alice 增加集群级别的所有权限,如下
+                > bin/kafka-acls --authorizer-properties zookeeper.connect=localhost:2181 
+                                 --add --allow-principal User:Alice --operation All --topic '*' --cluster
+                                 
+                  All 表示所有操作, topic 中的 * 则表示所有主题, 指定 --cluster 则说明为 Alice 设置的是集群权限
+                  
+                >  bin/kafka-acls --authorizer-properties zookeeper.connect=localhost:2181 
+                                  --add --allow-principal User:'*' --allow-host '*' 
+                                  --deny-principal User:BadUser --deny-host 10.205.96.119 
+                                  --operation Read --topic test-topic
+                                  
+                  User 后面的星号表示所有用户, allow-host 后面的星号则表示所有 IP 地址. 这个命令的
+                  允许所有的用户使用任意的 IP 地址读取名为 test-topic 的主题数据, 同时也禁止
+                  BadUser 用户和 10.205.96.119 的 IP 地址访问 test-topic 下的消息
+                  
+    6. 授权机制可以单独使用
+           (1) 往往认证机制和授权机制配合使用, 不过也可以只使用授权机制, 这样只能对某个 ip 进行指定
+           
+                禁止 127.0.0.1 上的 Producer 向 test 主题发送数据
+                > bin/kafka-acls.sh --authorizer-properties zookeeper.connect=localhost:2181 
+                                    --add --deny-principal User:* --deny-host 127.0.0.1 
+                                    --operation Write --topic test
+                                    
+    7.  SSL + ACL 配置实例
+            第一步: ssl 的配置(https://blog.csdn.net/qq_18522601/article/details/99834726),  SHELL 脚本在 Broker 上运行
+                   产生了 server.keystore.jks, server.truststore.jks,  client.keystore.jks 和 client.truststore.jks
+                   把以 server 开头的两个文件, 拷贝到集群中的所有 Broker 机器上, 把以 client 开头的两个文件,拷贝到所有要连接
+                   Kafka 集群的客户端应用程序机器上.
+                   
+            第二步: 配置每个 Broker 的 server.properties 文件
+                        listeners=SSL://localhost:9093
+                        ssl.truststore.location=/Users/huxi/testenv/certificates/server.truststore.jks
+                        ssl.truststore.password=test1234
+                        ssl.keystore.location=/Users/huxi/testenv/certificates/server.keystore.jks
+                        ssl.keystore.password=test1234
+                        security.inter.broker.protocol=SSL
+                        ssl.client.auth=required
+                        ssl.key.password=test1234
+                        
+            第三步: 配置客户端的 ssl
+                        client-ssl.config 配置文件
+                            security.protocol=SSL
+                            ssl.truststore.location=/Users/huxi/testenv/certificates/client.truststore.jks
+                            ssl.truststore.password=test1234
+                            ssl.keystore.location=/Users/huxi/testenv/certificates/server.keystore.jks
+                            ssl.keystore.password=test1234
+                            ssl.key.password=test1234
+                            ssl.endpoint.identification.algorithm=
+                            
+                        一定要加上最后一行, 自 Kafka 2.0 版本开始, 它默认会验证服务器端的主机名是否匹配 Broker 端证书里的主机名.
+                        要禁掉此功能的话, 一定要将该参数设置为空字符串
+                        
+            第四步: 验证
+                        >bin/kafka-console-producer.sh --broker-list localhost:9093 --topic test
+                         　　　　　　　　　　　　　　　　　 --producer.config client-ssl.config
+                         
+    8. ACL 配置实践
+            (1) 开启 ACL, authorizer.class.name=kafka.security.auth.SimpleAclAuthorizer
+            (2) 采用白名单机制, 没有设置的用户禁止访问资源, 不要设置 allow.everyone.if.no.acl.found=true
+            (3) 
+                        
+```
+
+### kafka 监控
+```shell
+    1. 概念
+    2. 主机监控
+            (1) 主机机器负载（Load）, top 命令的 load average 值分别代表过去 1 分钟、过去 5 分钟和过去 15 分钟的 Load 平均值,
+                值低于 cpu 核为正常.
+            (2) CPU 使用率, top 中的是考虑了多核进去, 如果是每个 cpu, 平均个数.
+            
+    3. JVM 监控
+            (1) 需要知道 Broker 端 JVM 进程的 Minor GC 和 Full GC(对程序堆进行垃圾回收) 的发生频率和时长,
+                长时间的停顿会令 Broker 端抛出各种超时异常
+            (2) 设置 Broker 堆的大小就是在程序 full gc 后存活的对象大小 * 1.5, 可以通过 GC 日志来看, 如下：
+                    2019-07-30T09:13:03.809+0800: 552.982: [GC cleanup 827M->645M(1024M), 0.0019078 secs]
+                监控 kafkaServergc.log 日志, 一旦频繁发生 Full GC, 可以开启 G1 的 -XX:+PrintAdaptiveSizePolicy 开关,
+                看哪个线程发生 Full GC
+            (3) 活跃对象大小, 设定堆大小的重要依据, 调优 JVM 各个代的堆大小
+            (4) 应用线程总数, 了解 Broker 进程对 CPU 的使用情况
+            
+    4. 集群监控
+            (1) 查看 Broker 进程是否启动, 端口是否建立
+            (2) 查看 Broker 端关键日志
+                     Broker 端服务器日志 server.log, 控制器日志 controller.log, 主题分区状态变更日志 state-change.log
+            (3) 查看 Broker 端关键线程的运行状态
+                    第一个: Log Compaction 线程, 以 kafka-log-cleaner-thread 开头, 做日志 Compaction(压缩), 一旦它挂掉了, 
+                          所有 Compaction 操作都会中断, 会出现 Kafka 内部的位移主题所占用的磁盘空间越来越大等现象.
+                          
+                    第二个: 副本拉取消息的线程, 以 ReplicaFetcherThread 开头, 执行 follower 副本从 leader 副本拉取消息进行同步,
+                           线程异常后会导致 Follower 副本的 Lag 会越来越大
+                           
+                    可以通过使用 jstack 命令, 或则其他的监控框架
+                    
+            (4) 查看 Broker 端的关键 JMX 指标
+                    a. BytesIn/BytesOut, Broker 端每秒入站和出站字节数, 最好不要接近自己的网络带宽
+                    b. NetworkProcessorAvgIdlePercent：网络线程池线程平均的空闲比例.确保这个 JMX 值长期大于 30%. 
+                       小于这个值说明网络线程池非常繁忙, 需要通过增加网络线程数或将负载转移给其他服务器的方式
+                    c. RequestHandlerAvgIdlePercent：即 I/O 线程池线程平均的空闲比例. 该值长期小于 30%, 需要调整
+                       I/O 线程池的数量
+                    d. UnderReplicatedPartitions：未充分备份的分区数, 即与 leader 副本未同步的 follower 的数量, 太多就要
+                    　　引起重视.
+                    e. SRShrink/ISRExpand：即 ISR 收缩和扩容的频次指标. 出现 ISR 中副本频繁进出的情形, 那么这组值一定是很高
+                       要诊断下副本频繁进出 ISR 的原因, 并采取适当的措施
+                    f. ActiveControllerCount：当前处于激活状态的控制器的数量. 正常情况下, Controller 所在 Broker 上的这个 JMX 
+                       指标值是 1, 其他 Broker 上的这个值是 0. 如果存在多台 Broker 上该值都是 1 的情况, 要查看网络连通性, 
+                       可能集群出现脑裂。脑裂问题是非常严重的分布式故障, Kafka 目前依托 ZooKeeper 来防止脑裂, 一旦出现脑裂,
+                       Kafka 是无法保证正常工作
+                       
+            (5) 监控 Kafka 客户端
+                    a. 查看客户端与 broker 之间的网络往返时间(RTT), 通过 ping
+                    b. 对于生产者, 监控以 kafka-producer-network-thread 开头的线程, 这个线程主要发送消息.
+                       request-latency 的 JMX 指标, 即消息生产请求的延时. 
+                    c. 对于消费者, 监控以 kafka-coordinator-heartbeat-thread　开头的线程, 这个线程事关与 Rebalance.
+                        records-lag 和 records-lead JMX 指标, 反映消费进度.
+                        如果是 consumer group, join rate 和  sync rate JMX 指标 反映 Rebalance 频繁程度.
+                                  
+```
+
+### kafka 调优
+```shell
+    1. 概念
+        (1) 高吞吐量、低延时是我们调优 Kafka 集群的主要目标
+    2. 优化漏斗
+            (1) 优化漏斗是一个调优过程中的分层漏斗, 层级越靠上, 其调优的效果越明显
+            (2)
+                 第一层：应用程序层. 优化 Kafka 客户端应用程序代码. 如使用合理的数据结构、缓存计算开销大的运算结果, 或是复用构造
+                        成本高的对象实例等. 这一层的优化效果最为明显, 通常也是比较简单的
+                 第二层: 框架层. 指合理设置 Kafka 集群的各种参数. 直接修改 Kafka 源码进行调优并不容易, 但可以恰当地配置关键参数的值
+                 第三层: JVM 层, Kafka Broker 进程是普通的 JVM 进程, 各种对 JVM 的优化在这里也是适用的
+                 第四层: 操作系统层, 对操作系统层的优化很重要, 但效果往往不如想象得那么好. 与应用程序层的优化效果相比,它是有很大差距的
+                 
+    3. 操作系统层
+            (1) > mount -o noatime 
+                  禁止 atime(文件最后被访问的时间)更新, 因为记录 atime 需要操作系统访问 inode 资源, 并写入.
+            (2) 文件系统, 尽量选择 ext4 或 XFS
+            (3) swap 空间的设置,  swappiness 设置成一个很小的值, 比如 1～ 10 之间, 防止逻辑内存大于物理内存时, 进程直接被 kill
+                                可以执行 sudo sysctl vm.swappiness=N 来临时设置该值. 如果要永久生效, 可以修改
+                                 /etc/sysctl.conf 文件,  增加 vm.swappiness=N, 然后重启机器即可
+            (4) ulimit -n, 如果设置太小, 会出现 Too Many File Open 的错误
+            (5) vm.max_map_count, 设置太小, 在一个主题数超多的 Broker 机器上, 会出现 OutOfMemoryError：Map failed 的问题.
+                建议设置为 65536, 方法是修改 /etc/sysctl.conf 文件, 增加 vm.max_map_count=655360, 保存之后, 执行
+                sysctl -p 命令使它生效.
+            (6) 页缓存大小, 最小值要容纳一个日志段的大小
+    4. JVM 层
+            (1) 设置堆大小
+                    一般将 JVM 堆大小设置成 6～8GB,精确的设置, 查看 GC log(kafkaServergc.log 日志), full gc 后
+                存活的对象大小 * 1.5, Full GC 没有被执行过, 可以手动运行 jmap -histo:live < pid > 就能人为触发 Full GC
+            (2) GC 收集器的选择
+                    建议使用 G1 收集器, 如果经常出现 Full GC, 配置 JVM 参数 -XX:+PrintAdaptiveSizePolicy, 看是哪个线程导致
+                Full GC.
+                    G1 容易出现大对象的问题, "too many humongous allocations", 存在至少占用半个区域（Region）大小的对象,
+                增加堆大小外, 还可以适当地增加区域大小, 设置方法是增加 JVM 启动参数 -XX:+G1HeapRegionSize=N
+                
+    5. 框架层(Broker)
+            (1) 尽力保持客户端版本和 Broker 端版本一致,不一致的客户端和 Broker 之间会发送消息转化.
+     
+    6. 应用程序层
+            (1) 不要频繁地创建 Producer 和 Consumer 对象实例. 构造这些对象的开销很大, 尽量复用它们
+            (2) 用完及时关闭. 这些对象底层会创建很多物理资源, 如 Socket 连接, ByteBuffer 缓冲区等.不及时关闭的话, 会造成资源泄露
+            (3) 合理利用多线程来改善性能. Kafka 的 Java Producer 是线程安全的, 可以在多个线程中共享同一个实例；
+                而 Java Consumer 不是线程安全的
+                
+    7. 性能指标调优
+            (1) 吞吐量调优
+                    a. kafka producer 发送消息, 延迟是 2ms ,再等待 8ms, 缓存了 1000 条消息, 再一次性发送.
+                    b. Broker 端
+                            1. 适当增加 num.replica.fetchers 参数值, 但不超过 cpu 核数,  Follower 副本用多少个线程来拉取消息,
+                               默认使用 1 个线程
+                            2. 调优 GC 参数避免经常性的 Full GC
+                    c. Producer 端
+                            1. 适当增加 batch.size 参数值, 由默认的 16KB 增加到 512 KB, 增加消息批次的大小
+                            2. 适当增加 lingr.ms 的参数值, 如 10 ~ 100, 增加批次缓存时间
+                            3. 设置 compression.type = lz4 或则 zstd, 适配好的压缩算法, 减少网络 I/O 传输量
+                            4. 设置 acks = 0, 1
+                            5. 设置 retries = 0
+                            6. 如果多线程共享同一个 Producer 实例, 增加 buffer.memory 的参数值, 解决出现 
+                               TimeoutException：Failed to allocate memory within the configured
+                               max blocking time
+                    d. Consumer 端
+                            1. 采用多 consumer 进程或则线程同时消费数据
+                            2. 增加 fetch.min.bytes 参数值, 设置为 1 KB, 默认是 1 字节, 表示只要 Kafka Broker 端积攒了 1 字节
+                               的数据, 就可以返回给 Consumer 端
+                               
+            (2) 延迟调优
+                    a. Broker 端
+                            1. 适当增加 num.replica.fetchers 参数值, 但不超过 cpu 核数
+                            
+                    b. Producer 端
+                            1. 设置 lingr.ms = 0; 消息尽快发送出去, 停留的时间设置为 0
+                            2. 不启动压缩, compression.type = none
+                            3. 设置 acks = 1
+                            
+                    c. Consumer 端
+                            1. 设置 fetch.min.bytes = 1
+```
+
+### kafka 集群集成监控
+```shell
+    1. 概念
+    2. JMXTool 工具
+            (1) JMXTool 工具能够实时查看 Kafka JMX 指标.
+            (2) 使用方法
+                    查看使用文档
+                    > bin/kafka-run-class.sh kafka.tools.JmxTool 
+                    
+                    查询 Broker 端每秒入站的流量, 通过 BytesInPerSec 的 JMX 指标
+                    > bin/kafka-run-class.sh kafka.tools.JmxTool 
+                            --object-name kafka.server:type=BrokerTopicMetrics,name=BytesInPerSec 
+                            --jmx-url service:jmx:rmi:///jndi/rmi://:9997/jmxrmi
+                            --date-format "YYYY-MM-dd HH:mm:ss"
+                            --attributes FifteenMinuteRate
+                            --reporting-interval 5000
+                            
+                    参数:
+                        --attributes : 指定要查询的 JMX 属性名称, 以逗号分隔的 csv 格式
+                        --date-format: 指定显示的日期格式
+                        --jmx-url: 指定要连接的 JMX 接口, 默认格式是 service:jmx:rmi:<端口号>/jmxrmi, 如果是在其他主机上运行的
+                        　　　　　　 需要带上连接的主机名.
+                        --object-name: 指定要查询的 JMX MBean 名称
+                        --reporting-interval : 指定实时查询的时间间隔, 默认是每 2 秒一次
+                        
+    3. kafka Manager
+            (1) 用于管理 和监控 Kafka 集群
+            (2) 
+                第一步: ./sbt clean dist   // 通过 sbt 工具进行编译 kafka Manager
+                第二步: 在 Kafka Manager 的 target/universal 目录下找到生成的 zip 文件, 把它解压, 然后修改里面的
+                       conf/application.conf 文件中的 kafka-manager.zkhosts 项, 让它指向你环境中的 ZooKeeper 地址,如：
+                            kafka-manager.zkhosts="localhost:2181"
+                            
+                第三步: 运行　kafka Manager
+                            > bin/kafka-manager -Dconfig.file=conf/application.conf -Dhttp.port=8080
+                            
+            (3) 如果只是想　kafka Manager 进行纯监控,不进行设置, 可以修改 config 下的 application.conf 文件, 
+                删除 application.features 中的值,如想禁掉 Preferred Leader 选举功能, 可以删除对应
+                 KMPreferredReplicaElectionFeature 项. 删除后重启 Kafka Manager, 再次进入到主界面, 
+                 Preferred Leader Election 菜单项已经没有
+                 
+    4. JMXTrans + InfluxDB + Grafana
+            (1) 
 ```
