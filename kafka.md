@@ -2128,5 +2128,5 @@
                  Preferred Leader Election 菜单项已经没有
                  
     4. JMXTrans + InfluxDB + Grafana
-            (1) 
+            
 ```
