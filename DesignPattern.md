@@ -3351,7 +3351,7 @@
                     boolean alert = interpreter.interpret(stats);
                     System.out.println(alert);
                 }
-            } 
+            }  
 ```
 
 ## 中介模式
